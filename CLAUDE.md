@@ -37,7 +37,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - Device detection: `D.DetectDevice()` – 1280x800 screen or active gamepad = "deck", else "pc";
   `DeckUIDB.device` = auto|deck|pc overrides. `D.IsDeck()` is the only thing modules should ask.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/deck device`) – they were essential for Midnight issues.
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/deck device`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 
@@ -49,6 +49,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - The crosses mirror **Action Bar 1** (buttons 1–12, with a page state driver like Blizzard's main
   bar) and **Action Bar 2** (buttons 13–24, slots 61–72). Deck = LT/RT + D-pad/ABXY,
   PC = the player's own Blizzard bindings of those bars (nothing to bind).
+- **Every page the state driver can select needs a registered state.** `PageMacro()` can return
+  `GetOverrideBarIndex()` (18 on retail), so `NUM_PAGES` is derived from that API, never hardcoded.
+  Slots are one flat list, page *p* button *i* = `(p-1)*12+i`, so page 18 is 205–216. A missing
+  state makes LibActionButton's `GetAction()` return `"empty"` and the button goes blank – that
+  was the "mount abilities not shown" bug. `/dc page` prints the active page and the resolved slot.
 - Blizzard's main bar is **not** called `MainMenuBar` anymore and buttons sit in per-button
   containers. Find a bar by climbing parents from `ActionButton1` until the parent is `UIParent`
   (`ResolveBar` in `DeckUI_Cross/input.lua`). Hide by reparenting to a hidden frame +
