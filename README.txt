@@ -83,6 +83,7 @@ Commands
 
 Diagnostics for the cross hotbar, useful when reporting a problem:
 
+  /dc page                 print the active action bar page and the slot behind a button
   /dc bars                 print which Blizzard bars were found and hidden
   /dc bare                 toggle the button decorations off and on
   /dc overlay [n]          print the visible parts of button n
