@@ -175,6 +175,27 @@ One round icon per specialization, click to switch out of combat, gold ring on
 the active spec. /spec or /qs toggles the bar, /deck unlock moves it.
 
 
+Using DeckUI with ConsolePort
+-----------------------------
+ConsolePort is the established controller addon for World of Warcraft, and
+most of it works fine next to DeckUI. Its action bar does not.
+
+ConsolePort ships as several separate addons, so this is one checkbox:
+uncheck "Console Port Action Bar" in the addon list and leave "Console Port"
+itself checked. You keep its radial menus, camera targeting, interface
+navigation and inventory menus, and DeckUI brings the cross hotbar and the
+orbs.
+
+Why the two cannot share: ConsolePort's own bar sits on the same LT/RT plus
+D-pad and face button combinations, it re-asserts its own key overrides over
+ours, and it unregisters the events on Blizzard's action buttons - which is
+where DeckUI reads the pushed state from. DeckUI says so in chat when it
+sees the bar module enabled.
+
+If you would rather keep ConsolePort's bar, switch the Cross module off in
+/deck and use DeckUI for the orbs and the spec bar.
+
+
 Per-device settings
 -------------------
 Frame positions and the two size sliders (Orbs, Cross) are stored separately
@@ -196,6 +217,11 @@ Just /deck unlock and drag everything back into place.
 
 Troubleshooting
 ---------------
+Cross buttons light up but cast the wrong thing
+    ConsolePort's action bar is enabled and claims the same keys. See
+    "Using DeckUI with ConsolePort" above.
+
+
 No cross hotbar on the PC
     Either the Cross module is off in the General tab, or "Cross hotbar only
     on Steam Deck" is checked.

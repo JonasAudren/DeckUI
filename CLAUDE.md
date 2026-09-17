@@ -60,6 +60,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   Slots are one flat list, page *p* button *i* = `(p-1)*12+i`, so page 18 is 205–216. A missing
   state makes LibActionButton's `GetAction()` return `"empty"` and the button goes blank – that
   was the "mount abilities not shown" bug. `/dc page` prints the active page and the resolved slot.
+- **ConsolePort's action bar and our crosses cannot coexist.** `ConsolePort_Bar` claims the same
+  LT/RT + D-pad/face combinations, hooks every `SetOverrideBinding*` and re-asserts its own
+  override so ours loses, and calls `UnregisterAllEvents` on `ActionButton1-12` – which is
+  exactly where our pushed state comes from. It is a separate addon, so the fix is unchecking
+  "Console Port Action Bar"; the rest of ConsolePort (cursor, targeting, rings, menus) is fine
+  next to us. `WarnConsolePortBar` in `DeckUI_Cross/input.lua` prints that at login – keep it.
 - Blizzard's main bar is **not** called `MainMenuBar` anymore and buttons sit in per-button
   containers. Find a bar by climbing parents from `ActionButton1` until the parent is `UIParent`
   (`ResolveBar` in `DeckUI_Cross/input.lua`). Hide by reparenting to a hidden frame +
