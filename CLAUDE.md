@@ -92,6 +92,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - Release on CurseForge as **Beta** after the checklist (see CURSEFORGE_DESCRIPTION.md;
   add `X-Curse-Project-ID` back to the four `.toc` files with the real numeric ID – it was
   removed rather than shipped as a placeholder, `X-Website` is already filled in).
+  The first Beta goes up **by hand** with `package.ps1`, so the owner sees what users get.
+- After the first Beta: automate releases with the BigWigs packager GitHub Action (push a
+  tag → it builds the zip and uploads it through the CurseForge API). Needs a CurseForge API
+  token as a repository secret, the project ID and a `.pkgmeta`. Whether the libs stay
+  committed or become `.pkgmeta` externals is a separate decision – `.gitignore` deliberately
+  keeps `libs/` in the repo until then.
 - Parked by owner's choice: set switching via LB/RB, controller navigation in the settings
-  window (built and removed – he uses the trackpad), German localisation, CurseForge packager
-  automation with `.pkgmeta` externals.
+  window (built and removed – he uses the trackpad), German localisation.
