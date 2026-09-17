@@ -47,10 +47,13 @@ On the Steam Deck, run the two buttons in the Cross tab once:
   /dc  ->  "Set up gamepad (LT/RT)"      enables the gamepad and maps
                                          LT = Shift, RT = Ctrl
   /dc  ->  "Apply default bindings"      A jump, X interact, B game menu,
-                                         Y character, D-pad targeting
+                                         Y character; D-pad up/down cycles
+                                         enemies, left/right cycles friends
 
 Both are per device, so do this once on the Deck and once on the PC if you
-play on both.
+play on both. "Apply default bindings" asks before it writes anything and
+lists which of your existing bindings it would replace - there is no undo,
+so read that list if it appears.
 
 Then fill Action Bar 1 and Action Bar 2 as you normally would - the crosses
 mirror those two bars, they do not have their own slots.

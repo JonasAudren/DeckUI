@@ -90,16 +90,75 @@ function ns.SetupGamepad()
     print("DeckUI Cross: gamepad enabled, LT = left, RT = right, LT+RT = middle.")
 end
 
+-- SetBinding writes straight into the player's key bindings and there is
+-- no undo, so ask first and say exactly which of their bindings would be
+-- replaced. preferredIndex = 3 is the usual guard against Blizzard's
+-- taint bug in StaticPopup.
+StaticPopupDialogs["DECKUI_CROSS_DEFAULT_BINDINGS"] = {
+    text         = "%s",
+    button1      = YES,
+    button2      = NO,
+    OnAccept     = function() ns.ApplyDefaultBindingsNow() end,
+    timeout      = 0,
+    whileDead    = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+local function KeyLabel(key)
+    return GetBindingText(key, true) or key
+end
+
+local function ActionLabel(command)
+    return _G["BINDING_NAME_" .. command] or command
+end
+
+function ns.ApplyDefaultBindingsNow()
+    if InCombatLockdown() then
+        print("DeckUI Cross: not possible in combat.")
+        return
+    end
+    local n = 0
+    for key, command in pairs(DEFAULT_BINDINGS) do
+        SetBinding(key, command)
+        n = n + 1
+    end
+    SaveBindings(GetCurrentBindingSet())
+    print("DeckUI Cross: default controller bindings applied (" .. n .. " keys).")
+end
+
 function ns.ApplyDefaultBindings()
     if InCombatLockdown() then
         print("DeckUI Cross: not possible in combat.")
         return
     end
+
+    -- keys that already do something else: those are what the player loses
+    local taken = {}
     for key, command in pairs(DEFAULT_BINDINGS) do
-        SetBinding(key, command)
+        local current = GetBindingAction(key)
+        if current and current ~= "" and current ~= command then
+            -- both sides, or a row reads like an assignment instead of a loss
+            table.insert(taken, KeyLabel(key) .. "   |cffff8080" .. ActionLabel(current)
+                .. "|r  ->  " .. ActionLabel(command))
+        end
     end
-    SaveBindings(GetCurrentBindingSet())
-    print("DeckUI Cross: default controller bindings applied.")
+    table.sort(taken)
+
+    local msg = "Bind the controller defaults?\n\n"
+             .. "A jump, X interact, B game menu, Y character.\n"
+             .. "D-pad up/down cycles enemies, left/right cycles friends."
+    if #taken > 0 then
+        msg = msg .. "\n\n|cffff8080This replaces " .. #taken
+           .. (#taken == 1 and " binding you already use|r" or " bindings you already use|r")
+           .. " (yours -> DeckUI):\n"
+           .. table.concat(taken, "\n")
+    else
+        msg = msg .. "\n\nNone of these keys is bound to anything else."
+    end
+    msg = msg .. "\n\nThere is no undo."
+
+    StaticPopup_Show("DECKUI_CROSS_DEFAULT_BINDINGS", msg)
 end
 
 -------------------------------------------------------------------
