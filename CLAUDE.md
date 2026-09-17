@@ -16,6 +16,11 @@ Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
 `D.RegisterModule(key, { title, build = function(content) end })`. The hub loads
 enabled modules from `DeckUIDB.modules` at `ADDON_LOADED`.
 
+`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the four addon
+folders at the **top level** (a wrapping folder would install everything one level too
+deep), README and LICENSE inside `DeckUI\`, without the `.github`/`utils` clutter from
+`libs\oUF`. It aborts if the four `.toc` files disagree on version or interface.
+
 Each folder is a separate WoW addon; in `Interface\AddOns\` they are directory
 junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 `.toc` changes or new folders/textures need a full client restart.
