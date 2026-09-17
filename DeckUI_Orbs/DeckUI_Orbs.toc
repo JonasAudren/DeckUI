@@ -5,6 +5,7 @@
 ## Version: 1.0.0
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
 ## X-Website: https://github.com/JonasAudren/DeckUI
+## X-Curse-Project-ID: 1699742
 ## X-Category: Action Bars, Unit Frames
 ## Dependencies: DeckUI
 ## LoadOnDemand: 1
