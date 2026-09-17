@@ -67,7 +67,19 @@ local function PageMacro()
     m = m .. "[bonusbar:1]7;[bonusbar:2]8;[bonusbar:3]9;[bonusbar:4]10;1"
     return m
 end
-local NUM_PAGES = 14
+-- Every index PageMacro() can return needs a registered state, or the
+-- buttons fall back to type "empty" and show nothing on that page.
+-- GetOverrideBarIndex() is 18 on retail, far above the 14 pages we used
+-- to register - that is why mounts and vehicles that take over the bar
+-- came up blank. Derive the count from the same API the macro uses so a
+-- changed constant cannot silently break it again.
+local NUM_PAGES = math.max(
+    NUM_ACTIONBAR_PAGES or 6,
+    GetOverrideBarIndex(),
+    GetVehicleBarIndex(),
+    GetTempShapeshiftBarIndex(),
+    GetBonusBarIndex()
+)
 
 -------------------------------------------------------------------
 -- Key labels: our own glyphs from DeckUI_Cross\textures (TGA files)
@@ -507,6 +519,30 @@ function ns.DumpOverlay(idx)
         local start, dur = b.cooldown:GetCooldownTimes()
         print(string.format("cooldown shown=%s start=%s dur=%s",
             tostring(b.cooldown:IsShown()), tostring(start), tostring(dur)))
+    end
+end
+
+-------------------------------------------------------------------
+-- /dc page: which page the crosses are on and why. The mount, vehicle
+-- and override bars were the hard part here, so keep this around.
+-------------------------------------------------------------------
+function ns.PrintPage()
+    print("DeckUI Cross: pages 1-" .. NUM_PAGES .. " registered")
+    print(string.format("  indices: bars=%d bonus5=%d vehicle=%d tempshapeshift=%d override=%d",
+        NUM_ACTIONBAR_PAGES or 6, GetBonusBarIndex(), GetVehicleBarIndex(),
+        GetTempShapeshiftBarIndex(), GetOverrideBarIndex()))
+    print(string.format("  state=%s  GetActionBarPage=%d  GetBonusBarOffset=%d",
+        tostring(header:GetAttribute("state")), GetActionBarPage(), GetBonusBarOffset()))
+    print(string.format("  override=%s vehicle=%s possess=%s",
+        tostring(HasOverrideActionBar and HasOverrideActionBar()),
+        tostring(HasVehicleActionBar and HasVehicleActionBar()),
+        tostring(IsPossessBarVisible and IsPossessBarVisible())))
+    for _, idx in ipairs({ 1, 13 }) do
+        local b = ns.buttons[idx]
+        if b then
+            local kind, action = b:GetAction()
+            print(string.format("  button %d -> %s %s", idx, tostring(kind), tostring(action)))
+        end
     end
 end
 

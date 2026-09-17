@@ -333,6 +333,9 @@ SlashCmdList.DECKCROSS = function(msg)
     elseif msg == "bars" then
         ns.PrintBars()
         return
+    elseif msg == "page" then
+        ns.PrintPage()
+        return
     end
     D.ToggleConfig("Cross")
 end
