@@ -16,7 +16,17 @@
     extractors outside Windows.
 
     Usage:  powershell -ExecutionPolicy Bypass -File package.ps1
+            pwsh ./package.ps1 -Version 1.0.1
 #>
+
+param(
+    # Version for this build. A tag name works as is, the leading v is
+    # stripped. When given it is written into the staged .toc files, so the
+    # release version can come from the git tag; the repository itself is
+    # never touched. Left out, the version comes from the .toc files, which
+    # then have to agree.
+    [string]$Version
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -47,11 +57,11 @@ function Get-TocField($path, $field) {
     return $null
 }
 
-# --- the four .toc files must agree on version and interface ----------
+# --- read the .toc headers --------------------------------------------
 $versions   = @()
 $interfaces = @()
 foreach ($a in $addons) {
-    $toc = Join-Path $root "$a\$a.toc"
+    $toc = Join-Path $root "$a/$a.toc"
     if (-not (Test-Path $toc)) { throw "missing $toc" }
     $v = Get-TocField $toc "Version"
     $i = Get-TocField $toc "Interface"
@@ -64,17 +74,26 @@ foreach ($a in $addons) {
 
 $uniqueVersions   = @($versions   | Sort-Object -Unique)
 $uniqueInterfaces = @($interfaces | Sort-Object -Unique)
-if ($uniqueVersions.Count -ne 1) {
-    throw "the .toc files disagree on ## Version: " + ($uniqueVersions -join ", ")
-}
 if ($uniqueInterfaces.Count -ne 1) {
     throw "the .toc files disagree on ## Interface: " + ($uniqueInterfaces -join ", ")
 }
-$version = $uniqueVersions[0]
+$interface = $uniqueInterfaces[0]
+
+if ($Version) {
+    $buildVersion = $Version -replace "^v", ""
+    if ($uniqueVersions.Count -ne 1 -or $uniqueVersions[0] -ne $buildVersion) {
+        Write-Host ("  note: building as {0}, the .toc files say {1}" -f $buildVersion, ($uniqueVersions -join ", ")) -ForegroundColor Yellow
+    }
+} else {
+    if ($uniqueVersions.Count -ne 1) {
+        throw "the .toc files disagree on ## Version: " + ($uniqueVersions -join ", ")
+    }
+    $buildVersion = $uniqueVersions[0]
+}
 
 # A missing project id is fine before the CurseForge project exists, but it
 # is easy to forget, so say so rather than silently shipping without it.
-$hubToc = Join-Path $root "DeckUI\DeckUI.toc"
+$hubToc = Join-Path $root "DeckUI/DeckUI.toc"
 if (-not (Get-TocField $hubToc "X-Curse-Project-ID")) {
     Write-Host "  note: X-Curse-Project-ID is not set yet" -ForegroundColor Yellow
 }
@@ -109,13 +128,30 @@ try {
         }
     }
 
+    # Stamp the version into the staged copies only. Written through .NET so
+    # the file keeps its encoding without a BOM - Set-Content would put one
+    # in front of ## Interface on Windows PowerShell.
+    if ($Version) {
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        foreach ($a in $addons) {
+            $toc  = Join-Path $stage "$a/$a.toc"
+            $text = (Get-Content $toc -Raw) -replace "(?m)^##\s+Version\s*:.*", "## Version: $buildVersion"
+            [System.IO.File]::WriteAllText($toc, $text, $utf8NoBom)
+        }
+        Write-Host ("  stamped version {0} into the four .toc files" -f $buildVersion)
+    }
+
     # --- zip it, entry names with forward slashes ---------------------
     if (-not (Test-Path $dist)) { New-Item -ItemType Directory $dist | Out-Null }
-    $zip = Join-Path $dist "DeckUI-$version.zip"
+    $zip = Join-Path $dist "DeckUI-$buildVersion.zip"
     if (Test-Path $zip) { Remove-Item $zip -Force }
 
-    Add-Type -AssemblyName System.IO.Compression
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    # Windows PowerShell needs these loaded; on PowerShell 7 they are already
+    # part of the runtime and Add-Type would fail there.
+    if (-not ("System.IO.Compression.ZipFile" -as [type])) {
+        Add-Type -AssemblyName System.IO.Compression
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+    }
 
     $stream  = [System.IO.File]::Open($zip, [System.IO.FileMode]::Create)
     $archive = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
@@ -164,6 +200,14 @@ try {
 
     Write-Host ""
     Write-Host "  ready to upload" -ForegroundColor Green
+
+    # Hand the results to whatever called us: the release workflow reads
+    # these instead of guessing the file name.
+    if ($env:GITHUB_OUTPUT) {
+        Add-Content $env:GITHUB_OUTPUT "zip=$zip"
+        Add-Content $env:GITHUB_OUTPUT "version=$buildVersion"
+        Add-Content $env:GITHUB_OUTPUT "interface=$interface"
+    }
 }
 finally {
     Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue

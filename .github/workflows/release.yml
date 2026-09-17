@@ -1,0 +1,82 @@
+name: Release
+
+# Push a tag like v1.0.1 and this builds the zip and uploads it to
+# CurseForge. Run it by hand first with dry_run on: that builds and checks
+# everything, talks to the API to resolve the game version, and stops short
+# of uploading.
+#
+# Needs the repository secret CF_API_TOKEN (Settings -> Secrets and variables
+# -> Actions). Create the token in your CurseForge account settings.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, e.g. 1.0.1"
+        required: true
+      release_type:
+        description: "Release type"
+        default: beta
+        type: choice
+        options: [beta, release, alpha]
+      dry_run:
+        description: "Build and check, but do not upload"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Work out version and release type
+        id: plan
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $version     = $env:GITHUB_REF_NAME -replace "^v", ""
+            $releaseType = "beta"      # tags publish as beta until we say otherwise
+            $dryRun      = "false"
+          } else {
+            $version     = "${{ inputs.version }}" -replace "^v", ""
+            $releaseType = "${{ inputs.release_type }}"
+            $dryRun      = "${{ inputs.dry_run }}".ToLower()
+          }
+          if (-not $version) { throw "no version to build" }
+          Add-Content $env:GITHUB_OUTPUT "version=$version"
+          Add-Content $env:GITHUB_OUTPUT "release_type=$releaseType"
+          Add-Content $env:GITHUB_OUTPUT "dry_run=$dryRun"
+          Write-Host "  building $version as $releaseType (dry run: $dryRun)"
+
+      - name: Build the package
+        id: build
+        shell: pwsh
+        run: ./package.ps1 -Version "${{ steps.plan.outputs.version }}"
+
+      - name: Upload to CurseForge
+        shell: pwsh
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          $params = @{
+            Zip           = "${{ steps.build.outputs.zip }}"
+            ProjectId     = "1699742"
+            ReleaseType   = "${{ steps.plan.outputs.release_type }}"
+            Interface     = "${{ steps.build.outputs.interface }}"
+            Changelog     = "See https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}"
+          }
+          if ("${{ steps.plan.outputs.dry_run }}" -eq "true") { $params["DryRun"] = $true }
+          ./upload-curseforge.ps1 @params
+
+      - name: Keep the built zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeckUI-${{ steps.plan.outputs.version }}
+          path: ${{ steps.build.outputs.zip }}
+          if-no-files-found: error

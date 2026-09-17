@@ -100,10 +100,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   add `X-Curse-Project-ID` back to the four `.toc` files with the real numeric ID – it was
   removed rather than shipped as a placeholder, `X-Website` is already filled in).
   The first Beta goes up **by hand** with `package.ps1`, so the owner sees what users get.
-- After the first Beta: automate releases with the BigWigs packager GitHub Action (push a
-  tag → it builds the zip and uploads it through the CurseForge API). Needs a CurseForge API
-  token as a repository secret, the project ID and a `.pkgmeta`. Whether the libs stay
-  committed or become `.pkgmeta` externals is a separate decision – `.gitignore` deliberately
-  keeps `libs/` in the repo until then.
+- Releases are automated: push a tag `v<version>` and `.github/workflows/release.yml`
+  runs `package.ps1 -Version <tag>` on the runner and uploads the result through the
+  CurseForge API with `upload-curseforge.ps1`. Run it by hand first from the Actions
+  tab with **dry_run** on - that builds and resolves the game version without
+  uploading. Needs the repository secret `CF_API_TOKEN`. The BigWigs packager was
+  looked at and dropped: it expects the main addon at the repository root, while ours
+  sits in `DeckUI/` beside the three modules, which `move-folders` cannot untangle.
+  Switching to `.pkgmeta` externals would mean adopting that layout after all.
 - Parked by owner's choice: set switching via LB/RB, controller navigation in the settings
   window (built and removed – he uses the trackpad), German localisation.
