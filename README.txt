@@ -1,68 +1,214 @@
-DeckUI - migration from DeckOrbs + DeckCross to a hub with modules
-==================================================================
+DeckUI
+======
 
-Target structure in ...\_retail_\Interface\AddOns\:
+A compact, controller-friendly interface for World of Warcraft on the Steam
+Deck - that also works on the PC with your normal key bindings.
 
-  DeckUI\                 <- NEW (hub)
-    DeckUI.toc, core.lua, widgets.lua, panel.lua, minimap.lua
-  DeckUI_Orbs\            <- was DeckOrbs
-    DeckUI_Orbs.toc, core.lua, layout.lua, config.lua, libs\oUF\ (unchanged)
-  DeckUI_Cross\           <- was DeckCross
-    DeckUI_Cross.toc, core.lua, input.lua, config.lua, textures\ (button glyphs), libs\ (unchanged)
+DeckUI is a hub with three load-on-demand modules. Enable or disable each one
+in /deck; what you do not use is never loaded.
 
-Step 1: rebuild the folders
-  1. Quit WoW. Back up / commit DeckOrbs and DeckCross.
-  2. Rename "DeckOrbs" to "DeckUI_Orbs", delete DeckOrbs.toc inside it.
-  3. Rename "DeckCross" to "DeckUI_Cross", delete DeckCross.toc inside it.
-  4. Copy the three folders from this ZIP into AddOns\, overwrite existing
-     files. Leave the libs folders as they are.
+  DeckUI          the hub: device detection, settings window, movable frames
+  DeckUI Orbs     round unit frames (player, target, focus, pet, boss)
+  DeckUI Cross    FFXIV-style cross hotbar for controller and keyboard
+  DeckUI Spec     one-click specialization switcher
 
-Step 2: start and verify
-  1. Restart WoW completely.
-  2. Addon list: DeckUI, DeckUI Orbs, DeckUI Cross and DeckUI Spec must all be checked
-     (the modules are marked "load on demand").
-  3. Log in: orbs and cross hotbar are there. Note: frame positions are
-     reset ONCE because the position keys are now English - just unlock
-     and drag them back into place.
-  4. /deck  -> window with tabs General / Orbs / Cross.
-     /orbs and /dc jump straight to their tab.
-  5. General -> uncheck "Cross" -> message "after /reload".
-     /reload -> bar is gone. Check it again -> bar appears IMMEDIATELY
-     without reload. (That is the real test: loading a module in-game.)
+Requires World of Warcraft Retail, Interface 120100 (Midnight).
+License: MIT, see LICENSE.txt.
 
-Boss frames (Orbs)
-  Up to five boss orbs in a column on the right, only shown while bosses
-  exist. Move them via /deck unlock ("Boss frames" overlay). Blizzard's
-  boss frames are hidden meanwhile; switch off in /orbs if you prefer them.
 
-Spec switcher (DeckUI_Spec, replaces QuickSpec)
-  Row of round spec icons, click to switch (not in combat), active spec
-  has a gold ring. /spec (or /qs) toggles the bar, /deck unlock moves it.
-  Delete the old QuickSpec folder, it would conflict on /qs.
+Installation
+------------
+1. Quit the game completely.
+2. Copy all four folders into
 
-Per-device settings
-  Frame positions and the size sliders (Orbs, Cross) are stored separately
-  for the Steam Deck and the PC. "Reset all positions" only resets the
-  current device. Optional: General -> "Set Blizzard UI scale per device
-  at login" with one scale value per device.
+     World of Warcraft\_retail_\Interface\AddOns\
+
+   so that you end up with AddOns\DeckUI, AddOns\DeckUI_Orbs,
+   AddOns\DeckUI_Cross and AddOns\DeckUI_Spec.
+3. Start the game. In the addon list on the character screen, DeckUI,
+   DeckUI Orbs, DeckUI Cross and DeckUI Spec must all be checked. The three
+   modules are marked "load on demand" and depend on the hub - if the hub is
+   unchecked, nothing loads.
+4. Log in. The orbs, the cross hotbar and the spec bar are there.
+
+A full restart is needed after installing or updating; /reload is not enough
+for new folders or textures.
+
+
+First steps
+-----------
+  /deck                    opens the settings window
+  minimap button           left-click settings, right-click unlock/lock,
+                           drag to move the button itself
+
+On the Steam Deck, run the two buttons in the Cross tab once:
+
+  /dc  ->  "Set up gamepad (LT/RT)"      enables the gamepad and maps
+                                         LT = Shift, RT = Ctrl
+  /dc  ->  "Apply default bindings"      A jump, X interact, B game menu,
+                                         Y character, D-pad targeting
+
+Both are per device, so do this once on the Deck and once on the PC if you
+play on both.
+
+Then fill Action Bar 1 and Action Bar 2 as you normally would - the crosses
+mirror those two bars, they do not have their own slots.
+
+Check what DeckUI thinks you are playing on:
+
+  /deck device             prints Steam Deck or PC and why
+
+On login the Cross module also reports its input mode in chat:
+"controller mode (LT/RT)" or "keyboard mode".
+
 
 Commands
-  /deck         open/close settings
-  /deck unlock  unlock frames (green overlays, draggable)
-  /deck lock    lock frames
-  /deck reset   reset all positions
-  /deck device  print which device was detected (Steam Deck / PC)
+--------
+  /deck                    open/close the settings window
+  /deck unlock             unlock frames (green overlays, drag them)
+  /deck lock               lock frames
+  /deck reset              reset all positions (current device only)
+  /deck device             print the detected device
 
-Device detection
-  Auto = Steam Deck if the screen is 1280x800 or a gamepad is active, else PC.
-  Override in General -> Device button (Auto / Steam Deck / PC).
-  "Cross hotbar only on Steam Deck" keeps the cross hotbar off on the PC
-  (off by default: on the PC the cross hotbar uses keyboard keys instead).
+  /orbs                    jump to the Orbs tab
+  /dc                      jump to the Cross tab
+  /spec  or  /qs           toggle the spec bar
+  /spec config             jump to the Spec tab
 
-What the crosses show (both devices)
-  Buttons 1-12 = Action Bar 1 (left cross + top/right of the right cross,
-  with stance/vehicle paging like Blizzard's main bar), buttons 13-24 =
-  Action Bar 2. Fill your bars as usual, the crosses follow.
-  Steam Deck: LT/RT + D-pad / face buttons. PC: your normal WoW key
-  bindings of Action Bar 1 and 2; the labels show the keys.
-  Action Bar 1 and 2 themselves are hidden (switch off in /dc -> Look).
+Diagnostics for the cross hotbar, useful when reporting a problem:
+
+  /dc bars                 print which Blizzard bars were found and hidden
+  /dc bare                 toggle the button decorations off and on
+  /dc overlay [n]          print the visible parts of button n
+
+
+General tab
+-----------
+Modules           Orbs, Cross and Spec on or off. Enabling takes effect
+                  immediately, disabling after /reload.
+Device            cycles Auto / Steam Deck / PC. Auto means: Steam Deck if
+                  the screen is 1280x800 or a gamepad is active, else PC.
+Cross hotbar only on Steam Deck
+                  keeps the cross hotbar off on the PC. Off by default - on
+                  the PC the crosses run on your keyboard bindings instead.
+Set Blizzard UI scale per device at login
+                  with one scale value per device, for the Deck's small
+                  screen. Off by default; when you turn it off again, the
+                  current scale simply stays.
+Unlock frames / Reset all positions
+                  the overlays are labelled Player, Target, Focus, Boss
+                  frames, Cross Hotbar and Spec bar. Reset only affects the
+                  device you are currently on.
+Show minimap button
+                  hide it if you prefer /deck.
+
+
+DeckUI Orbs - round unit frames
+-------------------------------
+Player and target are large orbs: health fills the orb, power runs as a ring
+around it, the cast bar sits inside the orb. Focus is medium, target-of-target
+and pet are small and docked to their orb, and up to five boss orbs appear in
+a column while bosses exist.
+
+Options in the Orbs tab:
+
+  Size (this device)       saved separately for Deck and PC
+  Opacity, Brightness
+  Buffs up to duration     hides long buffs; takes effect after /reload
+  Health text              Percent / Absolute / Short (1.2M) / Short + %
+  Show cast in orb
+  Show buffs and debuffs
+  Only own debuffs on target
+  Show focus frame
+  Show boss frames         hides Blizzard's boss frames while on; switch it
+                           off if you prefer Blizzard's
+  Class resource dots on player orb
+                           combo points, holy power, runes and so on
+  Announce target          shows the target's name large on every change
+
+
+DeckUI Cross - cross hotbar
+---------------------------
+Two halves of round buttons, 24 slots in total:
+
+  LT      left cross
+  RT      right cross
+  LT+RT   the small middle crosses
+
+The crosses mirror Action Bar 1 (buttons 1-12: the left cross and the upper
+half of the right one, with the same stance and vehicle paging as Blizzard's
+main bar) and Action Bar 2 (buttons 13-24). Fill your bars as usual and the
+crosses follow.
+
+  Steam Deck    LT/RT plus D-pad and A/B/X/Y, with controller glyphs on the
+                buttons
+  PC            your own WoW key bindings for bars 1 and 2, with the bound
+                keys shown on the buttons - nothing to set up
+
+Keys are bound to Blizzard's native commands, so press-and-hold casting and
+the single-button assistant work, including its changing icon.
+
+Options in the Cross tab:
+
+  Size (this device)       saved separately for Deck and PC
+  Out-of-combat opacity    dimmed out of combat, full brightness in combat or
+                           whenever you touch it
+  Show button labels
+  Hide the Blizzard bars the crosses mirror
+                           on by default, so nothing shows twice
+
+
+DeckUI Spec - spec switcher
+---------------------------
+One round icon per specialization, click to switch out of combat, gold ring on
+the active spec. /spec or /qs toggles the bar, /deck unlock moves it.
+
+
+Per-device settings
+-------------------
+Frame positions and the two size sliders (Orbs, Cross) are stored separately
+for the Steam Deck and the PC, because the Deck's 1280x800 screen needs a
+different layout than a monitor. Everything else - checkboxes, display
+options, UI scale values - is shared.
+
+SavedVariables: DeckUIDB, DeckOrbsDB, DeckCrossDB, DeckSpecDB.
+
+
+Upgrading from DeckOrbs, DeckCross or QuickSpec
+-----------------------------------------------
+Delete the old DeckOrbs, DeckCross and QuickSpec folders from AddOns\ before
+starting. QuickSpec in particular would fight over /qs.
+
+Your frame positions are reset once, because the saved position keys changed.
+Just /deck unlock and drag everything back into place.
+
+
+Troubleshooting
+---------------
+No cross hotbar on the PC
+    Either the Cross module is off in the General tab, or "Cross hotbar only
+    on Steam Deck" is checked.
+
+Cross buttons are empty
+    The crosses only display Action Bar 1 and 2. Put your spells on those two
+    bars.
+
+Blizzard's bars show as well
+    Cross tab -> "Hide the Blizzard bars the crosses mirror".
+
+LT/RT do nothing on the Deck
+    Cross tab -> "Set up gamepad (LT/RT)", then reload. The game needs the
+    gamepad enabled before it sees the triggers as modifiers.
+
+Something is broken and you want to see the error
+    /console scriptErrors 1, then /reload.
+
+Start over completely
+    Quit the game and delete the DeckUI*.lua files in
+    _retail_\WTF\Account\<account>\SavedVariables\. Defaults apply on the
+    next login.
+
+
+Author
+------
+Gottlieb Nowara - https://github.com/JonasAudren/DeckUI
