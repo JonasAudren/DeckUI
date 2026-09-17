@@ -4,8 +4,7 @@
 ## Author: Gottlieb
 ## Version: 1.0.0
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
-## X-Website: https://github.com/<your-github-name>/DeckUI
-## X-Curse-Project-ID: <fill in after creating the CurseForge project>
+## X-Website: https://github.com/JonasAudren/DeckUI
 ## X-Category: Action Bars, Unit Frames
 ## SavedVariables: DeckUIDB
 
