@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DeckUI logo export</title>
+<!--
+  Saves deckui-logo.svg as a PNG, offline, without any tooling installed.
+  Open this file in a browser and click a size.
+
+  deckui-logo.svg is the source of truth; the markup below is a copy of it,
+  because a file:// page may not read a sibling file (CORS) and drawing a
+  file:// image onto a canvas taints it, which blocks the PNG export. Keep
+  the two in sync when the logo changes.
+-->
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 32px 16px;
+    background: #121212; color: #e8e8e8;
+    font: 15px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; gap: 28px;
+  }
+  h1 { font-size: 19px; font-weight: 600; margin: 0; letter-spacing: .2px; }
+  .stage { width: 256px; height: 256px; }
+  .stage svg { width: 100%; height: 100%; display: block; }
+  .sizes { display: flex; align-items: flex-end; gap: 22px; }
+  .sizes figure { margin: 0; text-align: center; }
+  .sizes figcaption { margin-top: 8px; font-size: 12px; color: #9a9a9a; }
+  .sizes svg { display: block; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  button {
+    font: inherit; font-size: 14px; padding: 9px 18px;
+    background: #1f1f1f; color: #e8e8e8;
+    border: 1px solid #383838; border-radius: 8px; cursor: pointer;
+  }
+  button:hover { background: #2a2a2a; border-color: #4a4a4a; }
+  p.note { max-width: 46ch; text-align: center; color: #9a9a9a; font-size: 13px; margin: 0; }
+</style>
+</head>
+<body>
+
+<h1>DeckUI logo</h1>
+
+<div class="stage" id="stage">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" id="logo" role="img" aria-label="DeckUI">
+  <title>DeckUI</title>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%"   stop-color="#1F1F1F"/>
+      <stop offset="100%" stop-color="#101010"/>
+    </radialGradient>
+    <linearGradient id="health" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%"   stop-color="#C79A1E"/>
+      <stop offset="100%" stop-color="#F0CE4B"/>
+    </linearGradient>
+    <clipPath id="orbClip">
+      <circle cx="256" cy="256" r="80"/>
+    </clipPath>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="76" fill="url(#bg)"/>
+  <rect x="3" y="3" width="506" height="506" rx="74" fill="none" stroke="#2B2B2B" stroke-width="6"/>
+  <g transform="translate(256 256) scale(0.86) translate(-256 -256)">
+    <circle cx="256" cy="256" r="80" fill="#171717"/>
+    <g clip-path="url(#orbClip)">
+      <rect x="176" y="243" width="160" height="93" fill="url(#health)"/>
+    </g>
+    <circle cx="256" cy="256" r="80" fill="none" stroke="#000000" stroke-width="3" opacity="0.55"/>
+    <circle cx="256" cy="256" r="90" fill="none" stroke="#3380FF" stroke-width="7"/>
+    <circle cx="256" cy="80"  r="58" fill="#1C1C1C" stroke="#E6BF33" stroke-width="10"/>
+    <circle cx="256" cy="80"  r="36" fill="#E6BF33" opacity="0.18"/>
+    <circle cx="432" cy="256" r="58" fill="#232323" stroke="#6E6E6E" stroke-width="10"/>
+    <circle cx="256" cy="432" r="58" fill="#232323" stroke="#6E6E6E" stroke-width="10"/>
+    <circle cx="80"  cy="256" r="58" fill="#232323" stroke="#6E6E6E" stroke-width="10"/>
+  </g>
+</svg>
+</div>
+
+<div class="sizes" id="sizes"></div>
+
+<div class="row">
+  <button data-size="1024">PNG 1024</button>
+  <button data-size="512">PNG 512</button>
+  <button data-size="400">PNG 400</button>
+</div>
+
+<p class="note">The small renders above are there to check it still reads at
+the size CurseForge uses in project lists.</p>
+
+<script>
+const svg = document.getElementById('logo');
+
+// small previews, to judge legibility where it actually matters
+for (const px of [64, 48, 32]) {
+  const fig = document.createElement('figure');
+  const copy = svg.cloneNode(true);
+  copy.removeAttribute('id');
+  copy.setAttribute('width', px);
+  copy.setAttribute('height', px);
+  fig.appendChild(copy);
+  const cap = document.createElement('figcaption');
+  cap.textContent = px + ' px';
+  fig.appendChild(cap);
+  document.getElementById('sizes').appendChild(fig);
+}
+
+function serialize() {
+  const copy = svg.cloneNode(true);
+  copy.setAttribute('width', 512);
+  copy.setAttribute('height', 512);
+  return new XMLSerializer().serializeToString(copy);
+}
+
+function download(size) {
+  // a data: URL keeps the canvas untainted, so toBlob() is allowed
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(serialize());
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    canvas.getContext('2d').drawImage(img, 0, 0, size, size);
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'deckui-logo-' + size + '.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }, 'image/png');
+  };
+  img.onerror = () => alert('Could not rasterise the SVG in this browser.');
+  img.src = url;
+}
+
+for (const b of document.querySelectorAll('button[data-size]')) {
+  b.addEventListener('click', () => download(Number(b.dataset.size)));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="DeckUI">
+  <title>DeckUI</title>
+
+  <!-- Colours are the ones the addon actually uses:
+       gold  #E6BF33 = RING_ACTIVE / cast overlay (0.9, 0.75, 0.2)
+       blue  #3380FF = minimap ring               (0.2, 0.5, 1.0)
+       grey  #6E6E6E = RING_IDLE, brightened from the in-game 0.25 grey
+                        so the cross still reads at 32 px in a project list
+       base  #141414 = orb background             (0.08, 0.08, 0.08)
+
+       The mark is the cross hotbar around a unit orb: four round buttons
+       in a plus, the held one in gold, and the orb filled from the bottom
+       the way health fills it in game. -->
+
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%"   stop-color="#1F1F1F"/>
+      <stop offset="100%" stop-color="#101010"/>
+    </radialGradient>
+
+    <linearGradient id="health" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%"   stop-color="#C79A1E"/>
+      <stop offset="100%" stop-color="#F0CE4B"/>
+    </linearGradient>
+
+    <clipPath id="orbClip">
+      <circle cx="256" cy="256" r="80"/>
+    </clipPath>
+  </defs>
+
+  <!-- plate -->
+  <rect x="0" y="0" width="512" height="512" rx="76" fill="url(#bg)"/>
+  <rect x="3" y="3" width="506" height="506" rx="74" fill="none" stroke="#2B2B2B" stroke-width="6"/>
+
+  <!-- scaled down so the mark keeps a margin on all four sides -->
+  <g transform="translate(256 256) scale(0.86) translate(-256 -256)">
+
+    <!-- centre orb: health fills it from the bottom, like the real one -->
+    <circle cx="256" cy="256" r="80" fill="#171717"/>
+    <g clip-path="url(#orbClip)">
+      <rect x="176" y="243" width="160" height="93" fill="url(#health)"/>
+    </g>
+    <circle cx="256" cy="256" r="80" fill="none" stroke="#000000" stroke-width="3" opacity="0.55"/>
+
+    <!-- power ring around the orb -->
+    <circle cx="256" cy="256" r="90" fill="none" stroke="#3380FF" stroke-width="7"/>
+
+    <!-- the cross: four round buttons, the top one held/active in gold -->
+    <circle cx="256" cy="80"  r="58" fill="#1C1C1C" stroke="#E6BF33" stroke-width="10"/>
+    <circle cx="256" cy="80"  r="36" fill="#E6BF33" opacity="0.18"/>
+
+    <circle cx="432" cy="256" r="58" fill="#232323" stroke="#6E6E6E" stroke-width="10"/>
+    <circle cx="256" cy="432" r="58" fill="#232323" stroke="#6E6E6E" stroke-width="10"/>
+    <circle cx="80"  cy="256" r="58" fill="#232323" stroke="#6E6E6E" stroke-width="10"/>
+  </g>
+</svg>
