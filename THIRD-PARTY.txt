@@ -1,0 +1,57 @@
+Third-party libraries shipped with DeckUI
+=========================================
+
+DeckUI itself is MIT licensed (see LICENSE.txt). It embeds the libraries
+below unchanged. Each is used under its own licence, all of which are
+permissive and compatible with MIT. The licence names are the ones the
+libraries state themselves, in their own .toc files or file headers.
+
+
+oUF
+  Licence   MIT
+  Authors   Trond A Ekseth, Val Voronov, Adrian L Lange, Rainrider
+            (listed in the .toc as Haste, lightspark, p3lim, Rainrider)
+  Where     DeckUI_Orbs\libs\oUF\
+  Notice    the full licence text ships as DeckUI_Orbs\libs\oUF\LICENSE.txt
+
+LibStub
+  Licence   Public Domain
+  Credits   Kaelten, Cladhaire, ckknight, Mikk, Ammo, Nevcairiel
+  Where     DeckUI_Cross\libs\LibStub\
+  Notice    stated in the file header and in LibStub.toc
+
+CallbackHandler-1.0
+  Licence   BSD-2.0
+  Author    Ace3 Development Team
+  Website   http://www.wowace.com/projects/callbackhandler/
+  Where     DeckUI_Cross\libs\CallbackHandler-1.0\
+  Notice    stated in CallbackHandler-1.0.toc; the .lua file itself carries
+            no header, which is why this file exists
+
+LibActionButton-1.0
+  Licence   BSD
+  Author    Hendrik "nevcairiel" Leppkes <h.leppkes@gmail.com>
+  Copyright (c) 2010-2022 Hendrik Leppkes
+  Where     DeckUI_Cross\libs\LibActionButton-1.0\
+  Notice    full copyright and conditions in the header of
+            LibActionButton-1.0.lua
+
+LibButtonGlow-1.0
+  Licence   BSD
+  Author    Hendrik "nevcairiel" Leppkes <h.leppkes@gmail.com>
+  Copyright (c) 2015-2020 Hendrik Leppkes
+  Where     DeckUI_Cross\libs\LibActionButton-1.0\LibButtonGlow-1.0\
+  Notice    full copyright and conditions in the header of
+            LibButtonGlow-1.0.lua
+
+
+The BSD licences require the copyright notice to be kept when the software
+is redistributed. Those notices are in the library files themselves, and
+this file is not a substitute for them - do not strip the headers when
+updating a library.
+
+Some libraries ship their own nested copies of LibStub and
+CallbackHandler-1.0. DeckUI does not load those; DeckUI_Cross.toc loads one
+copy of each, in this order: LibStub, CallbackHandler-1.0,
+LibButtonGlow-1.0, LibActionButton-1.0. package.ps1 leaves the unused
+copies out of the release archive.

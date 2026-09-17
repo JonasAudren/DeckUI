@@ -7,7 +7,8 @@
 
     Repository files that are not part of the addon (CLAUDE.md, the git
     metadata, this script) are left out, as is the developer clutter that
-    ships inside libs\oUF (.github, utils, .luacheckrc, .pkgmeta).
+    ships inside libs\oUF (.github, utils, .luacheckrc, .pkgmeta) and the
+    unused LibStub/CallbackHandler copies that other libraries bundle.
 
     The archive is written through System.IO.Compression with explicit entry
     names: Compress-Archive on Windows PowerShell 5.1 separates them with
@@ -21,13 +22,23 @@ $ErrorActionPreference = "Stop"
 
 $root   = $PSScriptRoot
 $addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec")
-$extras = @("README.txt", "LICENSE.txt")   # shipped inside the DeckUI folder
+$extras = @("README.txt", "LICENSE.txt", "THIRD-PARTY.txt")   # shipped inside the DeckUI folder
 $dist   = Join-Path $root "dist"
 
 # Developer files that live in the libraries but must not ship.
 $dropDirs  = @(".github", "utils")
 $dropFiles = @(".editorconfig", ".gitattributes", ".luacheckrc", ".pkgmeta",
                "Thumbs.db", ".DS_Store")
+
+# Libraries that bundle their own copies of LibStub and CallbackHandler.
+# DeckUI_Cross.toc loads exactly one copy of each, so these never run and
+# only bloat the archive. Listed by path, so nothing goes by accident.
+$dropPaths = @(
+    "DeckUI_Cross/libs/LibStub/tests",
+    "DeckUI_Cross/libs/CallbackHandler-1.0/LibStub",
+    "DeckUI_Cross/libs/LibActionButton-1.0/LibStub",
+    "DeckUI_Cross/libs/LibActionButton-1.0/CallbackHandler-1.0"
+)
 
 function Get-TocField($path, $field) {
     foreach ($line in Get-Content $path) {
@@ -88,6 +99,14 @@ try {
     foreach ($f in $dropFiles) {
         Get-ChildItem $stage -Recurse -File -Filter $f -Force |
             ForEach-Object { Remove-Item $_.FullName -Force }
+    }
+    foreach ($rel in $dropPaths) {
+        $full = Join-Path $stage $rel
+        if (Test-Path $full) {
+            Remove-Item $full -Recurse -Force
+        } else {
+            Write-Host "  note: nothing at $rel, did a library change?" -ForegroundColor Yellow
+        }
     }
 
     # --- zip it, entry names with forward slashes ---------------------

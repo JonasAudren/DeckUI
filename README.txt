@@ -13,7 +13,8 @@ in /deck; what you do not use is never loaded.
   DeckUI Spec     one-click specialization switcher
 
 Requires World of Warcraft Retail, Interface 120100 (Midnight).
-License: MIT, see LICENSE.txt.
+License: MIT, see LICENSE.txt. The bundled libraries and their
+licences are listed in THIRD-PARTY.txt.
 
 
 Installation
