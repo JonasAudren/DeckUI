@@ -61,16 +61,29 @@ function D.IsDeck()
     return D.GetDevice() == "deck"
 end
 
+-- set the override directly: /deck deck|pc|auto, handy for testing the
+-- Deck behaviour while sitting at the PC
+function D.SetDevice(key)
+    if not D.DEVICE_NAMES[key] then return end
+    DeckUIDB.device = key
+    D.PrintDevice()
+    print("DeckUI: changes to the loaded modules take effect after /reload.")
+    -- the Device button caption would go stale while the panel is open
+    if D.panel and D.panel:IsShown() then
+        local c = D.panel.contents[D.panel.current]
+        if c then D.RefreshWidgets(c) end
+    end
+end
+
 function D.CycleDevice()
     local cur = DeckUIDB.device or "auto"
     for i, v in ipairs(D.DEVICE_ORDER) do
         if v == cur then
-            DeckUIDB.device = D.DEVICE_ORDER[(i % #D.DEVICE_ORDER) + 1]
-            break
+            D.SetDevice(D.DEVICE_ORDER[(i % #D.DEVICE_ORDER) + 1])
+            return
         end
     end
-    D.PrintDevice()
-    print("DeckUI: changes to the loaded modules take effect after /reload.")
+    D.SetDevice("auto")   -- stored value was not one of ours
 end
 
 function D.DeviceText()

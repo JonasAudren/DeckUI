@@ -37,7 +37,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - Device detection: `D.DetectDevice()` – 1280x800 screen or active gamepad = "deck", else "pc";
   `DeckUIDB.device` = auto|deck|pc overrides. `D.IsDeck()` is the only thing modules should ask.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/deck device`) – they were essential for Midnight issues.
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/deck device`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 

@@ -183,6 +183,8 @@ SlashCmdList.DECKUI = function(msg)
         D.ResetPositions()
     elseif msg == "device" then
         D.PrintDevice()
+    elseif msg == "deck" or msg == "pc" or msg == "auto" then
+        D.SetDevice(msg)
     else
         D.ToggleConfig()
     end

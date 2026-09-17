@@ -69,6 +69,12 @@ Commands
   /deck lock               lock frames
   /deck reset              reset all positions (current device only)
   /deck device             print the detected device
+  /deck deck               force Steam Deck mode (test it while on the PC)
+  /deck pc                 force PC mode
+  /deck auto               back to automatic detection
+
+  Forcing a device takes full effect after /reload; it switches input,
+  button labels, sizes and the saved positions to that device.
 
   /orbs                    jump to the Orbs tab
   /dc                      jump to the Cross tab
