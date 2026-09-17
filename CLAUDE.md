@@ -85,7 +85,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 ## Roadmap / parked
 
 - Release on CurseForge as **Beta** after the checklist (see CURSEFORGE_DESCRIPTION.md;
-  fill in `X-Curse-Project-ID` and `X-Website` in the `.toc` files).
+  add `X-Curse-Project-ID` back to the four `.toc` files with the real numeric ID – it was
+  removed rather than shipped as a placeholder, `X-Website` is already filled in).
 - Parked by owner's choice: set switching via LB/RB, controller navigation in the settings
   window (built and removed – he uses the trackpad), German localisation, CurseForge packager
   automation with `.pkgmeta` externals.
