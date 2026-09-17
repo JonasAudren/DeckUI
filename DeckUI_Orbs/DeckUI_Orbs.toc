@@ -1,0 +1,17 @@
+## Interface: 120100
+## Title: DeckUI Orbs
+## Notes: DeckUI module: round unit frames (orbs)
+## Author: Gottlieb
+## Version: 1.0.0
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/<your-github-name>/DeckUI
+## X-Curse-Project-ID: <fill in after creating the CurseForge project>
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckOrbsDB
+
+libs\oUF\oUF.xml
+core.lua
+layout.lua
+config.lua

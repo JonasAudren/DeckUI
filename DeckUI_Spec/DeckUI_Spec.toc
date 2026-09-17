@@ -1,0 +1,15 @@
+## Interface: 120100
+## Title: DeckUI Spec
+## Notes: DeckUI module: one-click specialization switcher
+## Author: Gottlieb
+## Version: 1.0.0
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/<your-github-name>/DeckUI
+## X-Curse-Project-ID: <fill in after creating the CurseForge project>
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckSpecDB
+
+core.lua
+config.lua

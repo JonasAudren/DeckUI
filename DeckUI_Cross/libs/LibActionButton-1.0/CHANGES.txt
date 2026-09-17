@@ -1,0 +1,14 @@
+tag d3b7786fcb5c319a41b790161fe6fc81bf1c3653 0.62
+Author:	Hendrik Leppkes <h.leppkes@gmail.com>
+Date:	Wed Aug 12 10:07:03 2026 +0200
+
+Tag as 0.62
+
+commit a87f39c2ad154b46697ee8a28cb8cf2651d691f9
+Author: Hendrik Leppkes <h.leppkes@gmail.com>
+Date:   Wed Aug 12 10:05:21 2026 +0200
+
+    Add OnActionBarSlotChanged function for the Single-Button Assist
+    
+    Fixes Bartender4#301
+

@@ -1,0 +1,3 @@
+# nothing to ignore yet; keep libs/ in the repo until the CurseForge packager fetches them
+Thumbs.db
+.DS_Store

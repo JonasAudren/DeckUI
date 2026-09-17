@@ -1,0 +1,20 @@
+## Interface: 120100
+## Title: DeckUI Cross
+## Notes: DeckUI module: FFXIV-style cross hotbar for controller and Steam Deck, keyboard on PC
+## Author: Gottlieb
+## Version: 1.0.0
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/<your-github-name>/DeckUI
+## X-Curse-Project-ID: <fill in after creating the CurseForge project>
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckCrossDB
+
+libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\LibActionButton-1.0\LibButtonGlow-1.0\LibButtonGlow-1.0.lua
+libs\LibActionButton-1.0\LibActionButton-1.0.lua
+core.lua
+input.lua
+config.lua
