@@ -312,6 +312,19 @@ end
 -------------------------------------------------------------------
 -- Startup (works on normal login AND when loaded on demand via the menu)
 -------------------------------------------------------------------
+-- ConsolePort ships its own cluster bar on the very same LT/RT + D-pad and
+-- face button combinations we use, and its ConsolePort_Bar module calls
+-- UnregisterAllEvents on ActionButton1-12, which is exactly what our
+-- mirrored pushed state hangs off. It also hooks all SetOverrideBinding
+-- functions and re-asserts its own override, so our bindings lose. The two
+-- cannot share the keys - say so rather than let the user wonder why the
+-- cross looks right but does the wrong thing.
+local function WarnConsolePortBar()
+    if not C_AddOns.IsAddOnLoaded("ConsolePort_Bar") then return end
+    print("DeckUI Cross: ConsolePort's action bar is enabled and claims the same LT/RT combinations - the two fight over them.")
+    print("DeckUI Cross: uncheck \"Console Port Action Bar\" in the addon list and keep \"Console Port\" itself; its cursor, targeting and rings work fine next to DeckUI.")
+end
+
 local function Init()
     DeckCrossDB = DeckCrossDB or {}
     if DeckCrossDB.showLabels == nil then DeckCrossDB.showLabels = true end
@@ -328,6 +341,7 @@ local function Init()
     ns.SetBlizzardBarsHidden(DeckCrossDB.hideBlizzardBars)
     UpdateHighlight()
     print("DeckUI Cross: " .. (D.IsDeck() and "controller mode (LT/RT)" or "keyboard mode (mirrors Action Bar 1 + 2, Blizzard bindings)"))
+    WarnConsolePortBar()
 end
 
 local ev = CreateFrame("Frame")

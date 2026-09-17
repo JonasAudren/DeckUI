@@ -1,0 +1,83 @@
+name: Bug report
+description: Something in DeckUI does not work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The three commands below usually say more than a
+        description can, so please run the fitting ones in game and paste what
+        they print. `/console scriptErrors 1` before reproducing the problem
+        gives you the real error text.
+
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: What you did, what you expected, what you got instead.
+      placeholder: |
+        On a mount with abilities the cross buttons stay empty.
+        I expected the mount's abilities to show up on them.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - Steam Deck
+        - PC
+        - PC in Deck mode (/deck deck)
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: DeckUI version
+      description: From the addon list on the character screen, or the CurseForge file you installed.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: wow-version
+    attributes:
+      label: WoW version
+      description: The build shown in the bottom corner of the character screen.
+      placeholder: "12.0.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Lua error
+      description: >
+        Run `/console scriptErrors 1`, reproduce the problem, then paste the
+        error window's text here, file name and line number included.
+      render: text
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: >
+        `/deck device` always helps. Add `/dc page` when buttons are blank or
+        show the wrong thing, `/dc bars` when Blizzard's bars show up twice or
+        not at all, `/dc overlay` for anything about how a button looks.
+      render: text
+      placeholder: |
+        DeckUI: Device: Auto (PC, no gamepad, screen 2560x1440)
+        DeckUI Cross: pages 1-18 registered
+          state=18  GetActionBarPage=1  GetBonusBarOffset=0
+
+  - type: textarea
+    id: other-addons
+    attributes:
+      label: Other addons
+      description: >
+        Does it still happen with only the four DeckUI folders enabled? That one
+        check rules out most conflicts and saves a lot of guessing.

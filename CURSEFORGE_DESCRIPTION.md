@@ -26,15 +26,30 @@ DeckUI is a hub with three load-on-demand modules; enable or disable each one in
 - One round icon per specialization, click to switch (out of combat), gold ring on the active spec
 
 ## Steam Deck / PC detection
-DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → General → Device.
+DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → General → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
 
 ## Commands
-- `/deck` – settings, `/deck unlock` / `lock` – move frames, `/deck reset` – reset positions, `/deck device` – detected device
+- `/deck` – settings, `/deck unlock` / `lock` – move frames, `/deck reset` – reset positions
+- `/deck device` – show the detected device, `/deck deck` / `pc` / `auto` – force one
 - `/orbs`, `/dc`, `/spec` – jump to a module tab
 
 ## Setup on the Steam Deck
 1. `/dc` → "Set up gamepad (LT/RT)" once (enables the gamepad, LT = Shift, RT = Ctrl)
-2. `/dc` → "Apply default bindings" once (D-pad targeting, A jump, B menu, X interact, Y character)
+2. `/dc` → "Apply default bindings" once: A jump, B menu, X interact, Y character; D-pad up/down cycles enemies, left/right cycles friends
+
+Step 2 writes into your key bindings, so it asks first and lists exactly which of your existing bindings it would replace. There is no undo, so read that list before you confirm – and if you would rather keep your own bindings, say no. The crosses work either way.
+
+## Reporting a bug
+Please open an issue at **https://github.com/JonasAudren/DeckUI/issues** – that keeps reports in one place with a history. Comments here are fine for short questions.
+
+DeckUI ships diagnostic commands whose output makes a report much easier to act on. Run the fitting one and paste what it prints in chat:
+
+- `/deck device` – which device DeckUI detected and why
+- `/dc page` – the active action bar page and the slot behind a button (use this when buttons are blank or show the wrong thing)
+- `/dc bars` – which Blizzard bars were found and hidden
+- `/dc overlay` – the visible parts of a cross button
+
+Turning on Lua errors with `/console scriptErrors 1` before reproducing the problem gives you the actual error text, which is worth more than any description.
 
 ## Libraries (embedded)
-oUF, LibStub, CallbackHandler-1.0, LibActionButton-1.0 – see the LICENSE files in the libs folders.
+oUF, LibStub, CallbackHandler-1.0, LibActionButton-1.0 and LibButtonGlow-1.0 – all under permissive licences, listed with their authors and terms in `THIRD-PARTY.txt` inside the DeckUI folder.
