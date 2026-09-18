@@ -34,6 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The changelog is built from the commits since the previous tag,
+          # and the default shallow clone carries neither tags nor history.
+          fetch-depth: 0
 
       - name: Work out version and release type
         id: plan
@@ -59,6 +63,13 @@ jobs:
         shell: pwsh
         run: ./package.ps1 -Version "${{ steps.plan.outputs.version }}"
 
+      - name: Write the changelog
+        shell: pwsh
+        run: |
+          ./changelog.ps1 -Version "${{ steps.plan.outputs.version }}" -Repo "${{ github.repository }}" -OutFile changelog.md
+          Write-Host "--- changelog.md ---"
+          Get-Content changelog.md
+
       - name: Upload to CurseForge
         shell: pwsh
         env:
@@ -69,7 +80,7 @@ jobs:
             ProjectId     = "1699742"
             ReleaseType   = "${{ steps.plan.outputs.release_type }}"
             Interface     = "${{ steps.build.outputs.interface }}"
-            Changelog     = "See https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}"
+            Changelog     = (Get-Content changelog.md -Raw)
           }
           if ("${{ steps.plan.outputs.dry_run }}" -eq "true") { $params["DryRun"] = $true }
           ./upload-curseforge.ps1 @params

@@ -135,7 +135,11 @@ try {
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
         foreach ($a in $addons) {
             $toc  = Join-Path $stage "$a/$a.toc"
-            $text = (Get-Content $toc -Raw) -replace "(?m)^##\s+Version\s*:.*", "## Version: $buildVersion"
+            # The character class instead of a dot: in .NET a dot matches every
+            # character but the newline itself, so on a CRLF working copy it also eats
+            # the carriage return and leaves that one line ending bare, mixing the two
+            # styles inside the file.
+            $text = (Get-Content $toc -Raw) -replace "(?m)^##\s+Version\s*:[^\r\n]*", "## Version: $buildVersion"
             [System.IO.File]::WriteAllText($toc, $text, $utf8NoBom)
         }
         Write-Host ("  stamped version {0} into the four .toc files" -f $buildVersion)

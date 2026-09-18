@@ -3,3 +3,5 @@ Thumbs.db
 .DS_Store
 # build output of package.ps1
 dist/
+# changelog.ps1 -OutFile writes here; the release builds it on the runner
+changelog.md

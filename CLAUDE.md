@@ -21,6 +21,11 @@ folders at the **top level** (a wrapping folder would install everything one lev
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
 other libraries bundle. It aborts if the four `.toc` files disagree on version or interface.
+`bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
+in all four at once - `package.ps1 -Version` only stamps the staged copies, so without
+the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` turns the
+commit subjects since the previous tag into the changelog the release sends along, which
+is why commit subjects are written as whole sentences.
 
 Each folder is a separate WoW addon; in `Interface\AddOns\` they are directory
 junctions pointing into this repo. Any `.lua` change is live after `/reload`;
@@ -102,10 +107,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   The first Beta goes up **by hand** with `package.ps1`, so the owner sees what users get.
 - Releases are automated: push a tag `v<version>` and `.github/workflows/release.yml`
   runs `package.ps1 -Version <tag>` on the runner and uploads the result through the
-  CurseForge API with `upload-curseforge.ps1`. Run it by hand first from the Actions
-  tab with **dry_run** on - that builds and resolves the game version without
-  uploading. Needs the repository secret `CF_API_TOKEN`. The BigWigs packager was
-  looked at and dropped: it expects the main addon at the repository root, while ours
+  CurseForge API with `upload-curseforge.ps1`, with the changelog from `changelog.ps1`
+  (hence `fetch-depth: 0` on the checkout - a shallow clone has no tags to diff against).
+  Run it by hand first from the Actions tab with **dry_run** on - that builds and
+  resolves the game version without uploading. Needs the repository secret
+  `CF_API_TOKEN`. Raise the version with `bump-version.ps1` before tagging.
+  The BigWigs packager was looked at and dropped: it expects the main addon at the repository root, while ours
   sits in `DeckUI/` beside the three modules, which `move-folders` cannot untangle.
   Switching to `.pkgmeta` externals would mean adopting that layout after all.
 - Parked by owner's choice: set switching via LB/RB, controller navigation in the settings
