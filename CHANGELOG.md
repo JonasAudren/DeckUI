@@ -11,14 +11,14 @@ which is duller but never blocks a release.
 
 First public beta.
 
-- Round unit frames (orbs) for player, target and focus, on oUF.
+- Round unit frames (orbs) for player, target, target of target, focus, pet
+  and the boss frames.
 - An FFXIV-style cross hotbar: LT/RT together with the D-pad and the face
   buttons on a controller, your own action bar bindings on a keyboard.
 - One-click specialization switching.
 - Settings are per device: frame positions and the orb and cross sizes are
   remembered separately for the Steam Deck and the PC, so the same account
   fits both screens.
-- Note for ConsolePort users: uncheck "Console Port Action Bar". It claims
-  the same LT/RT combinations and wins, which leaves the DeckUI crosses
-  unlit. Everything else in ConsolePort works fine next to DeckUI, and the
-  addon says so at login.
+- ConsolePort users: uncheck "Console Port Action Bar", which claims the
+  same LT/RT combinations and wins, leaving the DeckUI crosses unlit.
+  Everything else in ConsolePort works fine next to DeckUI.
