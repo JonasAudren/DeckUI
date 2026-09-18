@@ -1,9 +1,15 @@
 name: Release
 
 # Push a tag like v1.0.1 and this builds the zip and uploads it to
-# CurseForge. Run it by hand first with dry_run on: that builds and checks
-# everything, talks to the API to resolve the game version, and stops short
-# of uploading.
+# CurseForge. The tag's suffix decides how the file is published:
+#
+#   v1.0.1-beta    uploaded as a beta   (only users who opted into betas)
+#   v1.0.1-alpha   uploaded as an alpha
+#   v1.0.1         uploaded as a full release, reaching everyone
+#
+# Run it by hand first with dry_run on: that builds and checks everything,
+# talks to the API to resolve the game version, and stops short of
+# uploading.
 #
 # Needs the repository secret CF_API_TOKEN (Settings -> Secrets and variables
 # -> Actions). Create the token in your CurseForge account settings.
@@ -45,7 +51,14 @@ jobs:
         run: |
           if ($env:GITHUB_REF_TYPE -eq "tag") {
             $version     = $env:GITHUB_REF_NAME -replace "^v", ""
-            $releaseType = "beta"      # tags publish as beta until we say otherwise
+            # The suffix decides, and it stays part of the version: the
+            # archive and the four .toc then say the same as the file page,
+            # so a player can read off what they installed. A plain tag is a
+            # full release and reaches everyone - that is the one to be sure
+            # about before pushing.
+            if     ($version -like "*-alpha*") { $releaseType = "alpha" }
+            elseif ($version -like "*-beta*")  { $releaseType = "beta" }
+            else                               { $releaseType = "release" }
             $dryRun      = "false"
           } else {
             $version     = "${{ inputs.version }}" -replace "^v", ""

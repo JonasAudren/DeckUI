@@ -5,7 +5,9 @@
     place where a user reads what changed. Two sources, in this order:
 
     1. The section for this version in CHANGELOG.md, written by hand in the
-       words a player understands. This one should normally win.
+       words a player understands. This one should normally win. A
+       pre-release falls back to the version it leads up to, so 1.0.1-beta
+       uses the "## 1.0.1" section rather than needing one of its own.
     2. Failing that, the commit subjects since the previous tag. They are
        whole sentences in this repository, so they read acceptably - but they
        also carry build and release plumbing nobody outside cares about.
@@ -102,6 +104,9 @@ function Get-HandwrittenSection([string]$path, [string]$version) {
 
 $newVersion = $Version -replace "^v", ""
 $tag        = "v$newVersion"
+# 1.0.1-beta leads up to 1.0.1 and carries its notes: the section is written
+# once, under the version it belongs to.
+$baseVersion = $newVersion.Split("-")[0]
 
 # Resolve -OutFile while we are still in the caller's directory: the script
 # steps into the repository root below, and a path already rooted must not
@@ -145,15 +150,23 @@ try {
     $body.Add("")
 
     $section = $null
-    if (-not $FromCommits) { $section = Get-HandwrittenSection $File $newVersion }
+    $used    = $newVersion
+    if (-not $FromCommits) {
+        $section = Get-HandwrittenSection $File $newVersion
+        if (-not $section -and $baseVersion -ne $newVersion) {
+            $section = Get-HandwrittenSection $File $baseVersion
+            if ($section) { $used = $baseVersion }
+        }
+    }
 
     if ($section) {
-        Write-Host ("  from {0}, section {1}" -f (Split-Path $File -Leaf), $newVersion) -ForegroundColor Green
+        Write-Host ("  from {0}, section {1}" -f (Split-Path $File -Leaf), $used) -ForegroundColor Green
         $section | ForEach-Object { $body.Add($_) }
         $count = @($section | Where-Object { $_.Trim() }).Count
     } else {
         if (-not $FromCommits) {
-            Write-Host ("  note: no section '## {0}' in {1}, falling back to the commits" -f $newVersion, (Split-Path $File -Leaf)) -ForegroundColor Yellow
+            $wanted = if ($baseVersion -ne $newVersion) { "$newVersion' or '## $baseVersion" } else { $newVersion }
+            Write-Host ("  note: no section '## {0}' in {1}, falling back to the commits" -f $wanted, (Split-Path $File -Leaf)) -ForegroundColor Yellow
         }
 
         $lines = @()

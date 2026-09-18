@@ -5,7 +5,8 @@ reads the section whose heading matches the version being released, so the
 heading has to be `## <version>` - the rest of the line is free, a date is
 welcome. Write for players: what changed for them, not which file moved.
 Without a matching section a release falls back to the commit subjects,
-which is duller but never blocks a release.
+which is duller but never blocks a release. A pre-release reads the section
+of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
 ## 1.0.0
 

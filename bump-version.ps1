@@ -103,9 +103,11 @@ $log = Join-Path $root "CHANGELOG.md"
 if (Test-Path $log) {
     $headings = @(Get-Content $log | Where-Object { $_.StartsWith("## ") } |
                   ForEach-Object { $_.Substring(3).Trim().TrimStart("v").Split(" ")[0] })
-    if ($headings -notcontains $newVersion) {
+    # 1.0.1-beta is happy with the "## 1.0.1" section it leads up to.
+    $base = $newVersion.Split("-")[0]
+    if ($headings -notcontains $newVersion -and $headings -notcontains $base) {
         Write-Host ""
-        Write-Host ("  CHANGELOG.md has no '## {0}' section yet - write one before tagging," -f $newVersion) -ForegroundColor Yellow
+        Write-Host ("  CHANGELOG.md has no '## {0}' section yet - write one before tagging," -f $base) -ForegroundColor Yellow
         Write-Host "  or the release ships the commit subjects instead." -ForegroundColor Yellow
     }
 }

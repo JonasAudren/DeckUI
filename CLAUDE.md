@@ -115,6 +115,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   Run it by hand first from the Actions tab with **dry_run** on - that builds and
   resolves the game version without uploading. Needs the repository secret
   `CF_API_TOKEN`. Raise the version with `bump-version.ps1` before tagging.
+  **The tag's suffix decides the release type**: `v1.0.1-beta` goes up as a beta,
+  `v1.0.1-alpha` as an alpha, and a plain `v1.0.1` as a full release that reaches
+  every user - so a stray tag push is no longer harmless. The suffix stays part of
+  the version, so archive and `.toc` say what the file page says; a pre-release
+  takes the changelog section of the version it leads up to (`1.0.1-beta` reads
+  `## 1.0.1`).
   The BigWigs packager was looked at and dropped: it expects the main addon at the repository root, while ours
   sits in `DeckUI/` beside the three modules, which `move-folders` cannot untangle.
   Switching to `.pkgmeta` externals would mean adopting that layout after all.
