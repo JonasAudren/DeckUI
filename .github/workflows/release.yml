@@ -66,9 +66,9 @@ jobs:
       - name: Write the changelog
         shell: pwsh
         run: |
-          ./changelog.ps1 -Version "${{ steps.plan.outputs.version }}" -Repo "${{ github.repository }}" -OutFile changelog.md
-          Write-Host "--- changelog.md ---"
-          Get-Content changelog.md
+          ./changelog.ps1 -Version "${{ steps.plan.outputs.version }}" -Repo "${{ github.repository }}" -OutFile release-notes.md
+          Write-Host "--- release-notes.md ---"
+          Get-Content release-notes.md
 
       - name: Upload to CurseForge
         shell: pwsh
@@ -80,7 +80,7 @@ jobs:
             ProjectId     = "1699742"
             ReleaseType   = "${{ steps.plan.outputs.release_type }}"
             Interface     = "${{ steps.build.outputs.interface }}"
-            Changelog     = (Get-Content changelog.md -Raw)
+            Changelog     = (Get-Content release-notes.md -Raw)
           }
           if ("${{ steps.plan.outputs.dry_run }}" -eq "true") { $params["DryRun"] = $true }
           ./upload-curseforge.ps1 @params

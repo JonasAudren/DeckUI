@@ -3,5 +3,7 @@ Thumbs.db
 .DS_Store
 # build output of package.ps1
 dist/
-# changelog.ps1 -OutFile writes here; the release builds it on the runner
-changelog.md
+# changelog.ps1 -OutFile writes here; the release builds it on the runner.
+# Deliberately not named changelog.md: git compares paths case-insensitively
+# on Windows, so that pattern would also ignore CHANGELOG.md itself.
+release-notes.md

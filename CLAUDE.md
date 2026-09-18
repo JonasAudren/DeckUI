@@ -23,9 +23,12 @@ clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies th
 other libraries bundle. It aborts if the four `.toc` files disagree on version or interface.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
 in all four at once - `package.ps1 -Version` only stamps the staged copies, so without
-the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` turns the
-commit subjects since the previous tag into the changelog the release sends along, which
-is why commit subjects are written as whole sentences.
+the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
+changelog the release sends along: the `## <version>` section of `CHANGELOG.md` when there
+is one, otherwise the commit subjects since the previous tag. Write the section - the
+fallback carries build and release plumbing that means nothing to a player. It falls back
+rather than failing so a forgotten section never blocks a release, and `bump-version.ps1`
+says so when the section is missing.
 
 Each folder is a separate WoW addon; in `Interface\AddOns\` they are directory
 junctions pointing into this repo. Any `.lua` change is live after `/reload`;

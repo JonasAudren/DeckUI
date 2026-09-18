@@ -96,6 +96,20 @@ foreach ($a in $addons) {
     $changed++
 }
 
+# The release falls back to the commit subjects when CHANGELOG.md has no
+# section for this version. That is a working release with a dull changelog,
+# so it is worth a nudge here rather than a failure later.
+$log = Join-Path $root "CHANGELOG.md"
+if (Test-Path $log) {
+    $headings = @(Get-Content $log | Where-Object { $_.StartsWith("## ") } |
+                  ForEach-Object { $_.Substring(3).Trim().TrimStart("v").Split(" ")[0] })
+    if ($headings -notcontains $newVersion) {
+        Write-Host ""
+        Write-Host ("  CHANGELOG.md has no '## {0}' section yet - write one before tagging," -f $newVersion) -ForegroundColor Yellow
+        Write-Host "  or the release ships the commit subjects instead." -ForegroundColor Yellow
+    }
+}
+
 Write-Host ""
 if ($DryRun) {
     Write-Host ("  dry run, nothing written ({0} file(s) would change)" -f $changed) -ForegroundColor Yellow
@@ -107,6 +121,7 @@ if ($changed -eq 0) {
 }
 
 Write-Host ("  {0} .toc file(s) updated" -f $changed) -ForegroundColor Green
+
 Write-Host ""
 Write-Host "  next, to release this version:"
 Write-Host ("    git add {0}" -f (($addons | ForEach-Object { "$_/$_.toc" }) -join " "))

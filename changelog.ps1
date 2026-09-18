@@ -1,31 +1,42 @@
 <#
-    changelog.ps1 - turn the commits since the last tag into a changelog.
+    changelog.ps1 - work out the changelog text a release ships with.
 
-    CurseForge shows this text on the file's page and in the app, so it used
-    to be worth little: the release workflow sent a bare link to the commit
-    list, which nobody clicks. The commit subjects in this repository are
-    written as whole sentences, so they serve as the changelog directly.
+    CurseForge shows this on the file's page and in the app, so it is the one
+    place where a user reads what changed. Two sources, in this order:
 
-    The range is "everything since the previous tag". That tag is found with
-    git describe, so it is the previous tag on this branch's history rather
-    than whatever sorts highest. Without any earlier tag - the first release
-    - there is nothing to diff against, and a short line goes out instead of
-    dozens of commits from the initial development.
+    1. The section for this version in CHANGELOG.md, written by hand in the
+       words a player understands. This one should normally win.
+    2. Failing that, the commit subjects since the previous tag. They are
+       whole sentences in this repository, so they read acceptably - but they
+       also carry build and release plumbing nobody outside cares about.
 
-    Needs the full history: a shallow clone has no tags and no earlier
-    commits, so the script says so rather than writing an empty list.
+    Falling back rather than failing is deliberate: a forgotten section
+    should not stop a release, it should only make it duller. The run log
+    says which source was used.
+
+    The previous tag comes from git describe, so it is the previous tag in
+    this commit's history rather than whatever sorts highest. Needs the full
+    history: a shallow clone has no tags, so the script says so instead of
+    writing an empty list.
 
     Usage:  pwsh ./changelog.ps1 1.0.1
+            pwsh ./changelog.ps1 1.0.1 -FromCommits
             pwsh ./changelog.ps1 1.0.1 -Since v1.0.0
-            pwsh ./changelog.ps1 1.0.1 -OutFile changelog.md
+            pwsh ./changelog.ps1 1.0.1 -OutFile release-notes.md
 #>
 
 param(
     # Version this changelog is for, e.g. 1.0.1. A leading v is stripped.
     [Parameter(Mandatory, Position = 0)] [string]$Version,
 
-    # Start of the range, a tag like v1.0.0. Found with git describe when
-    # left out.
+    # The handwritten changelog. Default: CHANGELOG.md next to this script.
+    [string]$File,
+
+    # Ignore CHANGELOG.md and use the commits, for comparing the two.
+    [switch]$FromCommits,
+
+    # Start of the commit range, a tag like v1.0.0. Found with git describe
+    # when left out.
     [string]$Since,
 
     # owner/repo for the compare link. Read from the origin remote when left
@@ -62,6 +73,33 @@ function Invoke-Git {
     }
 }
 
+# Pull "## <version>" out of CHANGELOG.md and return everything up to the
+# next "## " heading. Headings may read "## 1.0.1", "## v1.0.1" or
+# "## 1.0.1 - 2026-09-20"; only the first word counts. Plain string work
+# rather than a regex, because a version is full of dots.
+function Get-HandwrittenSection([string]$path, [string]$version) {
+    if (-not (Test-Path $path)) { return $null }
+
+    $section    = New-Object System.Collections.Generic.List[string]
+    $collecting = $false
+    foreach ($line in Get-Content $path) {
+        if ($line.StartsWith("## ")) {
+            if ($collecting) { break }
+            $heading = $line.Substring(3).Trim().TrimStart("v")
+            if ($heading.Split(" ")[0] -eq $version) { $collecting = $true }
+            continue
+        }
+        if ($collecting) { $section.Add($line.TrimEnd()) }
+    }
+    if (-not $collecting) { return $null }
+
+    # Drop the blank lines around the section, keep the ones inside it.
+    while ($section.Count -gt 0 -and -not $section[0].Trim())                 { $section.RemoveAt(0) }
+    while ($section.Count -gt 0 -and -not $section[$section.Count - 1].Trim()) { $section.RemoveAt($section.Count - 1) }
+    if ($section.Count -eq 0) { return $null }
+    return $section
+}
+
 $newVersion = $Version -replace "^v", ""
 $tag        = "v$newVersion"
 
@@ -91,6 +129,7 @@ try {
         $url = (Invoke-Git remote get-url origin).Output
         if ($url -match "github\.com[:/](?<slug>[^/]+/[^/]+?)(\.git)?$") { $Repo = $matches.slug }
     }
+    if (-not $File) { $File = Join-Path $PSScriptRoot "CHANGELOG.md" }
 
     # Prefer the tag when it already exists: a tag push builds exactly that
     # commit, which need not be the tip of the branch any more.
@@ -101,42 +140,57 @@ try {
         if ($described.Ok) { $Since = $described.Output }
     }
 
-    $lines = @()
-    if ($Since) {
-        Write-Host ("  commits in {0}..{1}" -f $Since, $to)
-        $found = Invoke-Git log --no-merges --pretty=format:%s "$Since..$to"
-        if (-not $found.Ok) { throw "cannot read the range $Since..$to - is '$Since' a tag in this repository?" }
-        $lines = @($found.Output | Where-Object { $_.Trim() } | ForEach-Object { "- " + $_.Trim() })
-    } else {
-        Write-Host "  no earlier tag found, writing a first-release line" -ForegroundColor Yellow
-    }
-
     $body = New-Object System.Collections.Generic.List[string]
     $body.Add("## DeckUI $newVersion")
     $body.Add("")
 
-    if ($lines.Count -gt 0) {
-        $lines | ForEach-Object { $body.Add($_) }
-        if ($Repo) {
-            $body.Add("")
-            $body.Add("[All changes since $Since](https://github.com/$Repo/compare/$Since...$tag)")
-        }
-    } elseif ($Since) {
-        # A tag on the same commit as the last one, or a re-release.
-        $body.Add("No code changes since $Since.")
-        Write-Host "  note: no commits in that range" -ForegroundColor Yellow
+    $section = $null
+    if (-not $FromCommits) { $section = Get-HandwrittenSection $File $newVersion }
+
+    if ($section) {
+        Write-Host ("  from {0}, section {1}" -f (Split-Path $File -Leaf), $newVersion) -ForegroundColor Green
+        $section | ForEach-Object { $body.Add($_) }
+        $count = @($section | Where-Object { $_.Trim() }).Count
     } else {
-        $body.Add("First public release.")
-        if ($Repo) {
-            $body.Add("")
+        if (-not $FromCommits) {
+            Write-Host ("  note: no section '## {0}' in {1}, falling back to the commits" -f $newVersion, (Split-Path $File -Leaf)) -ForegroundColor Yellow
+        }
+
+        $lines = @()
+        if ($Since) {
+            Write-Host ("  commits in {0}..{1}" -f $Since, $to)
+            $found = Invoke-Git log --no-merges --pretty=format:%s "$Since..$to"
+            if (-not $found.Ok) { throw "cannot read the range $Since..$to - is '$Since' a tag in this repository?" }
+            $lines = @($found.Output | Where-Object { $_.Trim() } | ForEach-Object { "- " + $_.Trim() })
+        } else {
+            Write-Host "  no earlier tag found, writing a first-release line" -ForegroundColor Yellow
+        }
+
+        if ($lines.Count -gt 0) {
+            $lines | ForEach-Object { $body.Add($_) }
+        } elseif ($Since) {
+            # A tag on the same commit as the last one, or a re-release.
+            $body.Add("No code changes since $Since.")
+            Write-Host "  note: no commits in that range" -ForegroundColor Yellow
+        } else {
+            $body.Add("First public release.")
+        }
+        $count = $lines.Count
+    }
+
+    if ($Repo) {
+        $body.Add("")
+        if ($Since) {
+            $body.Add("[All changes since $Since](https://github.com/$Repo/compare/$Since...$tag)")
+        } else {
             $body.Add("[Source and issue tracker](https://github.com/$Repo)")
         }
     }
 
     $text = ($body -join "`n") + "`n"
 
-    $word = if ($lines.Count -eq 1) { "entry" } else { "entries" }
-    Write-Host ("  {0} {1}" -f $lines.Count, $word)
+    $word = if ($count -eq 1) { "line" } else { "lines" }
+    Write-Host ("  {0} {1}" -f $count, $word)
     if ($outPath) {
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
         [System.IO.File]::WriteAllText($outPath, $text, $utf8NoBom)
