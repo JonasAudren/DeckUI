@@ -8,6 +8,13 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.0.1
+
+Nothing has changed in the addon itself: 1.0.0 and 1.0.1 hold the same four
+addons, file for file. This build exists to put the automated upload through
+its paces, so there is nothing you need to do. Settings, frame positions and
+key bindings carry over untouched.
+
 ## 1.0.0
 
 First public beta.
