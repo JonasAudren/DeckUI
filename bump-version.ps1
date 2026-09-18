@@ -130,4 +130,15 @@ Write-Host ("    git add {0}" -f (($addons | ForEach-Object { "$_/$_.toc" }) -jo
 Write-Host ("    git commit -m ""Raise the version to {0}""" -f $newVersion)
 Write-Host ("    git push && git tag v{0} && git push origin v{0}" -f $newVersion)
 Write-Host ""
-Write-Host "  the tag starts the Release workflow, which uploads to CurseForge as beta."
+# The suffix decides, so this line has to be exact: it is the last thing read
+# before a tag goes out, and "it only goes to beta testers" would be a bad
+# thing to believe by mistake.
+if ($newVersion -like "*-alpha*") {
+    Write-Host "  the tag starts the Release workflow and publishes as ALPHA." -ForegroundColor Yellow
+} elseif ($newVersion -like "*-beta*") {
+    Write-Host "  the tag starts the Release workflow and publishes as BETA - only users" -ForegroundColor Yellow
+    Write-Host "  who opted into beta files are offered it." -ForegroundColor Yellow
+} else {
+    Write-Host "  the tag starts the Release workflow and publishes as a FULL RELEASE," -ForegroundColor Red
+    Write-Host "  which reaches every user. Tag v$newVersion-beta instead to limit it." -ForegroundColor Red
+}

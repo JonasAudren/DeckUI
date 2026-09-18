@@ -2,7 +2,7 @@
 ## Title: DeckUI Orbs
 ## Notes: DeckUI module: round unit frames (orbs)
 ## Author: Gottlieb
-## Version: 1.0.0
+## Version: 1.0.1
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
 ## X-Website: https://github.com/JonasAudren/DeckUI
 ## X-Curse-Project-ID: 1699742
