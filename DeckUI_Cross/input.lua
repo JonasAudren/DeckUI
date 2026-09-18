@@ -38,6 +38,21 @@ end
 -------------------------------------------------------------------
 local bindingsPending = false
 
+-- /dc trace: print what the engine does while a key is held, with
+-- timestamps. The press-and-hold repeat runs on the engine's native
+-- binding, and it stops the moment the combination stops matching. On a
+-- Deck LT/RT are ANALOG triggers driving the emulated Shift/Ctrl, so a
+-- finger easing off below the threshold releases the modifier while the
+-- direction key stays down - and when the trigger comes back there is no
+-- fresh key-down for the combination, so the repeat does not resume. The
+-- trace tells that apart from a cast that simply failed, and it also says
+-- when something re-applies our bindings mid-fight.
+local trace, traceStart = false, 0
+
+local function TraceSay(fmt, ...)
+    print(format("|cff88ccffDC %6.2f|r " .. fmt, GetTime() - traceStart, ...))
+end
+
 -- Keys are bound to Blizzard's NATIVE commands (ACTIONBUTTONn /
 -- MULTIACTIONBAR1BUTTONn), not to our buttons: only the native path
 -- runs the engine's press-and-hold repeat (single-button assistant,
@@ -61,8 +76,10 @@ end
 function ns.ApplyBindings()
     if InCombatLockdown() then
         bindingsPending = true
+        if trace then TraceSay("bindings deferred (in combat)") end
         return
     end
+    if trace then TraceSay("BINDINGS RE-APPLIED - this kills a running repeat") end
     ClearOverrideBindings(ns.header)
     -- PC: nothing to bind, the player's own key bindings already drive
     -- the native commands the crosses mirror.
@@ -274,11 +291,18 @@ local function UpdateHighlight()
     local lt, rt = IsShiftKeyDown(), IsControlKeyDown()
     local modHeld = lt or rt
     if modHeld then Touch() end
-    local idle = (not inCombat) and (not modHeld) and (GetTime() - lastActivity > DIM_DELAY)
+    -- Idle dimming is optional. Switched off, IDLE goes with it: that is the
+    -- quiet-but-not-idle level, and leaving it in would mean "no dimming"
+    -- still sat at 80%. The LT/RT highlight below is untouched either way -
+    -- it says which half a trigger has armed, which is orientation, not
+    -- dimming.
+    local dimming = DeckCrossDB and DeckCrossDB.dimWhenIdle
+    local base = dimming and IDLE or 1
+    local idle = dimming and (not inCombat) and (not modHeld) and (GetTime() - lastActivity > DIM_DELAY)
     local ooc = idle and (DeckCrossDB and DeckCrossDB.oocAlpha or 1) or 1
 
     if not D.IsDeck() then
-        ns.SetGroupAlpha(IDLE * ooc, IDLE * ooc, IDLE * ooc)
+        ns.SetGroupAlpha(base * ooc, base * ooc, base * ooc)
         return
     end
     if lt and rt then
@@ -288,7 +312,7 @@ local function UpdateHighlight()
     elseif rt then
         ns.SetGroupAlpha(DIM, ACTIVE, MID_IDLE)
     else
-        ns.SetGroupAlpha(IDLE * ooc, IDLE * ooc, MID_IDLE * ooc)
+        ns.SetGroupAlpha(base * ooc, base * ooc, MID_IDLE * ooc)
     end
 end
 ns.UpdateHighlight = UpdateHighlight
@@ -306,6 +330,11 @@ end)
 
 function ns.SetOocAlpha(value)
     DeckCrossDB.oocAlpha = value
+    UpdateHighlight()
+end
+
+function ns.SetDimWhenIdle(value)
+    DeckCrossDB.dimWhenIdle = value
     UpdateHighlight()
 end
 
@@ -329,6 +358,9 @@ local function Init()
     DeckCrossDB = DeckCrossDB or {}
     if DeckCrossDB.showLabels == nil then DeckCrossDB.showLabels = true end
     if DeckCrossDB.oocAlpha == nil then DeckCrossDB.oocAlpha = 0.35 end
+    -- Off by default: a hotbar that fades while you look at it is a taste,
+    -- and the owner's is that it should stay put. The option brings it back.
+    if DeckCrossDB.dimWhenIdle == nil then DeckCrossDB.dimWhenIdle = false end
     inCombat = InCombatLockdown()
     D.MigrateToDevice(DeckCrossDB, { "scale" })
     ns.SetScale(ns.DeviceDB().scale or 1)
@@ -351,7 +383,75 @@ ev:RegisterEvent("MODIFIER_STATE_CHANGED")
 ev:RegisterEvent("UPDATE_BINDINGS")
 ev:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 ev:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-ev:SetScript("OnEvent", function(self, event)
+-- Cast events carry the spell id in different places, and a name lookup
+-- can fail on an unknown id - neither is worth an error in a debug aid.
+local function SpellLabel(id)
+    if not id then return "?" end
+    local ok, info = pcall(C_Spell.GetSpellInfo, id)
+    if ok and type(info) == "table" and info.name then return info.name end
+    return tostring(id)
+end
+
+-- A failed cast says nothing about why. The target's state and the red
+-- error line the game shows do, and together they separate "no valid
+-- target" from "out of range" from "not enough resources".
+local function TargetNote()
+    if not UnitExists("target") then return "  (no target)" end
+    if UnitIsDead("target") then return "  (target dead)" end
+    if not UnitCanAttack("player", "target") then return "  (target not attackable)" end
+    return ""
+end
+
+local function TraceEvent(event, a1, a2, a3)
+    if event == "MODIFIER_STATE_CHANGED" then
+        -- The interesting line: a modifier going UP while you are still
+        -- holding the direction key is the repeat dying.
+        TraceSay("%s %s", a1, (a2 == 1) and "down" or "UP  <-- modifier released")
+    elseif event == "UNIT_SPELLCAST_SENT" then
+        TraceSay("cast sent")
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        TraceSay("cast ok     %s", SpellLabel(a3))
+    elseif event == "UNIT_SPELLCAST_FAILED" then
+        TraceSay("cast FAILED %s%s", SpellLabel(a3), TargetNote())
+    elseif event == "UI_ERROR_MESSAGE" then
+        TraceSay("   reason: %s", tostring(a2))
+    elseif event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_REGEN_DISABLED" then
+        TraceSay("%s", event)
+    end
+end
+
+function ns.ToggleTrace()
+    trace = not trace
+    if trace then
+        traceStart = GetTime()
+        ev:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player")
+        ev:RegisterEvent("UI_ERROR_MESSAGE")
+        print("DeckUI Cross: trace ON. Hold the key until the repeat stops, then /dc trace again.")
+        -- The repeat is driven by Blizzard's own button, and a hidden frame
+        -- gets no OnUpdate. Say up front where that button stands, so the
+        -- log can be read without guessing at the state it ran in.
+        local b = _G["ActionButton1"]
+        if b then
+            local parent = b:GetParent()
+            TraceSay("ActionButton1 shown=%s visible=%s parent=%s",
+                tostring(b:IsShown()), tostring(b:IsVisible()),
+                parent and (parent:GetName() or "(unnamed)") or "nil")
+        end
+        TraceSay("hideBlizzardBars=%s device=%s", tostring(DeckCrossDB.hideBlizzardBars), D.IsDeck() and "deck" or "pc")
+        if ns.AssistedStatus then
+            local n, hasTarget = ns.AssistedStatus()
+            TraceSay("assistant buttons=%d  live target=%s%s", n, tostring(hasTarget),
+                (n == 0) and "   <-- no button holds the assistant, so no veil can show" or "")
+        end
+    else
+        ev:UnregisterEvent("UNIT_SPELLCAST_FAILED")
+        ev:UnregisterEvent("UI_ERROR_MESSAGE")
+        print("DeckUI Cross: trace off.")
+    end
+end
+
+ev:SetScript("OnEvent", function(self, event, a1, a2, a3)
+    if trace then TraceEvent(event, a1, a2, a3) end
     if event == "UNIT_SPELLCAST_SENT" or event == "UNIT_SPELLCAST_SUCCEEDED" then
         Touch()
         UpdateHighlight()
@@ -408,6 +508,9 @@ SlashCmdList.DECKCROSS = function(msg)
         return
     elseif msg == "page" then
         ns.PrintPage()
+        return
+    elseif msg == "trace" then
+        ns.ToggleTrace()
         return
     end
     D.ToggleConfig("Cross")

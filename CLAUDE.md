@@ -51,7 +51,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - Device detection: `D.DetectDevice()` – 1280x800 screen or active gamepad = "deck", else "pc";
   `DeckUIDB.device` = auto|deck|pc overrides. `D.IsDeck()` is the only thing modules should ask.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/deck device`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/deck device`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 
@@ -84,8 +84,27 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   must be BACKGROUND sublevel -8/-7.
 - Blizzard's highlight/pushed/checked textures are neutralised (methods replaced with a no-op)
   and replaced by our own masked additive glows.
+- **State on a cross button is shown with colour, never with brightness.** Brightness is
+  already taken: `SetGroup` in `DeckUI_Cross/core.lua` dims whole groups with `b:SetAlpha`,
+  and out of combat the bar sits at roughly a quarter alpha, where a darkening veil is
+  barely a difference. The "assistant has no target" state therefore rides on the ring
+  colour (`RING_NOTARGET`), set inside `SetGroup` itself - it repaints every dim tick, so a
+  colour written anywhere else would be overwritten four times a second.
 - Assisted combat: the purple rotation highlight is hidden on cross buttons; the assistant's
   changing icon is painted by polling `C_AssistedCombat.GetNextCastSpell()` every 0.1 s.
+  **"The assistant stops while I hold the key" was measured and is not ours** (2026-09-18,
+  `/dc trace` on the PC): the engine keeps repeating, the assistant keeps naming Sunfire,
+  and every attempt fails with `Invalid target` because the player has no target at all -
+  the moment one exists again the rotation continues by itself. `Spell is not ready yet`
+  in between is just the repeat outrunning the global cooldown. Re-targeting cannot be
+  automated: `TARGETNEARESTENEMY` and friends need a hardware event, which is exactly what
+  Blizzard locks down.
+  The press-and-hold repeat lives entirely in the engine and stops the moment the key
+  combination stops matching. LT/RT are **analog** triggers driving the emulated Shift/Ctrl,
+  so easing off below the threshold releases the modifier while the direction key stays
+  down, and the returning trigger brings no fresh key-down for the combination - the repeat
+  does not resume. `/dc trace` prints modifier edges, casts and any re-applied bindings with
+  timestamps to tell that apart from a cast that simply failed.
 - Gamepad glyph atlases (`Gamepad_Ltr_Face_*`) do not exist on this client; we ship our own
   TGA glyphs in `DeckUI_Cross/textures/`.
 - Health/power values may be *secret values*: display them via tags / Blizzard helpers

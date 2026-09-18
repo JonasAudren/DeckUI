@@ -227,6 +227,17 @@ local function MakeRound(b, size)
     b.DeckPushed  = Glow(1, 0.85, 0.3, 0.45)
     b.DeckChecked = Glow(0.3, 0.7, 1, 0.35)
 
+    -- Dark veil for "the assistant has nothing to cast at". Normal blend,
+    -- not additive like the glows, and a sublevel above them so it also
+    -- dims a button under the cursor. Same mask, so it stays round.
+    local veil = fx:CreateTexture(nil, "OVERLAY", nil, 1)
+    veil:SetAllPoints()
+    veil:SetTexture("Interface\\Buttons\\WHITE8x8")
+    veil:SetVertexColor(0, 0, 0, 0.55)
+    veil:AddMaskTexture(mask)
+    veil:Hide()
+    b.DeckNoTarget = veil
+
     b:HookScript("OnEnter",     function(self) self.DeckHover:Show() end)
     b:HookScript("OnLeave",     function(self) self.DeckHover:Hide(); self.DeckPushed:Hide() end)
     b:HookScript("OnMouseDown", function(self) self.DeckPushed:Show() end)
@@ -419,6 +430,50 @@ local function RefreshAssistedButtons()
             PaintAssistIcon(b)
         end
     end
+    if ns.UpdateNoTargetVeil then ns.UpdateNoTargetVeil() end
+end
+
+-- Measured on 2026-09-18 with /dc trace: while the player holds the key
+-- without a target, the engine repeats happily and every cast fails with
+-- "Invalid target", which reads as "the addon froze". No addon may re-target
+-- for the player - TARGETNEARESTENEMY needs a hardware event - so the honest
+-- thing is to show the state: the assistant's buttons go dark while there is
+-- nothing alive to cast at. Deliberately only "no target" and "target dead",
+-- the two cases where a damage assistant certainly has nothing to do; a
+-- friendly or out-of-range target is left alone rather than risk crying wolf.
+local lastTargetOk
+
+-- Forced to a real boolean: UnitIsDead answers with nil rather than false,
+-- and the poll below compares this against the last answer.
+local function HasLiveTarget()
+    if UnitExists("target") and not UnitIsDead("target") then return true end
+    return false
+end
+
+local function UpdateNoTargetVeil()
+    local ok = HasLiveTarget()
+    lastTargetOk = ok
+    for _, b in pairs(ns.buttons) do
+        if b.DeckNoTarget then
+            local flag = (assistedButtons[b] and not ok) or false
+            b.DeckNoTargetOn = flag
+            if flag then b.DeckNoTarget:Show() else b.DeckNoTarget:Hide() end
+        end
+    end
+    -- Repaints the rings through the one function that owns them, so the
+    -- colour lands at once instead of waiting for the next dim tick - and
+    -- without a second place that knows how a ring is coloured.
+    if ns.UpdateHighlight then ns.UpdateHighlight() end
+end
+ns.UpdateNoTargetVeil = UpdateNoTargetVeil
+
+-- For /dc trace: without a button holding the assistant action there is
+-- nothing to veil and nothing to repaint, which is worth saying out loud
+-- before anyone hunts a veil that cannot appear.
+function ns.AssistedStatus()
+    local n = 0
+    for _ in pairs(assistedButtons) do n = n + 1 end
+    return n, HasLiveTarget()
 end
 
 local poll = CreateFrame("Frame")
@@ -427,6 +482,8 @@ poll:SetScript("OnUpdate", function(_, dt)
     elapsed = elapsed + dt
     if elapsed < 0.1 then return end
     elapsed = 0
+    -- Cheap: only walks the buttons when the answer actually changed.
+    if HasLiveTarget() ~= lastTargetOk then UpdateNoTargetVeil() end
     if not next(assistedButtons) then return end
     if not (C_AssistedCombat and C_AssistedCombat.GetNextCastSpell) then return end
     local ok, spell = pcall(C_AssistedCombat.GetNextCastSpell, true)
@@ -445,8 +502,12 @@ LAB.RegisterCallback(callbacks, "OnButtonUpdate", function(_, button)
         if IsAssistedSlot(slot) then
             assistedButtons[button] = true
             PaintAssistIcon(button)
+            -- A button that becomes the assistant's while there is no target
+            -- must start out veiled, not wait for the next target change.
+            if button.DeckNoTarget then UpdateNoTargetVeil() end
         else
             assistedButtons[button] = nil
+            if button.DeckNoTarget then button.DeckNoTarget:Hide() end
         end
     end
 end)
@@ -565,12 +626,17 @@ end
 -------------------------------------------------------------------
 local RING_IDLE   = { 0.25, 0.25, 0.25 }
 local RING_ACTIVE = { 0.9, 0.75, 0.2 }   -- same gold as the orb cast overlay
+-- The assistant has nothing to cast at. Deliberately a COLOUR: the dimming
+-- below already owns brightness, and out of combat the whole bar sits at
+-- about a quarter alpha, where a dark veil alone is barely a difference.
+local RING_NOTARGET = { 0.85, 0.15, 0.15 }
 
 local function SetGroup(list, alpha, active)
     local c = active and RING_ACTIVE or RING_IDLE
     for _, b in ipairs(list) do
         b:SetAlpha(alpha)
-        b.DeckRing:SetVertexColor(c[1], c[2], c[3], 1)
+        local ring = b.DeckNoTargetOn and RING_NOTARGET or c
+        b.DeckRing:SetVertexColor(ring[1], ring[2], ring[3], 1)
     end
 end
 

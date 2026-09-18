@@ -10,10 +10,16 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
 ## 1.0.1
 
-Nothing has changed in the addon itself: 1.0.0 and 1.0.1 hold the same four
-addons, file for file. This build exists to put the automated upload through
-its paces, so there is nothing you need to do. Settings, frame positions and
-key bindings carry over untouched.
+- **The hotbar no longer fades when you stand still.** It used to dim itself
+  after a few quiet seconds; now it stays where you put it. If you liked the
+  fading, switch "Dim the crosses when idle" back on in the Cross settings -
+  the opacity slider belongs to that setting and greys out while it is off.
+- The assistant button now shows a **red ring while you have no target**. The
+  game keeps firing the button as long as you hold the key, but every cast is
+  refused when there is nothing to cast at, which looks exactly like a frozen
+  addon. Now you can see it and re-target. (An addon is not allowed to pick a
+  target for you, so showing the state is as far as this can go.)
+- Settings, frame positions and key bindings carry over untouched.
 
 ## 1.0.0
 
