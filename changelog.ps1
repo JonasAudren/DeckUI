@@ -50,7 +50,13 @@ function Invoke-Git {
     $ErrorActionPreference = "Continue"
     try {
         $output = & git @GitArgs 2>$null
-        return [pscustomobject]@{ Ok = ($LASTEXITCODE -eq 0); Output = $output }
+        $ok     = ($LASTEXITCODE -eq 0)
+        # Consume the exit code. The caller judges the call by .Ok, while a
+        # non-zero $LASTEXITCODE left lying around ends the GitHub Actions
+        # step with a failure - and "there is no earlier tag" is a normal
+        # answer here, not a broken build.
+        $global:LASTEXITCODE = 0
+        return [pscustomobject]@{ Ok = $ok; Output = $output }
     } finally {
         $ErrorActionPreference = $previous
     }
