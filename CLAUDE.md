@@ -112,8 +112,9 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   runs `package.ps1 -Version <tag>` on the runner and uploads the result through the
   CurseForge API with `upload-curseforge.ps1`, with the changelog from `changelog.ps1`
   (hence `fetch-depth: 0` on the checkout - a shallow clone has no tags to diff against).
-  Run it by hand first from the Actions tab with **dry_run** on - that builds and
-  resolves the game version without uploading. Needs the repository secret
+  Run it by hand first from the Actions tab with **dry_run** on and the release type
+  on `auto` - that rehearses a tag exactly, including the type it would pick, and
+  builds and resolves the game version without uploading. Needs the repository secret
   `CF_API_TOKEN`. Raise the version with `bump-version.ps1` before tagging.
   **The tag's suffix decides the release type**: `v1.0.1-beta` goes up as a beta,
   `v1.0.1-alpha` as an alpha, and a plain `v1.0.1` as a full release that reaches

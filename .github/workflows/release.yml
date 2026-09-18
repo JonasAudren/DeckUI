@@ -23,10 +23,10 @@ on:
         description: "Version to build, e.g. 1.0.1"
         required: true
       release_type:
-        description: "Release type"
-        default: beta
+        description: "Release type (auto = decide from the version suffix, as a tag does)"
+        default: auto
         type: choice
-        options: [beta, release, alpha]
+        options: [auto, beta, release, alpha]
       dry_run:
         description: "Build and check, but do not upload"
         type: boolean
@@ -49,20 +49,26 @@ jobs:
         id: plan
         shell: pwsh
         run: |
+          # The suffix decides, and it stays part of the version: the archive
+          # and the four .toc then say the same as the file page, so a player
+          # can read off what they installed. A tag without a suffix is a full
+          # release and reaches everyone - that is the one to be sure about
+          # before pushing. A hand start with "auto" asks the same question,
+          # which is how a tag can be rehearsed without publishing anything.
+          function Get-ReleaseType([string]$v) {
+            if     ($v -like "*-alpha*") { return "alpha" }
+            elseif ($v -like "*-beta*")  { return "beta" }
+            else                         { return "release" }
+          }
+
           if ($env:GITHUB_REF_TYPE -eq "tag") {
             $version     = $env:GITHUB_REF_NAME -replace "^v", ""
-            # The suffix decides, and it stays part of the version: the
-            # archive and the four .toc then say the same as the file page,
-            # so a player can read off what they installed. A plain tag is a
-            # full release and reaches everyone - that is the one to be sure
-            # about before pushing.
-            if     ($version -like "*-alpha*") { $releaseType = "alpha" }
-            elseif ($version -like "*-beta*")  { $releaseType = "beta" }
-            else                               { $releaseType = "release" }
+            $releaseType = Get-ReleaseType $version
             $dryRun      = "false"
           } else {
             $version     = "${{ inputs.version }}" -replace "^v", ""
             $releaseType = "${{ inputs.release_type }}"
+            if ($releaseType -eq "auto") { $releaseType = Get-ReleaseType $version }
             $dryRun      = "${{ inputs.dry_run }}".ToLower()
           }
           if (-not $version) { throw "no version to build" }
