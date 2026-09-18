@@ -1,7 +1,12 @@
 # DeckUI – project notes for Claude Code
 
 World of Warcraft addon suite (Lua) for the **Steam Deck and PC**, written by Gottlieb
-as a learning project. Retail client, currently **Midnight (Interface 120100)**.
+as a learning project. Retail client, currently **Midnight (Interface 120100)** - verified in game with
+`/deck build`, which compares the running client against our `.toc`. That number also
+picks the CurseForge game version on upload, so it is the one place to change at a patch
+(`bump-version.ps1 <version> -Interface <new>`). Beware the PTR: 12.1.5 exists as
+`wowxptr` while live is 12.1.0, and filing a release under it hides the addon from
+everyone who plays.
 The owner tests everything in-game himself; Claude Code cannot run WoW.
 
 ## Layout
@@ -51,7 +56,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - Device detection: `D.DetectDevice()` – 1280x800 screen or active gamepad = "deck", else "pc";
   `DeckUIDB.device` = auto|deck|pc overrides. `D.IsDeck()` is the only thing modules should ask.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/deck device`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/deck device`, `/deck build`,
+  `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 

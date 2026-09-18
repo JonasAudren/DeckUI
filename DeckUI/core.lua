@@ -99,6 +99,30 @@ function D.PrintDevice()
     print("DeckUI: " .. D.DeviceText())
 end
 
+-- /deck build - the numbers a release depends on. The interface number in
+-- our .toc files decides two things at once: whether WoW calls the addon
+-- out of date, and which game version the CurseForge upload is filed under,
+-- because the release script derives the version name from it. Reading it
+-- off the running client beats reading it off a website, and the comparison
+-- is the whole point: a mismatch is the thing to catch before tagging.
+function D.PrintBuild()
+    local version, build, _, toc = GetBuildInfo()
+    local ours = C_AddOns.GetAddOnMetadata("DeckUI", "Interface")
+    print(("DeckUI: client %s (build %s), interface %s"):format(
+        tostring(version), tostring(build), tostring(toc)))
+    if not ours then
+        print("DeckUI: cannot read our own ## Interface")
+        return
+    end
+    if tostring(ours) == tostring(toc) then
+        print(("DeckUI: our .toc says %s - matches, nothing to do"):format(tostring(ours)))
+    else
+        print(("DeckUI: our .toc says %s - MISMATCH, the .toc files want %s"):format(
+            tostring(ours), tostring(toc)))
+        print("DeckUI: fix before releasing with  bump-version.ps1 <version> -Interface " .. tostring(toc))
+    end
+end
+
 -- Per-device settings: positions and sizes differ between the Deck's
 -- 1280x800 and a PC monitor, so modules keep them in db.perDevice[<device>].
 -- D.DeviceDB(db) returns that table for the current device.
