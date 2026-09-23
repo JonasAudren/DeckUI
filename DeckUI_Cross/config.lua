@@ -42,6 +42,9 @@ D.RegisterModule("Cross", {
         D.Checkbox(c, "Hide the Blizzard bars the crosses mirror", -450, db, "hideBlizzardBars",
             function(v) ns.SetBlizzardBarsHidden(v) end)
 
-        D.Hint(c, "Device is detected by the hub (General tab).", -488)
+        D.Label(c, "Assistant indicator", -490, 15)
+        D.Checkbox(c, "Show what the assistant will cast next", -512, db, "showAssist",
+            function(v) ns.SetAssistShown(v) end)
+        D.Hint(c, "Green ring: castable now. Grey with a swirl: waiting is correct. Move it with /deck unlock.", -544)
     end,
 })

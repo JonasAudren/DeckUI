@@ -371,6 +371,7 @@ local function Init()
     ns.ApplyBindings()
     ns.ApplyLabels()
     ns.SetBlizzardBarsHidden(DeckCrossDB.hideBlizzardBars)
+    if ns.InitAssist then ns.InitAssist() end
     UpdateHighlight()
     print("DeckUI Cross: " .. (D.IsDeck() and "controller mode (LT/RT)" or "keyboard mode (mirrors Action Bar 1 + 2, Blizzard bindings)"))
     WarnConsolePortBar()

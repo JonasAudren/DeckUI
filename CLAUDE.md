@@ -15,6 +15,7 @@ The owner tests everything in-game himself; Claude Code cannot run WoW.
 DeckUI/          hub: device detection, settings window (/deck), movable frames, minimap button
 DeckUI_Orbs/     module: round unit frames on oUF (/orbs)         libs/oUF
 DeckUI_Cross/    module: FFXIV-style cross hotbar (/dc)           libs/LibStub, CallbackHandler, LibActionButton-1.0
+                 assist.lua: the assistant indicator, a movable frame of its own
 DeckUI_Spec/     module: spec switcher (/spec, /qs)
 ```
 Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
@@ -108,6 +109,17 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   like three separate bugs - `/dc assist` prints the API, the buttons holding the action, the
   flag and the ring's actual colour, and when the API is missing it sweeps the namespaces for
   whatever replaced it.
+- The assistant indicator (`DeckUI_Cross/assist.lua`, off by default) answers the question a
+  button cannot: *is* there nothing to press, or am I missing something? It shows the spell
+  `GetNextCastSpell()` recommends, with a green ring when it is castable **right now** and grey
+  plus a cooldown swirl when it is not - so a grey ring is the confirmation that waiting is
+  correct. Asked for by the owner while tanking, where the assistant is weakest.
+  The trick is spell **61304**, the global cooldown itself: a spell whose cooldown ends no later
+  than the GCD is only held up by the GCD, and treating that as "not ready" would make the
+  indicator flicker with every cast instead of answering anything. The swirl deliberately shows
+  the spell's own cooldown only.
+  It is a separate frame because the assistant may live on a key binding with no button at all -
+  which is exactly how the owner used it.
 - Feedback that a press arrived: Blizzard's PUSHED state is too short to see on a tap, so
   `ShowPushed` holds our glow for `PUSH_MIN` past the release. A rejected cast flashes
   `DeckFailed` red on whichever button is lit, falling back to the assistant's buttons.
@@ -139,6 +151,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   TGA glyphs in `DeckUI_Cross/textures/`.
 - Health/power values may be *secret values*: display them via tags / Blizzard helpers
   (`AbbreviateNumbers`), never compare or compute with them.
+- **So are cooldown numbers.** `C_Spell.GetSpellCooldown(id)` hands back `startTime`,
+  `duration` and `modRate` as secret values for real spells - measured 2026-09-23 on Shield of
+  the Righteous, while the same call for the GCD spell 61304 returned plain numbers. Comparing
+  one throws *"attempt to compare a secret number value"* and taints the addon. Readable are the
+  booleans in that table: `isActive`, `isEnabled`, and `isOnGCD` on the GCD entry. The raw
+  numbers may still be passed straight into Blizzard's own `Cooldown:SetCooldown` - handing them
+  on is fine, doing arithmetic on them is not. `assist.lua` is built on exactly that line.
 - oUF: `ClassPower` / `Runes` dots are StatusBars with a masked WHITE8x8 fill; `[deck:hpshort]`
   is our custom tag.
 
