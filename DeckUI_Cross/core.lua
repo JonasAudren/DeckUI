@@ -154,6 +154,35 @@ end
 -------------------------------------------------------------------
 local function Nop() end
 
+-- A tap is over in a few milliseconds, and Blizzard's PUSHED state with it -
+-- far too short to read as "my press arrived". The glow is therefore held a
+-- moment past the release, and a press inside that moment simply keeps it
+-- lit instead of restarting it.
+local PUSH_MIN = 0.18
+
+local function ShowPushed(b, on)
+    if not b.DeckPushed then return end
+    if on then
+        b.DeckPushedAt      = GetTime()
+        b.DeckPushedPending = false
+        b.DeckPushed:Show()
+        return
+    end
+    local held = GetTime() - (b.DeckPushedAt or 0)
+    if held >= PUSH_MIN then
+        b.DeckPushed:Hide()
+        return
+    end
+    b.DeckPushedPending = true
+    C_Timer.After(PUSH_MIN - held, function()
+        -- Pressed again in the meantime? Then the later press owns the glow.
+        if b.DeckPushedPending then
+            b.DeckPushedPending = false
+            b.DeckPushed:Hide()
+        end
+    end)
+end
+
 local function MakeRound(b, size)
     local mask = b:CreateMaskTexture()
     mask:SetTexture(D.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
@@ -238,13 +267,24 @@ local function MakeRound(b, size)
     veil:Hide()
     b.DeckNoTarget = veil
 
+    -- Rejected cast: a short red flash, a sublevel above the veil so it
+    -- reads even on a button that is already dark.
+    local failed = fx:CreateTexture(nil, "OVERLAY", nil, 2)
+    failed:SetAllPoints()
+    failed:SetTexture("Interface\\Buttons\\WHITE8x8")
+    failed:SetVertexColor(1, 0.12, 0.1, 0.6)
+    failed:SetBlendMode("ADD")
+    failed:AddMaskTexture(mask)
+    failed:Hide()
+    b.DeckFailed = failed
+
     b:HookScript("OnEnter",     function(self) self.DeckHover:Show() end)
     b:HookScript("OnLeave",     function(self) self.DeckHover:Hide(); self.DeckPushed:Hide() end)
     b:HookScript("OnMouseDown", function(self) self.DeckPushed:Show() end)
     b:HookScript("OnMouseUp",   function(self) self.DeckPushed:Hide() end)
     -- key press via binding: LAB calls SetButtonState, mirror that
     hooksecurefunc(b, "SetButtonState", function(self, state)
-        self.DeckPushed:SetShown(state == "PUSHED")
+        ShowPushed(self, state == "PUSHED")
     end)
     hooksecurefunc(b, "SetChecked", function(self, state)
         self.DeckChecked:SetShown(state and true or false)
@@ -409,10 +449,33 @@ ns.CleanOverlay = CleanOverlay
 local assistedButtons = {}   -- button -> true while it holds the assistant action
 local lastAssistSpell
 
+-- Which spell is the assistant's own action? Measured 2026-09-23: this
+-- client's C_AssistedCombat offers GetActionSpell, GetNextCastSpell,
+-- GetRotationSpells and IsAIAvailable - the IsAssistedCombatAction(slot) we
+-- used before is simply not there, which is why nothing assistant-related
+-- ever lit up. So ask for the spell and compare it against the slot instead.
+local function AssistSpellID()
+    if not (C_AssistedCombat and C_AssistedCombat.GetActionSpell) then return nil end
+    local ok, id = pcall(C_AssistedCombat.GetActionSpell)
+    if ok and id then return id end
+    return nil
+end
+ns.AssistSpellID = AssistSpellID
+
+-- Ask the action bar, not the assistant: the function is
+-- C_ActionBar.IsAssistedCombatAction(slot). Swept out of the API on
+-- 2026-09-23 after two wrong guesses - C_AssistedCombat has no such call,
+-- which is why nothing assistant-related ever lit up.
+--
+-- The slot cannot be recognised by its contents either: an assistant slot
+-- reports whatever spell it recommends at that moment, so slot 61 read as
+-- an ordinary spell (193753) while holding the assistant. Only this call
+-- knows the difference.
 local function IsAssistedSlot(slot)
-    if not slot or not (C_AssistedCombat and C_AssistedCombat.IsAssistedCombatAction) then return false end
-    local ok, v = pcall(C_AssistedCombat.IsAssistedCombatAction, slot)
-    return ok and v or false
+    if not slot then return false end
+    if not (C_ActionBar and C_ActionBar.IsAssistedCombatAction) then return false end
+    local ok, v = pcall(C_ActionBar.IsAssistedCombatAction, slot)
+    return (ok and v) and true or false
 end
 
 local function PaintAssistIcon(b)
@@ -470,11 +533,146 @@ ns.UpdateNoTargetVeil = UpdateNoTargetVeil
 -- For /dc trace: without a button holding the assistant action there is
 -- nothing to veil and nothing to repaint, which is worth saying out loud
 -- before anyone hunts a veil that cannot appear.
+-- /dc assist - why is the ring not red? Four things have to line up: the
+-- client must offer the API, a cross button must actually hold the
+-- assistant action, the flag must be set, and SetGroup must have written
+-- the colour. This prints all four, so the broken link names itself
+-- instead of being guessed at.
+-- A rejected cast flashes where the press was: the button that is lit right
+-- now, and failing that the assistant's buttons, because a held key can have
+-- let the glow lapse between two attempts. The token guards against an older
+-- timer switching off a flash a newer one just started.
+local FLASH = 0.35
+
+local function FlashButton(b)
+    if not b.DeckFailed then return end
+    b.DeckFailed:Show()
+    local token = (b.DeckFlashToken or 0) + 1
+    b.DeckFlashToken = token
+    C_Timer.After(FLASH, function()
+        if b.DeckFlashToken == token then b.DeckFailed:Hide() end
+    end)
+end
+
+function ns.FlashFailed()
+    local hit = false
+    for _, b in ipairs(ns.buttons) do
+        if b.DeckPushed and b.DeckPushed:IsShown() then
+            FlashButton(b)
+            hit = true
+        end
+    end
+    if hit then return end
+    for b in pairs(assistedButtons) do FlashButton(b) end
+end
+
+function ns.PrintAssist()
+    local want = AssistSpellID()
+    local api  = (C_ActionBar and C_ActionBar.IsAssistedCombatAction) and "yes" or "MISSING"
+    local n = 0
+    for _ in pairs(assistedButtons) do n = n + 1 end
+    -- Name it, not just the id: the point of this line is that the owner can
+    -- go and find the thing in the spellbook.
+    local label = "MISSING"
+    if want then
+        local ok, info = pcall(C_Spell.GetSpellInfo, want)
+        label = (ok and type(info) == "table" and info.name)
+            and ("%s (%d)"):format(info.name, want) or tostring(want)
+    end
+    print(("DeckUI Cross: assist spell %s, API %s, buttons holding it: %d, live target: %s")
+        :format(label, api, n, tostring(HasLiveTarget())))
+
+    -- The client is the only reliable source for the API - guessing a name
+    -- from memory is how this went wrong in the first place. Sweep the
+    -- namespaces that could plausibly own a "is this slot the assistant"
+    -- question and print everything assist-related they carry.
+    for _, space in ipairs((api == "MISSING") and { "C_AssistedCombat", "C_ActionBar", "C_Spell", "C_SpellBook" } or {}) do
+        local t = _G[space]
+        if type(t) == "table" then
+            local names = {}
+            for k in pairs(t) do
+                local key = tostring(k)
+                if key:lower():find("assist") then names[#names + 1] = key end
+            end
+            table.sort(names)
+            if #names > 0 then
+                print(("  %s: %s"):format(space, table.concat(names, ", ")))
+            end
+        else
+            print(("  %s does not exist on this client"):format(space))
+        end
+    end
+
+    for i, b in ipairs(ns.buttons) do
+        if assistedButtons[b] then
+            local r, g, bl = b.DeckRing:GetVertexColor()
+            print(("  button %d  slot %s  flag=%s  ring=%.2f/%.2f/%.2f  alpha=%.2f")
+                :format(i, tostring(b._state_action or b:GetAttribute("action")),
+                        tostring(b.DeckNoTargetOn), r, g, bl, b:GetAlpha()))
+        end
+    end
+
+    if n == 0 then
+        print("  no cross button holds the assistant action - is it on action bar 1 or 2?")
+
+        -- "Put it on bar 1 or 2" is useless advice without knowing where it
+        -- is now, so walk every action slot once and say. 180 covers the
+        -- pages plus the extra bars; empty slots simply answer nil.
+        if want then
+            local found = {}
+            for slot = 1, 180 do
+                local kind, id = GetActionInfo(slot)
+                if kind == "spell" and id == want then found[#found + 1] = slot end
+            end
+            if #found > 0 then
+                print("  the assistant action sits on action slot(s): " .. table.concat(found, ", "))
+                print("  the crosses only show the current main-bar page and slots 61-72,")
+                print("  so drag it onto one of those bars to make it appear here")
+            else
+                print("  no action slot holds it, so it is being used through a")
+                print("  key binding instead - which leaves no button to show anything on.")
+                print("  Drag it from the spellbook onto bar 1 or 2 to get the ring and icon.")
+                -- Print both halves raw: page one, which is what people mean
+                -- by "it is on 1", and bar 2, the gestalt-proof half where it
+                -- belongs. Seeing the actual type settles it faster than
+                -- another round of guessing - the action need not be a spell.
+                for _, range in ipairs({ { 1, 12, "main bar page 1" }, { 61, 72, "action bar 2" } }) do
+                    print(("  %s:"):format(range[3]))
+                    for slot = range[1], range[2] do
+                        local kind, id, sub = GetActionInfo(slot)
+                        if kind then
+                            print(("    slot %d: type=%s id=%s sub=%s")
+                                :format(slot, tostring(kind), tostring(id), tostring(sub)))
+                        end
+                    end
+                end
+            end
+        end
+        -- Say what the buttons DO hold, so a wrong bar shows up at once.
+        local shown = 0
+        for i, b in ipairs(ns.buttons) do
+            local slot = b._state_action or b:GetAttribute("action")
+            if slot and shown < 6 then
+                local kind, id = GetActionInfo(slot)
+                print(("  (button %d slot %s holds %s %s)")
+                    :format(i, tostring(slot), tostring(kind), tostring(id)))
+                shown = shown + 1
+            end
+        end
+    end
+end
+
 function ns.AssistedStatus()
     local n = 0
     for _ in pairs(assistedButtons) do n = n + 1 end
     return n, HasLiveTarget()
 end
+
+-- The assistant's spell is not fixed: it changes with the specialisation,
+-- and the one-shot scan a second after login cannot know that. Watching the
+-- id here re-scans whenever it moves - which also covers a scan that ran
+-- before the action bars were filled.
+local lastAssistAction
 
 local poll = CreateFrame("Frame")
 local elapsed = 0
@@ -482,6 +680,11 @@ poll:SetScript("OnUpdate", function(_, dt)
     elapsed = elapsed + dt
     if elapsed < 0.1 then return end
     elapsed = 0
+    local action = AssistSpellID()
+    if action ~= lastAssistAction then
+        lastAssistAction = action
+        RefreshAssistedButtons()
+    end
     -- Cheap: only walks the buttons when the answer actually changed.
     if HasLiveTarget() ~= lastTargetOk then UpdateNoTargetVeil() end
     if not next(assistedButtons) then return end
@@ -615,7 +818,7 @@ for idx, b in pairs(ns.buttons) do
     local native = idx <= 12 and _G["ActionButton" .. idx] or _G["MultiBarBottomLeftButton" .. (idx - 12)]
     if native then
         hooksecurefunc(native, "SetButtonState", function(_, state)
-            b.DeckPushed:SetShown(state == "PUSHED")
+            ShowPushed(b, state == "PUSHED")
             if state == "PUSHED" and ns.TouchActivity then ns.TouchActivity() end
         end)
     end

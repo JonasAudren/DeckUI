@@ -383,6 +383,9 @@ ev:RegisterEvent("MODIFIER_STATE_CHANGED")
 ev:RegisterEvent("UPDATE_BINDINGS")
 ev:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 ev:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+-- Not just for the trace any more: a rejected cast is what the red flash on
+-- the button is made of.
+ev:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player")
 -- Cast events carry the spell id in different places, and a name lookup
 -- can fail on an unknown id - neither is worth an error in a debug aid.
 local function SpellLabel(id)
@@ -424,7 +427,6 @@ function ns.ToggleTrace()
     trace = not trace
     if trace then
         traceStart = GetTime()
-        ev:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player")
         ev:RegisterEvent("UI_ERROR_MESSAGE")
         print("DeckUI Cross: trace ON. Hold the key until the repeat stops, then /dc trace again.")
         -- The repeat is driven by Blizzard's own button, and a hidden frame
@@ -444,7 +446,6 @@ function ns.ToggleTrace()
                 (n == 0) and "   <-- no button holds the assistant, so no veil can show" or "")
         end
     else
-        ev:UnregisterEvent("UNIT_SPELLCAST_FAILED")
         ev:UnregisterEvent("UI_ERROR_MESSAGE")
         print("DeckUI Cross: trace off.")
     end
@@ -455,6 +456,10 @@ ev:SetScript("OnEvent", function(self, event, a1, a2, a3)
     if event == "UNIT_SPELLCAST_SENT" or event == "UNIT_SPELLCAST_SUCCEEDED" then
         Touch()
         UpdateHighlight()
+        return
+    end
+    if event == "UNIT_SPELLCAST_FAILED" then
+        if ns.FlashFailed then ns.FlashFailed() end
         return
     end
     if event == "PLAYER_LOGIN" then
@@ -511,6 +516,9 @@ SlashCmdList.DECKCROSS = function(msg)
         return
     elseif msg == "trace" then
         ns.ToggleTrace()
+        return
+    elseif msg == "assist" then
+        ns.PrintAssist()
         return
     end
     D.ToggleConfig("Cross")

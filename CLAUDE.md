@@ -45,7 +45,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   Slash commands (`/deck`, `/orbs`, `/dc`, `/spec`) and SavedVariables names
   (`DeckUIDB`, `DeckOrbsDB`, `DeckCrossDB`, `DeckSpecDB`) never change.
 - Font: `D.FONT = STANDARD_TEXT_FONT` (locale-safe). Masks: `D.MASK`, disc texture `D.DISC`.
-- Widgets: `D.Label / D.Button / D.Slider / D.Checkbox` from `DeckUI/widgets.lua`.
+- Widgets: `D.Label / D.Hint / D.Button / D.Slider / D.Checkbox` from `DeckUI/widgets.lua`.
+  **Explanatory lines go through `D.Hint`**, which limits the width so the text wraps inside
+  the panel - never place newlines by hand, they fight the wrapping and strand single words
+  on their own line, and a line without a width limit runs out of the frame. Both were real
+  bugs, reported by a stranger on reddit before anyone here noticed them.
+  `D.Slider` puts its value **below** the bar: `OptionsSliderTemplate` parks it above, which
+  is where the heading is, and the two printed on top of each other.
   Slider/checkbox take `db` as a **function** returning the table, plus a key and an apply function.
   Widgets with a `Refresh()` method and a place in `content.widgets` are refreshed on tab show.
 - Movable frames: `D.MakeMovable(frame, key, db)`; set `frame.defaultPoint` first.
@@ -56,8 +62,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - Device detection: `D.DetectDevice()` – 1280x800 screen or active gamepad = "deck", else "pc";
   `DeckUIDB.device` = auto|deck|pc overrides. `D.IsDeck()` is the only thing modules should ask.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/deck device`, `/deck build`,
-  `/deck deck|pc|auto`) – they were essential for Midnight issues.
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`,
+  `/deck build`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 
@@ -90,6 +96,21 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   must be BACKGROUND sublevel -8/-7.
 - Blizzard's highlight/pushed/checked textures are neutralised (methods replaced with a no-op)
   and replaced by our own masked additive glows.
+- The assistant's buttons are found through **`C_ActionBar.IsAssistedCombatAction(slot)`** -
+  the action bar owns that question, not `C_AssistedCombat`, which has only `GetActionSpell`,
+  `GetNextCastSpell`, `GetRotationSpells` and `IsAIAvailable` (swept out of the client on
+  2026-09-23, after two wrong guesses cost an evening). **An assistant slot cannot be
+  recognised by its contents**: `GetActionInfo` on it returns whatever spell the assistant
+  recommends at that moment, so a slot holding the assistant reads as an ordinary changing
+  spell. Only that call knows.
+  Everything assistant-related hangs off one table (`assistedButtons`): the painted icon, the
+  red no-target ring, the failure flash. An empty table means none of it can show, which looks
+  like three separate bugs - `/dc assist` prints the API, the buttons holding the action, the
+  flag and the ring's actual colour, and when the API is missing it sweeps the namespaces for
+  whatever replaced it.
+- Feedback that a press arrived: Blizzard's PUSHED state is too short to see on a tap, so
+  `ShowPushed` holds our glow for `PUSH_MIN` past the release. A rejected cast flashes
+  `DeckFailed` red on whichever button is lit, falling back to the assistant's buttons.
 - **State on a cross button is shown with colour, never with brightness.** Brightness is
   already taken: `SetGroup` in `DeckUI_Cross/core.lua` dims whole groups with `b:SetAlpha`,
   and out of combat the bar sits at roughly a quarter alpha, where a darkening veil is
@@ -97,7 +118,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   colour (`RING_NOTARGET`), set inside `SetGroup` itself - it repaints every dim tick, so a
   colour written anywhere else would be overwritten four times a second.
 - Assisted combat: the purple rotation highlight is hidden on cross buttons; the assistant's
-  changing icon is painted by polling `C_AssistedCombat.GetNextCastSpell()` every 0.1 s.
+  changing icon is painted by polling `C_AssistedCombat.GetNextCastSpell()` every 0.1 s. This
+  **never ran before 2026-09-23** because the detection above asked a function that does not
+  exist, leaving `assistedButtons` empty and the poll returning on its first line. Do not trust
+  this entry without `/dc assist` saying `API yes` and a non-zero button count.
   **"The assistant stops while I hold the key" was measured and is not ours** (2026-09-18,
   `/dc trace` on the PC): the engine keeps repeating, the assistant keeps naming Sunfire,
   and every attempt fails with `Invalid target` because the player has no target at all -
