@@ -8,6 +8,23 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.0.2
+
+- The settings window reads properly now: percentages sit below their
+  sliders instead of on top of the headings, and the explanations wrap
+  inside the window instead of running off the edge. Thanks to the person
+  on reddit who pointed both out.
+- Pressing a button is visible again. A short tap used to flash by too
+  quickly to notice; the button now stays lit long enough to see.
+- A spell the game refuses - no target, out of range, not enough resources -
+  flashes the button red. That tells "nothing happened" apart from "my press
+  never arrived", which used to look the same.
+- **The single-button assistant works with the crosses now.** Its button
+  shows the spell it is about to cast, and its ring turns red while you have
+  no target, which is the usual reason the assistant seems to stall. This
+  never ran in any earlier version: DeckUI asked the game a question it
+  could not answer, and quietly got "no" every time.
+
 ## 1.0.1
 
 - **The hotbar no longer fades when you stand still.** It used to dim itself
