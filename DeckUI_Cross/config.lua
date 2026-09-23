@@ -10,19 +10,10 @@ D.RegisterModule("Cross", {
         D.Button(c, "Set up gamepad (LT/RT)", -28, ns.SetupGamepad)
         D.Button(c, "Apply default bindings",    -68, ns.ApplyDefaultBindings)
 
-        local hint = c:CreateFontString(nil, "OVERLAY")
-        hint:SetFont(D.FONT, 11, "OUTLINE")
-        hint:SetPoint("TOP", 0, -108)
-        hint:SetTextColor(0.7, 0.7, 0.7)
-        hint:SetText("Run both once per device.")
+        D.Hint(c, "Run both once per device.", -108)
 
         D.Label(c, "Keyboard (PC)", -140, 15)
-        local hint2 = c:CreateFontString(nil, "OVERLAY")
-        hint2:SetFont(D.FONT, 11, "OUTLINE")
-        hint2:SetPoint("TOP", 0, -162)
-        hint2:SetWidth(300)
-        hint2:SetTextColor(0.7, 0.7, 0.7)
-        hint2:SetText("The crosses mirror Action Bar 1 (left cross + upper half\nof the right cross, incl. stance/vehicle paging) and Action\nBar 2 (rest) on both devices. On the PC your normal WoW\nkey bindings for those bars drive the buttons.")
+        D.Hint(c, "The crosses mirror Action Bar 1 (left cross + upper half of the right cross, incl. stance/vehicle paging) and Action Bar 2 (rest) on both devices. On the PC your normal WoW key bindings for those bars drive the buttons.", -162)
 
         D.Label(c, "Look", -240, 15)
         D.Slider(c, "Size (this device)", -262, 0.6, 1.6, 0.05,
@@ -51,10 +42,6 @@ D.RegisterModule("Cross", {
         D.Checkbox(c, "Hide the Blizzard bars the crosses mirror", -450, db, "hideBlizzardBars",
             function(v) ns.SetBlizzardBarsHidden(v) end)
 
-        local hint3 = c:CreateFontString(nil, "OVERLAY")
-        hint3:SetFont(D.FONT, 11, "OUTLINE")
-        hint3:SetPoint("TOP", 0, -488)
-        hint3:SetTextColor(0.7, 0.7, 0.7)
-        hint3:SetText("Device is detected by the hub (General tab).")
+        D.Hint(c, "Device is detected by the hub (General tab).", -488)
     end,
 })

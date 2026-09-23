@@ -114,11 +114,7 @@ panel:AddTab("General", {
         D.Checkbox(c, "Spec (spec switcher)", -84, function() return DeckUIDB.modules end, "Spec",
             function(v) D.SetModuleEnabled("Spec", v) end)
 
-        local hint = c:CreateFontString(nil, "OVERLAY")
-        hint:SetFont(D.FONT, 11, "OUTLINE")
-        hint:SetPoint("TOPLEFT", 24, -116)
-        hint:SetTextColor(0.7, 0.7, 0.7)
-        hint:SetText("Enabling takes effect immediately, disabling after /reload.")
+        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -116)
 
         D.Label(c, "Device", -148, 15)
         local devBtn = D.Button(c, "Device", -170, function() end)
