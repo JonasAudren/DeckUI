@@ -127,8 +127,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   than the GCD is only held up by the GCD, and treating that as "not ready" would make the
   indicator flicker with every cast instead of answering anything. The swirl deliberately shows
   the spell's own cooldown only.
-  It is a separate frame because the assistant may live on a key binding with no button at all -
-  which is exactly how the owner used it.
+  **It only works while the assistant sits on one of the player's action bars** (owner's test,
+  2026-09-29) - the settings hint and the 1.0.3 changelog say so. Why was not measured; do not
+  "fix" it by guessing at a cause. It is still a separate frame because that slot need not be
+  on a cross: the assistant may sit on a bar the crosses do not mirror and be reached by a key
+  binding, with no cross button to decorate.
 - Feedback that a press arrived: Blizzard's PUSHED state is too short to see on a tap, so
   `ShowPushed` holds our glow for `PUSH_MIN` past the release. A rejected cast flashes
   `DeckFailed` red on whichever button is lit, falling back to the assistant's buttons.

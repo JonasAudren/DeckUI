@@ -14,9 +14,11 @@ local D = DeckUI
 -- Ready means press; not ready means waiting really is correct. The
 -- cooldown swirl says how much longer.
 --
--- Deliberately a separate frame rather than a badge on a cross button: the
--- assistant may live on a key binding with no button of its own, and then
--- there is nothing to decorate.
+-- It only works while the assistant sits on one of the player's action bars
+-- (owner's test, 2026-09-29; why was not measured), and the settings hint
+-- says so. That slot need not be on a cross, though - the assistant may sit
+-- on a bar the crosses do not mirror and be reached by a key binding - which
+-- is why this is a separate frame rather than a badge on a cross button.
 -------------------------------------------------------------------
 local SIZE = 46
 local RING_READY = { 0.3, 0.9, 0.35 }    -- the recommended spell can be cast
