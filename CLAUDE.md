@@ -207,6 +207,13 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
   `overrideBankType` attribute - Blizzard's own template for addons, so the purchase stays
   untainted. Sorting a bank is `C_Container.SortBank(bankType)`, the only form Blizzard's
   code uses; it asks first while the CVar `bankConfirmTabCleanUp` is on.
+- **Category view** (bags only, default on, `DeckBagsDB.categories`; the bank keeps its tabs,
+  whose deposit rules a category view would hide). Groups in order: New, Equipment,
+  Consumables, Trade Goods, Quest, Other, Junk, then one stand-in empty slot per kind of bag
+  (normal / reagent) showing the free count. The class comes from `C_Item.GetItemInfoInstant`,
+  which needs no server round trip. Items move between groups, so this view re-lays out on
+  `BAG_UPDATE_DELAYED` (`w.relayoutOnMove`) - but never on `ITEM_LOCK_CHANGED`, which fires on
+  pickup and would reshuffle the grid under the cursor.
 - `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked;
   `/bags bank` prints the bank types, their lock state, tabs and slots.
 

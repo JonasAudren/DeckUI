@@ -24,13 +24,140 @@ window.defaultPoint = { "BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -20, 110 }
 window:SetPoint(unpack(window.defaultPoint))
 ns.bags = window
 
-local function Sections()
-    local held = {}
-    for bag = BACKPACK, NUM_BAGS do held[#held + 1] = bag end
+local HELD = {}
+for bag = BACKPACK, NUM_BAGS do HELD[#HELD + 1] = bag end
+local ALL = { unpack(HELD) }
+ALL[#ALL + 1] = REAGENT
+
+-- The grid view: every slot where it actually is.
+local function GridSections()
     return {
-        { bags = held },
+        { bags = HELD },
         { title = "Reagents", bags = { REAGENT } },
     }
+end
+
+-------------------------------------------------------------------
+-- The category view
+-------------------------------------------------------------------
+-- Each item goes into the first group that claims it, in this order, and
+-- the groups are shown in the same order. The item class comes from
+-- C_Item.GetItemInfoInstant, which answers from the client's own data -
+-- no server round trip, so nothing lands in "Other" just for being new.
+local C = Enum.ItemClass
+local POOR = Enum.ItemQuality.Poor
+
+local CATEGORIES = {
+    { key = "new",        title = "New" },
+    { key = "equipment",  title = "Equipment" },
+    { key = "consumable", title = "Consumables" },
+    { key = "trade",      title = "Trade Goods" },
+    { key = "quest",      title = "Quest" },
+    { key = "other",      title = "Other" },
+    { key = "junk",       title = "Junk" },
+}
+
+local CLASS_CATEGORY = {
+    [C.Weapon]          = "equipment",
+    [C.Armor]           = "equipment",
+    [C.Consumable]      = "consumable",
+    [C.ItemEnhancement] = "consumable",
+    [C.Tradegoods]      = "trade",
+    [C.Reagent]         = "trade",
+    [C.Gem]             = "trade",
+    [C.Recipe]          = "trade",
+    [C.Profession]      = "trade",
+    [C.Questitem]       = "quest",
+}
+
+local function Categorize(bag, slot, info)
+    -- junk before "new": a grey drop is junk the moment it arrives
+    if info.quality == POOR and not info.hasNoValue then return "junk" end
+    if C_NewItems.IsNewItem(bag, slot) then return "new" end
+    local quest = C_Container.GetContainerItemQuestInfo(bag, slot)
+    if quest.isQuestItem or quest.questID then return "quest" end
+    local _, _, _, equipLoc, _, classID = C_Item.GetItemInfoInstant(info.itemID)
+    local key = classID and CLASS_CATEGORY[classID]
+    -- armor class also holds cosmetic odds and ends that cannot be worn
+    if key == "equipment" and (not equipLoc or equipLoc == "" or equipLoc == "INVTYPE_NON_EQUIP_IGNORE") then
+        key = nil
+    end
+    return key or "other"
+end
+
+-- Inside a group: best quality first, then by name, bigger stacks first.
+local function ItemOrder(a, b)
+    if a.quality ~= b.quality then return a.quality > b.quality end
+    if a.name ~= b.name then return a.name < b.name end
+    if a.count ~= b.count then return a.count > b.count end
+    if a[1] ~= b[1] then return a[1] < b[1] end
+    return a[2] < b[2]
+end
+
+-- The empty slots collapse into one per kind of bag - the reagent bag only
+-- takes reagents - showing how many there are. Dropping an item on it puts
+-- the item into that very slot, which is as good as any free one.
+local function EmptySection()
+    local slots = {}
+    for _, group in ipairs({ HELD, { REAGENT } }) do
+        local first, free = nil, 0
+        for _, bag in ipairs(group) do
+            for slot = 1, C_Container.GetContainerNumSlots(bag) do
+                if not C_Container.GetContainerItemInfo(bag, slot) then
+                    free = free + 1
+                    first = first or { bag, slot }
+                end
+            end
+        end
+        if first then
+            first.free = free
+            slots[#slots + 1] = first
+        end
+    end
+    return { title = "Empty", slots = slots }
+end
+
+local function CategorySections()
+    local groups = {}
+    for _, cat in ipairs(CATEGORIES) do groups[cat.key] = {} end
+
+    for _, bag in ipairs(ALL) do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) do
+            local info = C_Container.GetContainerItemInfo(bag, slot)
+            if info then
+                local entry = { bag, slot, quality = info.quality or 0,
+                    name = info.itemName or "", count = info.stackCount or 1 }
+                table.insert(groups[Categorize(bag, slot, info)], entry)
+            end
+        end
+    end
+
+    local sections = {}
+    for _, cat in ipairs(CATEGORIES) do
+        local list = groups[cat.key]
+        if #list > 0 then
+            table.sort(list, ItemOrder)
+            sections[#sections + 1] = { title = cat.title, slots = list }
+        end
+    end
+    sections[#sections + 1] = EmptySection()
+    return sections
+end
+
+-- Only the stand-in empty slots carry a number; every other button forgets
+-- the one it may have had from an earlier layout.
+local function MarkFreeCounts(sections)
+    for _, bagButtons in pairs(window.grid.buttons) do
+        for _, b in pairs(bagButtons) do b.freeCount = nil end
+    end
+    local empty = sections[#sections]
+    for _, s in ipairs(empty.slots or {}) do
+        ns.Button(window.grid, s[1], s[2]).freeCount = s.free
+    end
+end
+
+local function IsCategoryView()
+    return DeckBagsDB.categories
 end
 
 -------------------------------------------------------------------
@@ -53,8 +180,49 @@ end
 
 function window.Layout()
     local d = ns.DeviceDB()
-    return Sections(), d.columns, d.scale
+    window.relayoutOnMove = IsCategoryView()
+    if not IsCategoryView() then
+        for _, bagButtons in pairs(window.grid.buttons) do
+            for _, b in pairs(bagButtons) do b.freeCount = nil end
+        end
+        return GridSections(), d.columns, d.scale
+    end
+    local sections = CategorySections()
+    MarkFreeCounts(sections)
+    return sections, d.columns, d.scale, ALL
 end
+
+-------------------------------------------------------------------
+-- Switching views: a button in the window, a checkbox in the settings
+-------------------------------------------------------------------
+function ns.SetCategoryView(state)
+    DeckBagsDB.categories = state
+    window.needLayout = true
+    ns.Flush(window)
+end
+
+-- room for the view button between the search box and the sort button
+window.search:SetPoint("RIGHT", window, "RIGHT", -68, 0)
+window.sort:ClearAllPoints()
+window.sort:SetPoint("TOPRIGHT", -12, -32)
+
+local viewButton = CreateFrame("Button", nil, window)
+viewButton:SetSize(24, 24)
+viewButton:SetPoint("RIGHT", window.sort, "LEFT", -4, 0)
+viewButton:SetNormalAtlas("bags-icon-multiple")
+viewButton:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+viewButton:SetScript("OnClick", function()
+    ns.SetCategoryView(not IsCategoryView())
+    if D.panel and D.panel:IsShown() and D.panel.contents.Bags then
+        D.RefreshWidgets(D.panel.contents.Bags)
+    end
+end)
+viewButton:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText(IsCategoryView() and "Show one grid" or "Show categories")
+    GameTooltip:Show()
+end)
+viewButton:SetScript("OnLeave", GameTooltip_Hide)
 
 -------------------------------------------------------------------
 -- Following Blizzard's open/closed state
@@ -153,6 +321,7 @@ local function Init()
     DeckBagsDB = DeckBagsDB or {}
     if DeckBagsDB.itemLevel == nil then DeckBagsDB.itemLevel = true end
     if DeckBagsDB.markJunk  == nil then DeckBagsDB.markJunk  = true end
+    if DeckBagsDB.categories == nil then DeckBagsDB.categories = true end
     ns.InitBags()
     if ns.InitBank then ns.InitBank() end
 end

@@ -58,6 +58,12 @@ local function NewButton(grid, bag)
     b.DeckLevel = b:CreateFontString(nil, "OVERLAY")
     b.DeckLevel:SetFont(D.FONT, 12, "OUTLINE")
     b.DeckLevel:SetPoint("TOPLEFT", 2, -2)
+
+    -- the category view shows one empty slot standing in for all of them
+    b.DeckFree = b:CreateFontString(nil, "OVERLAY")
+    b.DeckFree:SetFont(D.FONT, 15, "OUTLINE")
+    b.DeckFree:SetPoint("CENTER")
+    b.DeckFree:SetTextColor(0.8, 0.8, 0.8)
     return b
 end
 
@@ -119,14 +125,15 @@ function ns.UpdateButton(b)
 
     local level = DeckBagsDB.itemLevel and info and ItemLevel(bag, slot, info.itemID)
     b.DeckLevel:SetText(level or "")
+    b.DeckFree:SetText((not info and b.freeCount) or "")
 end
 
 -------------------------------------------------------------------
 -- Window
 -------------------------------------------------------------------
 -- sections: { { title = string|nil, bags = { bagID, ... } }, ... }
+-- or, for the category view, { title = ..., slots = { { bag, slot }, ... } }.
 -- Laid out top to bottom, each section a grid of `columns` buttons.
--- Phase two (categories) only changes what goes into the sections.
 --
 -- opts.extraHeader / opts.extraFooter make room for rows of the window's
 -- own (the bank's tab icons and its deposit buttons), opts.minWidth keeps
@@ -235,8 +242,11 @@ end
 
 -- Places every slot of every section and sizes the window around them.
 -- Only needed when slots appear or vanish (a bag equipped, a bank tab
--- bought or switched, a setting changed); everything else is RefreshWindow.
-function ns.LayoutWindow(w, sections, columns, scale)
+-- bought or switched, a setting changed) - or, in the category view, when
+-- items move; everything else is RefreshWindow.
+-- countBags: the bags the "free" line counts, when the sections do not
+-- simply list them (the category view hides most empty slots).
+function ns.LayoutWindow(w, sections, columns, scale, countBags)
     local grid = w.grid
     grid:SetScale(scale)
 
@@ -249,13 +259,19 @@ function ns.LayoutWindow(w, sections, columns, scale)
     local bags, total = {}, 0
     for _, section in ipairs(sections) do
         local slots = {}
-        for _, bag in ipairs(section.bags) do
-            for slot = 1, C_Container.GetContainerNumSlots(bag) do
-                slots[#slots + 1] = ns.Button(grid, bag, slot)
+        if section.slots then
+            for _, s in ipairs(section.slots) do
+                slots[#slots + 1] = ns.Button(grid, s[1], s[2])
             end
-            bags[#bags + 1] = bag
+        else
+            for _, bag in ipairs(section.bags) do
+                for slot = 1, C_Container.GetContainerNumSlots(bag) do
+                    slots[#slots + 1] = ns.Button(grid, bag, slot)
+                end
+                bags[#bags + 1] = bag
+            end
+            total = total + #slots
         end
-        total = total + #slots
 
         if #slots > 0 then
             if section.title then
@@ -287,6 +303,10 @@ function ns.LayoutWindow(w, sections, columns, scale)
     -- the window is not scaled, so the grid's size is converted back
     w:SetSize(math.max(gridW * scale + 2 * PAD, w.minWidth),
         gridH * scale + w.headerHeight + w.footerHeight + 8)
+    if countBags then
+        bags, total = countBags, 0
+        for _, bag in ipairs(countBags) do total = total + C_Container.GetContainerNumSlots(bag) end
+    end
     w.layoutBags, w.totalSlots = bags, total
 end
 
@@ -358,8 +378,18 @@ for _, e in ipairs({
     "BAG_CONTAINER_UPDATE", "BANK_TABS_CHANGED", "BANK_TAB_SETTINGS_UPDATED",
 }) do ev:RegisterEvent(e) end
 
+-- items actually moved; a window that sorts by content (the category view,
+-- w.relayoutOnMove) has to place them again. Not ITEM_LOCK_CHANGED: that
+-- fires on pickup, and reshuffling the grid under the cursor is maddening.
+local MOVE_EVENTS = { BAG_UPDATE_DELAYED = true, BAG_NEW_ITEMS_UPDATED = true }
+
 ev:SetScript("OnEvent", function(_, event)
     if LAYOUT_EVENTS[event] then ns.RequestLayout() else ns.RequestRefresh() end
+    if MOVE_EVENTS[event] then
+        for _, w in ipairs(windows) do
+            if w.relayoutOnMove then w.needLayout = true end
+        end
+    end
 end)
 
 -------------------------------------------------------------------

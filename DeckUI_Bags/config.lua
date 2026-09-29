@@ -30,9 +30,11 @@ D.RegisterModule("Bags", {
         D.Slider(c, "Size", -156, 0.6, 1.4, 0.05, pct, device, "scale", Relayout("scale"))
 
         D.Label(c, "Items", -228, 15)
-        D.Checkbox(c, "Show item level on gear", -250, db, "itemLevel", Refresh)
-        D.Checkbox(c, "Mark junk (grey items) with a coin", -278, db, "markJunk", Refresh)
+        D.Checkbox(c, "Sort the bags into categories", -250, db, "categories", ns.SetCategoryView)
+        D.Checkbox(c, "Show item level on gear", -278, db, "itemLevel", Refresh)
+        D.Checkbox(c, "Mark junk (grey items) with a coin", -306, db, "markJunk", Refresh)
 
-        D.Hint(c, "B, the bag bar and /bags open the bags, a banker opens the bank, as they would Blizzard's windows. Drag a window by its frame to move it.", -318)
+        D.Hint(c, "Categories: new, equipment, consumables, trade goods, quest, other, junk, and one empty slot counting the free ones. The button next to sort switches too. The bank keeps its tabs.", -344)
+        D.Hint(c, "B, the bag bar and /bags open the bags, a banker opens the bank, as they would Blizzard's windows. Drag a window by its frame to move it.", -404)
     end,
 })
