@@ -2,8 +2,8 @@ local ADDON, ns = ...
 local D = DeckUI
 
 -------------------------------------------------------------------
--- Shared pieces for the bag window now and the bank windows later:
--- a window with search, sort, money and a grid of item buttons.
+-- Shared pieces for the bag window and the bank window: a window with
+-- search, sort, money and a grid of item buttons, and one update loop.
 -------------------------------------------------------------------
 -- The item buttons are Blizzard's own ContainerFrameItemButtonTemplate.
 -- Its click handler is Blizzard code that knows every case - using a
@@ -11,12 +11,13 @@ local D = DeckUI
 -- depositing at the bank, splitting stacks - and it only stays untainted
 -- because it learns its bag through an attribute (SetBagID) rather than
 -- a field we write. So we never set a click script of our own on them;
--- we only fill in what they show.
+-- we only fill in what they show. Bank tabs are ordinary bag IDs, so the
+-- same template serves the bank.
 -------------------------------------------------------------------
 local BUTTON = 37    -- the template's own size; scaling happens on the grid
 local GAP    = 4
 local PAD    = 10
-local HEADER = 58    -- title row + search row
+local HEADER = 58    -- title row + search row; a window can ask for more
 local FOOTER = 26
 
 ns.BUTTON = BUTTON
@@ -126,7 +127,15 @@ end
 -- sections: { { title = string|nil, bags = { bagID, ... } }, ... }
 -- Laid out top to bottom, each section a grid of `columns` buttons.
 -- Phase two (categories) only changes what goes into the sections.
-function ns.NewWindow(name, titleText)
+--
+-- opts.extraHeader / opts.extraFooter make room for rows of the window's
+-- own (the bank's tab icons and its deposit buttons), opts.minWidth keeps
+-- those rows from being squeezed, opts.money says whose gold to show and
+-- opts.currencies turns on the tracked currencies.
+local windows = {}   -- every window made here, for search sync and updates
+
+function ns.NewWindow(name, titleText, opts)
+    opts = opts or {}
     local w = CreateFrame("Frame", name, UIParent, "BackdropTemplate")
     w:SetFrameStrata("MEDIUM")
     w:SetToplevel(true)
@@ -139,6 +148,9 @@ function ns.NewWindow(name, titleText)
     })
     w:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
     w:Hide()
+    w.headerHeight = HEADER + (opts.extraHeader or 0)
+    w.footerHeight = FOOTER + (opts.extraFooter or 0)
+    w.minWidth     = opts.minWidth or 260
 
     local title = w:CreateFontString(nil, "OVERLAY")
     title:SetFont(D.FONT, 16, "OUTLINE")
@@ -152,10 +164,19 @@ function ns.NewWindow(name, titleText)
 
     -- BagSearchBoxTemplate feeds C_Container.SetItemSearch, and the game
     -- answers with isFiltered on every item plus INVENTORY_SEARCH_UPDATE.
+    -- The search is global, so the other windows' boxes follow the text.
     local search = CreateFrame("EditBox", name .. "Search", w, "BagSearchBoxTemplate")
     search:SetHeight(20)
     search:SetPoint("TOPLEFT", PAD + 6, -34)
     search:SetPoint("RIGHT", w, "RIGHT", -PAD - 30, 0)
+    search:HookScript("OnTextChanged", function(self)
+        local text = self:GetText()
+        for _, other in ipairs(windows) do
+            if other.search ~= self and other.search:GetText() ~= text then
+                other.search:SetText(text)
+            end
+        end
+    end)
     w.search = search
 
     local sort = CreateFrame("Button", nil, w)
@@ -175,7 +196,7 @@ function ns.NewWindow(name, titleText)
     -- The grid scales as a whole: the template's textures are laid out for
     -- 37 pixels, so resizing single buttons would tear their overlays apart.
     local grid = CreateFrame("Frame", nil, w)
-    grid:SetPoint("TOPLEFT", PAD, -HEADER)
+    grid:SetPoint("TOPLEFT", PAD, -w.headerHeight)
     grid:SetSize(1, 1)
     grid.buttons = {}
     grid.headings = {}
@@ -192,8 +213,12 @@ function ns.NewWindow(name, titleText)
     free:SetTextColor(0.7, 0.7, 0.7)
     w.free = free
 
-    -- tracked currencies sit left of the gold
     w.currencies = {}
+    w.showCurrencies = opts.currencies
+    w.Money = opts.money or GetMoney
+
+    w.needLayout, w.needRefresh = true, true
+    windows[#windows + 1] = w
     return w
 end
 
@@ -209,8 +234,8 @@ local function Heading(grid, i)
 end
 
 -- Places every slot of every section and sizes the window around them.
--- Only needed when slots appear or vanish (a bag equipped, a setting
--- changed); everything else is ns.RefreshWindow.
+-- Only needed when slots appear or vanish (a bag equipped, a bank tab
+-- bought or switched, a setting changed); everything else is RefreshWindow.
 function ns.LayoutWindow(w, sections, columns, scale)
     local grid = w.grid
     grid:SetScale(scale)
@@ -221,14 +246,14 @@ function ns.LayoutWindow(w, sections, columns, scale)
     for _, fs in ipairs(grid.headings) do fs:Hide() end
 
     local y, widest, headingIndex = 0, 0, 0
-    local free, total = 0, 0
+    local bags, total = {}, 0
     for _, section in ipairs(sections) do
         local slots = {}
         for _, bag in ipairs(section.bags) do
             for slot = 1, C_Container.GetContainerNumSlots(bag) do
                 slots[#slots + 1] = ns.Button(grid, bag, slot)
             end
-            free  = free + (C_Container.GetContainerNumFreeSlots(bag) or 0)
+            bags[#bags + 1] = bag
         end
         total = total + #slots
 
@@ -260,22 +285,82 @@ function ns.LayoutWindow(w, sections, columns, scale)
     local gridH = math.max(y - 6, 1)
     grid:SetSize(gridW, gridH)
     -- the window is not scaled, so the grid's size is converted back
-    w:SetSize(math.max(gridW * scale + 2 * PAD, 260), gridH * scale + HEADER + FOOTER + 8)
-    w.freeSlots, w.totalSlots = free, total
+    w:SetSize(math.max(gridW * scale + 2 * PAD, w.minWidth),
+        gridH * scale + w.headerHeight + w.footerHeight + 8)
+    w.layoutBags, w.totalSlots = bags, total
 end
 
 function ns.RefreshWindow(w)
-    local free = 0
-    for bag, bagButtons in pairs(w.grid.buttons) do
+    for _, bagButtons in pairs(w.grid.buttons) do
         for _, b in pairs(bagButtons) do
             if b:IsShown() then ns.UpdateButton(b) end
         end
+    end
+    local free = 0
+    for _, bag in ipairs(w.layoutBags or {}) do
         free = free + (C_Container.GetContainerNumFreeSlots(bag) or 0)
     end
     w.free:SetText(("%d / %d free"):format(free, w.totalSlots or 0))
-    w.money:SetText(GetMoneyString(GetMoney(), true))
-    ns.UpdateCurrencies(w)
+    w.money:SetText(GetMoneyString(w.Money() or 0, true))
+    if w.showCurrencies then ns.UpdateCurrencies(w) end
+    if w.OnRefresh then w:OnRefresh() end
 end
+
+-------------------------------------------------------------------
+-- Updates for every window
+-------------------------------------------------------------------
+-- Each window supplies w.Layout() -> sections, columns, scale. Events come
+-- in bursts (a loot pickup fires several), so they only mark the windows
+-- and one pass runs on the next frame, for the windows that are shown.
+function ns.RequestLayout()
+    for _, w in ipairs(windows) do w.needLayout = true end
+end
+
+function ns.RequestRefresh()
+    for _, w in ipairs(windows) do w.needRefresh = true end
+end
+
+function ns.Flush(w)
+    if not w:IsShown() or not w.Layout then return end
+    if w.needLayout then
+        ns.LayoutWindow(w, w.Layout())
+        w.needLayout, w.needRefresh = false, true
+    end
+    if w.needRefresh then
+        ns.RefreshWindow(w)
+        w.needRefresh = false
+    end
+end
+
+function ns.FlushAll()
+    for _, w in ipairs(windows) do ns.Flush(w) end
+end
+
+local updater = CreateFrame("Frame")
+updater:SetScript("OnUpdate", function()
+    for _, w in ipairs(windows) do
+        if w.needLayout or w.needRefresh then ns.Flush(w) end
+    end
+end)
+
+-- slot counts change: a bag put on, a bank tab bought or renamed
+local LAYOUT_EVENTS = {
+    BAG_CONTAINER_UPDATE = true, BANK_TABS_CHANGED = true,
+    BANK_TAB_SETTINGS_UPDATED = true,
+}
+
+local ev = CreateFrame("Frame")
+for _, e in ipairs({
+    "BAG_UPDATE_DELAYED", "ITEM_LOCK_CHANGED", "BAG_UPDATE_COOLDOWN",
+    "INVENTORY_SEARCH_UPDATE", "BAG_NEW_ITEMS_UPDATED", "QUEST_ACCEPTED",
+    "UNIT_QUEST_LOG_CHANGED", "PLAYER_MONEY", "ACCOUNT_MONEY", "CURRENCY_DISPLAY_UPDATE",
+    "PLAYER_EQUIPMENT_CHANGED", "PLAYERBANKSLOTS_CHANGED", "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED",
+    "BAG_CONTAINER_UPDATE", "BANK_TABS_CHANGED", "BANK_TAB_SETTINGS_UPDATED",
+}) do ev:RegisterEvent(e) end
+
+ev:SetScript("OnEvent", function(_, event)
+    if LAYOUT_EVENTS[event] then ns.RequestLayout() else ns.RequestRefresh() end
+end)
 
 -------------------------------------------------------------------
 -- Tracked currencies (the ones the player picked for the backpack)

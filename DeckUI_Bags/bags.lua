@@ -19,7 +19,7 @@ local BACKPACK = Enum.BagIndex.Backpack
 local REAGENT  = Enum.BagIndex.ReagentBag
 local NUM_BAGS = Constants.InventoryConstants.NumBagSlots   -- 4
 
-local window = ns.NewWindow("DeckBagsWindow", "Bags")
+local window = ns.NewWindow("DeckBagsWindow", "Bags", { currencies = true })
 window.defaultPoint = { "BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -20, 110 }
 window:SetPoint(unpack(window.defaultPoint))
 ns.bags = window
@@ -36,9 +36,10 @@ end
 -------------------------------------------------------------------
 -- Settings that shape the grid (per device, like the Orbs and Cross sizes)
 -------------------------------------------------------------------
+-- A bank tab holds 98 slots, which Blizzard shows as 14 x 7.
 local DEVICE_DEFAULTS = {
-    deck = { columns = 10, scale = 0.9 },
-    pc   = { columns = 12, scale = 1.0 },
+    deck = { columns = 10, scale = 0.9, bankColumns = 14 },
+    pc   = { columns = 12, scale = 1.0, bankColumns = 14 },
 }
 
 function ns.DeviceDB()
@@ -50,29 +51,10 @@ function ns.DeviceDB()
     return d
 end
 
--------------------------------------------------------------------
--- Updating: layout when slots change, refresh for everything else
--------------------------------------------------------------------
--- Events arrive in bursts (a loot pickup fires several), so they only
--- mark the window dirty and one pass runs on the next frame.
-local needLayout, needRefresh = true, true
-
-function ns.RequestLayout() needLayout = true end
-function ns.RequestRefresh() needRefresh = true end
-
-local function Flush()
-    if not window:IsShown() then return end
-    if needLayout then
-        local d = ns.DeviceDB()
-        ns.LayoutWindow(window, Sections(), d.columns, d.scale)
-        needLayout, needRefresh = false, true
-    end
-    if needRefresh then
-        ns.RefreshWindow(window)
-        needRefresh = false
-    end
+function window.Layout()
+    local d = ns.DeviceDB()
+    return Sections(), d.columns, d.scale
 end
-ns.FlushBags = Flush
 
 -------------------------------------------------------------------
 -- Following Blizzard's open/closed state
@@ -100,9 +82,9 @@ end
 local function Sync()
     local open = IsAnyBagOpen()
     if open and not window:IsShown() then
-        needLayout = true
+        window.needLayout = true
         window:Show()
-        Flush()
+        ns.Flush(window)
     elseif not open and window:IsShown() then
         window:Hide()
     end
@@ -116,11 +98,10 @@ for _, fn in ipairs({ "OpenAllBags", "CloseAllBags", "ToggleAllBags",
 end
 
 -- The hooks cover every path we know; the poll covers the ones we do not
--- (a frame hidden directly, a new opener in a patch). It also drives Flush.
+-- (a frame hidden directly, a new opener in a patch).
 local poll = CreateFrame("Frame")
 local elapsed = 0
 poll:SetScript("OnUpdate", function(_, dt)
-    if needLayout or needRefresh then Flush() end
     elapsed = elapsed + dt
     if elapsed < 0.2 then return end
     elapsed = 0
@@ -138,26 +119,6 @@ end)
 window:SetScript("OnHide", function(self)
     -- a focused search box would keep swallowing the keyboard
     self.search:ClearFocus()
-end)
-
--------------------------------------------------------------------
--- Events
--------------------------------------------------------------------
-local ev = CreateFrame("Frame")
-for _, e in ipairs({
-    "BAG_UPDATE_DELAYED", "ITEM_LOCK_CHANGED", "BAG_UPDATE_COOLDOWN",
-    "INVENTORY_SEARCH_UPDATE", "BAG_NEW_ITEMS_UPDATED", "QUEST_ACCEPTED",
-    "UNIT_QUEST_LOG_CHANGED", "PLAYER_MONEY", "CURRENCY_DISPLAY_UPDATE",
-    "BAG_CONTAINER_UPDATE", "PLAYER_EQUIPMENT_CHANGED",
-}) do ev:RegisterEvent(e) end
-
-ev:SetScript("OnEvent", function(_, event)
-    if event == "BAG_CONTAINER_UPDATE" then
-        -- a bag was put on or taken off: the slot count changed
-        needLayout = true
-    else
-        needRefresh = true
-    end
 end)
 
 -------------------------------------------------------------------
@@ -212,7 +173,7 @@ else
 end
 
 -- /bags opens and closes the bags the way B does; /bags config opens the
--- tab, /bags debug prints what the window is built from.
+-- tab, /bags debug and /bags bank print what the windows are built from.
 SLASH_DECKBAGS1 = "/bags"
 SlashCmdList.DECKBAGS = function(msg)
     msg = (msg or ""):lower():trim()
@@ -220,6 +181,8 @@ SlashCmdList.DECKBAGS = function(msg)
         D.ToggleConfig("Bags")
     elseif msg == "debug" then
         ns.PrintBags()
+    elseif msg == "bank" then
+        ns.PrintBank()
     else
         ToggleAllBags()
     end

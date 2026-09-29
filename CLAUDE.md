@@ -174,10 +174,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - oUF: `ClassPower` / `Runes` dots are StatusBars with a masked WHITE8x8 fill; `[deck:hpshort]`
   is our custom tag.
 
-## Bags module (in progress, not yet tested in game)
+## Bags module (bag window tested in game 2026-09-29; bank not yet)
 
 Built from Blizzard's 12.1.0 source (Gethe/wow-ui-source, `live`, read 2026-09-29), not from
 memory - the bank changed completely in 11.2. Plan: one grid first, categories second.
+All windows share one update loop in `core.lua`: events only mark windows dirty, one pass
+per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the shown ones.
 - **Blizzard's bag frames keep running, parked under a hidden frame**; our window shows while
   `IsAnyBagOpen()` says so (hooks on the open/close functions plus a 0.2 s poll). We do not
   replace `ToggleAllBags` and friends: the bank's `OnShow` calls `OpenAllBags`, and our code in
@@ -186,13 +188,27 @@ memory - the bank changed completely in 11.2. Plan: one grid first, categories s
   ours: its handler covers every case (potion in combat, merchant, auction house, bank deposit,
   split). It learns its bag from an attribute (`SetBagID`) precisely so that stays untainted.
   The grid scales as a whole; the template's overlays are laid out for 37 px.
-- Bank facts for the next step: `Enum.BagIndex.Bank`, `BankBag_1..7` and `ReagentBank` are
-  gone. Bank slots are ordinary bags: `CharacterBankTab_1..6` (6-11), `AccountBankTab_1..5`
-  (12-16). A right click on a bag item at the bank deposits into
+- Bank facts: `Enum.BagIndex.Bank`, `BankBag_1..7` and `ReagentBank` are gone. Bank slots
+  are ordinary bags: `CharacterBankTab_1..6` (6-11), `AccountBankTab_1..5` (12-16), so the
+  same item template serves them. A right click on a bag item at the bank deposits into
   `BankFrame:GetActiveBankType()`, which is nil unless Blizzard's `BankFrame` and its panel
-  are shown - so the bank has to be parked like the bags, not replaced.
-  Sorting a bank is `C_Container.SortBank(bankType)`, the only form Blizzard's code uses.
-- `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked.
+  are shown - so `bank.lua` parks `BankFrame` under a hidden parent (and strips its
+  `UIPanelLayout-area`, so the invisible frame does not take the left panel slot) and writes
+  the type we display into `BankFrame.BankPanel.bankType` - what Inventorian does too.
+  The parked frame **must keep a position**: with the panel manager out of the way nothing
+  places it, and Blizzard's `GetContainerScale` does arithmetic on `BankFrame:GetRight()`
+  whenever a bag opens while the bank counts as shown - nil crashed ContainerFrame.lua:1167
+  (2026-09-29). It sits with its right edge on the screen's left edge.
+  Never `BankPanel:SetBankType()`: it rebuilds Blizzard's whole invisible panel.
+  The bank opens and closes on `PLAYER_INTERACTION_MANAGER_FRAME_SHOW/HIDE` for Banker,
+  CharacterBanker and AccountBanker; closing our window calls `C_Bank.CloseBankFrame()`.
+  One bank tab at a time: a tab is 98 slots, six in one grid would be 2000 px tall.
+  Buying a tab goes through `BankPanelPurchaseButtonScriptTemplate` with the
+  `overrideBankType` attribute - Blizzard's own template for addons, so the purchase stays
+  untainted. Sorting a bank is `C_Container.SortBank(bankType)`, the only form Blizzard's
+  code uses; it asks first while the CVar `bankConfirmTabCleanUp` is on.
+- `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked;
+  `/bags bank` prints the bank types, their lock state, tabs and slots.
 
 ## Testing checklist (owner does this in-game)
 
