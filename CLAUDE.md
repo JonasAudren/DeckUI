@@ -91,6 +91,15 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   containers. Find a bar by climbing parents from `ActionButton1` until the parent is `UIParent`
   (`ResolveBar` in `DeckUI_Cross/input.lua`). Hide by reparenting to a hidden frame +
   visibility state driver + SetParent hook.
+- **Hiding the bars took Blizzard's leave-vehicle button with it** (reported 2026-09-29), which
+  left no way out of a vehicle on the Deck. Presumably `MainMenuBarVehicleLeaveButton` hangs
+  under the main bar now - not yet confirmed; `/dc bars` prints its parent chain, so check that
+  in a vehicle and replace this line with the answer. The fix does not depend on it: we carry our own
+  `DeckCrossLeaveVehicle` (movable, "Leave vehicle"), shown whenever `CanExitVehicle()` or
+  `UnitOnTaxi` and none of Blizzard's leave buttons `IsVisible()`, so it never doubles up.
+  It is polled (0.2 s) on purpose: taxis have no clean start event, and Blizzard updates its
+  own button on the same events, so asking about its visibility there would race it.
+  `VehicleExit` / `TaxiRequestEarlyLanding` are not protected - a plain button works in combat.
 - `ActionButtonTemplate` has a `TextOverlayContainer` at frame level 500 whose textures darken the
   button while a modifier is held – strip its textures (`CleanOverlay`).
 - Blizzard's template draws the **icon in the BACKGROUND layer**; anything of ours behind the icon
