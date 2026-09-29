@@ -2,7 +2,7 @@
 
 A compact, controller-friendly interface for World of Warcraft on the **Steam Deck** – that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with five load-on-demand modules; enable or disable each one in `/deck`.
+DeckUI is a hub with six load-on-demand modules; enable or disable each one in `/deck`.
 
 ## DeckUI Orbs – round unit frames
 - Player and target as large orbs: health fills the orb, power runs as a ring around it, cast bar inside the orb
@@ -43,6 +43,13 @@ DeckUI is a hub with five load-on-demand modules; enable or disable each one in 
 - Achievements, Traveler's Log, neighbourhood endeavors, collections and recipes (reagents counted across bags, bank and warband bank), zone widgets
 - Fold single sections or the whole tracker; width, size, text size and height limit per device
 
+## DeckUI Map – minimap and world map (off until you switch it on)
+- **Square minimap** in a plain frame: zone name, clock and your coordinates on its edges
+- Tracking, calendar, addon menu, zoom and addon minimap buttons appear under the mouse; mail, crafting orders and instance difficulty always visible
+- **World map as a movable window**, never full screen, controls under the mouse, quest log closed by default and restyled to match
+- Switches for Blizzard's own map extras: player and cursor coordinates, fade while moving (no option for it in the game)
+- Size and position per device
+
 ## Steam Deck / PC detection
 DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → General → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
 
@@ -58,6 +65,7 @@ ConsolePort ships as several separate addons, so the fix is one checkbox: unchec
 - `/orbs`, `/dc`, `/spec` – jump to a module tab
 - `/bags` – open or close the bags, `/bags config` – the Bags tab
 - `/quests` – fold or unfold the tracker, `/quests config` – the Quests tab, `/quests reset` – bring it back into view
+- `/deckmap` – the Map tab, `/deckmap reset` – bring both maps back to their default places
 
 ## Setup on the Steam Deck
 1. `/dc` → "Set up gamepad (LT/RT)" once (enables the gamepad, LT = Shift, RT = Ctrl)
@@ -76,6 +84,7 @@ DeckUI ships diagnostic commands whose output makes a report much easier to act 
 - `/dc overlay` – the visible parts of a cross button
 - `/bags debug` / `/bags bank` – what the bag and bank windows are built from
 - `/quests debug` – whether Blizzard's tracker is off, and the state of the tracker's buttons
+- `/deckmap debug` – where the minimap sits, the world map's scale and the map options
 
 Turning on Lua errors with `/console scriptErrors 1` before reproducing the problem gives you the actual error text, which is worth more than any description.
 

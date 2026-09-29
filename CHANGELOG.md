@@ -34,7 +34,25 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
     by its frame; width, size, text size and height limit are set
     separately for the Steam Deck and the PC in the new Quests tab.
     `/quests reset` brings it back if it ever ends up out of sight.
-- The settings tabs use a slightly smaller font, so six of them fit.
+- **New module: DeckUI Map.** A tidier minimap and world map, also
+  switched off until you tick "Map" in `/deck` -> General.
+  - **Minimap:** square, in a plain DeckUI frame, with the zone name on
+    top and the clock and your coordinates along the bottom. Tracking,
+    calendar, the addon button menu, zoom and other addons' minimap
+    buttons only show while your mouse is over the map; mail, crafting
+    orders and the instance difficulty always stay. Drag it where you want
+    it and set its size - separately for the Steam Deck and the PC.
+  - **World map:** always a window, never full screen, and movable by the
+    strip along its top edge. Its breadcrumbs and buttons appear under
+    the mouse, it opens without the quest log (the toggle on the map still
+    brings it up), and the quest log beside it now matches DeckUI's look.
+    Its size is set per device too.
+  - Switches for Blizzard's own world map extras: your coordinates, the
+    cursor's coordinates, and fading the map while you move - that last
+    one has no checkbox anywhere in the game's options.
+  - `/deckmap reset` brings both maps back to their default places.
+- The settings window puts its tabs into two rows now that there are
+  seven, and uses a slightly smaller tab font.
 
 ## 1.1.0
 
