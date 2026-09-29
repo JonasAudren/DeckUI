@@ -20,7 +20,8 @@ DeckUI is a hub with four load-on-demand modules; enable or disable each one in 
 - PC: your own key bindings for bars 1 and 2, with the bound keys shown on the buttons
 - Keys are bound to Blizzard's native commands, so **press-and-hold casting** and the **single-button assistant** work, including its changing icon
 - Dimmed out of combat, full brightness in combat or whenever you touch it; size slider
-- Hides Blizzard's bars 1 and 2 (optional)
+- Hides Blizzard's bars 1 and 2 (optional), and brings its own leave-vehicle button so you are never stuck in a vehicle
+- Optional **assistant indicator**: shows the spell the single-button assistant wants next – green ring when you can cast it now, grey with a cooldown swirl when waiting is right
 
 ## DeckUI Spec – spec switcher
 - One round icon per specialization, click to switch (out of combat), gold ring on the active spec
