@@ -97,6 +97,34 @@ local function ItemLevel(bag, slot, itemID)
     return nil
 end
 
+-------------------------------------------------------------------
+-- "Old expansions only": dims everything from the current expansion
+-------------------------------------------------------------------
+-- For clearing out: what is left over from earlier expansions. Session
+-- only on purpose - a filter that is still on after the next login looks
+-- like missing items. The expansion comes from C_Item.GetItemInfo's
+-- expansionID (the 15th return); the current one from the server.
+-- Items the client has not cached yet count as current until their data
+-- arrives (ITEM_DATA_LOAD_RESULT), so nothing is lit up by mistake.
+-- Old really means the item's own expansion: a hearthstone is from 0.
+ns.oldOnly = false
+
+local function CurrentExpansion()
+    return (GetServerExpansionLevel and GetServerExpansionLevel()) or GetExpansionLevel()
+end
+
+function ns.ItemExpansion(itemID)
+    local expansion = select(15, C_Item.GetItemInfo(itemID))
+    if expansion == nil then C_Item.RequestLoadItemDataByID(itemID) end
+    return expansion
+end
+
+function ns.IsOld(itemID)
+    local expansion = itemID and ns.ItemExpansion(itemID)
+    return expansion ~= nil and expansion < CurrentExpansion()
+end
+ns.CurrentExpansion = CurrentExpansion
+
 function ns.UpdateButton(b)
     local bag, slot = b:GetBagID(), b:GetID()
     local info = C_Container.GetContainerItemInfo(bag, slot)
@@ -117,7 +145,10 @@ function ns.UpdateButton(b)
     b:UpdateItemContextMatching()
     b:UpdateCooldown(texture)
     b:SetReadable(info and info.isReadable)
-    b:SetMatchesSearch(not (info and info.isFiltered))
+    -- Dimming is the search's own overlay, so both filters simply combine.
+    local matches = not (info and info.isFiltered)
+    if ns.oldOnly and info then matches = matches and ns.IsOld(info.itemID) end
+    b:SetMatchesSearch(matches)
 
     -- Blizzard marks junk only while a merchant is open. We mark it always:
     -- knowing what to sell before walking to the vendor is the point.
@@ -169,26 +200,12 @@ function ns.NewWindow(name, titleText, opts)
     close:SetPoint("TOPRIGHT", -2, -2)
     w.close = close
 
-    -- BagSearchBoxTemplate feeds C_Container.SetItemSearch, and the game
-    -- answers with isFiltered on every item plus INVENTORY_SEARCH_UPDATE.
-    -- The search is global, so the other windows' boxes follow the text.
-    local search = CreateFrame("EditBox", name .. "Search", w, "BagSearchBoxTemplate")
-    search:SetHeight(20)
-    search:SetPoint("TOPLEFT", PAD + 6, -34)
-    search:SetPoint("RIGHT", w, "RIGHT", -PAD - 30, 0)
-    search:HookScript("OnTextChanged", function(self)
-        local text = self:GetText()
-        for _, other in ipairs(windows) do
-            if other.search ~= self and other.search:GetText() ~= text then
-                other.search:SetText(text)
-            end
-        end
-    end)
-    w.search = search
-
+    -- The buttons right of the search box line up from the right edge:
+    -- sort, the old-expansions filter, and whatever a window adds (it then
+    -- re-anchors the search box's right edge to its own button).
     local sort = CreateFrame("Button", nil, w)
     sort:SetSize(24, 24)
-    sort:SetPoint("LEFT", search, "RIGHT", 4, 0)
+    sort:SetPoint("TOPRIGHT", -12, -32)
     sort:SetNormalAtlas("bags-button-autosort-up")
     sort:SetPushedAtlas("bags-button-autosort-down")
     sort:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
@@ -199,6 +216,42 @@ function ns.NewWindow(name, titleText, opts)
     end)
     sort:SetScript("OnLeave", GameTooltip_Hide)
     w.sort = sort
+
+    local old = CreateFrame("Button", nil, w)
+    old:SetSize(24, 24)
+    old:SetPoint("RIGHT", sort, "LEFT", -4, 0)
+    old.icon = old:CreateTexture(nil, "ARTWORK")
+    old.icon:SetAllPoints()
+    old.icon:SetTexture("Interface\\Icons\\INV_Misc_PocketWatch_01")
+    old.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    old.icon:SetDesaturated(true)
+    old:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    old:SetScript("OnClick", function() ns.SetOldOnly(not ns.oldOnly) end)
+    old:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(ns.oldOnly and "Showing old expansions only" or "Show old expansions only")
+        GameTooltip:AddLine("Dims everything from the current expansion, to find what can go.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    old:SetScript("OnLeave", GameTooltip_Hide)
+    w.old = old
+
+    -- BagSearchBoxTemplate feeds C_Container.SetItemSearch, and the game
+    -- answers with isFiltered on every item plus INVENTORY_SEARCH_UPDATE.
+    -- The search is global, so the other windows' boxes follow the text.
+    local search = CreateFrame("EditBox", name .. "Search", w, "BagSearchBoxTemplate")
+    search:SetHeight(20)
+    search:SetPoint("TOPLEFT", PAD + 6, -34)
+    search:SetPoint("RIGHT", old, "LEFT", -6, 0)
+    search:HookScript("OnTextChanged", function(self)
+        local text = self:GetText()
+        for _, other in ipairs(windows) do
+            if other.search ~= self and other.search:GetText() ~= text then
+                other.search:SetText(text)
+            end
+        end
+    end)
+    w.search = search
 
     -- The grid scales as a whole: the template's textures are laid out for
     -- 37 pixels, so resizing single buttons would tear their overlays apart.
@@ -356,6 +409,14 @@ function ns.FlushAll()
     for _, w in ipairs(windows) do ns.Flush(w) end
 end
 
+-- one state for every window: the bags and the bank dim together
+function ns.SetOldOnly(state)
+    ns.oldOnly = state
+    for _, w in ipairs(windows) do w.old.icon:SetDesaturated(not state) end
+    ns.RequestRefresh()
+    ns.FlushAll()
+end
+
 local updater = CreateFrame("Frame")
 updater:SetScript("OnUpdate", function()
     for _, w in ipairs(windows) do
@@ -376,6 +437,7 @@ for _, e in ipairs({
     "UNIT_QUEST_LOG_CHANGED", "PLAYER_MONEY", "ACCOUNT_MONEY", "CURRENCY_DISPLAY_UPDATE",
     "PLAYER_EQUIPMENT_CHANGED", "PLAYERBANKSLOTS_CHANGED", "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED",
     "BAG_CONTAINER_UPDATE", "BANK_TABS_CHANGED", "BANK_TAB_SETTINGS_UPDATED",
+    "ITEM_DATA_LOAD_RESULT",
 }) do ev:RegisterEvent(e) end
 
 -- items actually moved; a window that sorts by content (the category view,
@@ -384,6 +446,9 @@ for _, e in ipairs({
 local MOVE_EVENTS = { BAG_UPDATE_DELAYED = true, BAG_NEW_ITEMS_UPDATED = true }
 
 ev:SetScript("OnEvent", function(_, event)
+    -- item data arrives all the time; it only matters to the old-expansion
+    -- filter, which asked for it
+    if event == "ITEM_DATA_LOAD_RESULT" and not ns.oldOnly then return end
     if LAYOUT_EVENTS[event] then ns.RequestLayout() else ns.RequestRefresh() end
     if MOVE_EVENTS[event] then
         for _, w in ipairs(windows) do

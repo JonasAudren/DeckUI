@@ -214,6 +214,10 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
   which needs no server round trip. Items move between groups, so this view re-lays out on
   `BAG_UPDATE_DELAYED` (`w.relayoutOnMove`) - but never on `ITEM_LOCK_CHANGED`, which fires on
   pickup and would reshuffle the grid under the cursor.
+- **Old-expansions filter** (pocket-watch button, both windows, session only): dims items whose
+  `expansionID` (15th return of `C_Item.GetItemInfo`) is below `GetServerExpansionLevel()`,
+  through the search's own overlay so it combines with a search. Uncached items count as
+  current until `ITEM_DATA_LOAD_RESULT`. "Old" is the item's own expansion - a hearthstone is 0.
 - `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked;
   `/bags bank` prints the bank types, their lock state, tabs and slots.
 

@@ -201,14 +201,11 @@ function ns.SetCategoryView(state)
     ns.Flush(window)
 end
 
--- room for the view button between the search box and the sort button
-window.search:SetPoint("RIGHT", window, "RIGHT", -68, 0)
-window.sort:ClearAllPoints()
-window.sort:SetPoint("TOPRIGHT", -12, -32)
-
+-- the view button joins the row right of the search box
 local viewButton = CreateFrame("Button", nil, window)
 viewButton:SetSize(24, 24)
-viewButton:SetPoint("RIGHT", window.sort, "LEFT", -4, 0)
+viewButton:SetPoint("RIGHT", window.old, "LEFT", -4, 0)
+window.search:SetPoint("RIGHT", viewButton, "LEFT", -6, 0)
 viewButton:SetNormalAtlas("bags-icon-multiple")
 viewButton:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
 viewButton:SetScript("OnClick", function()
@@ -312,6 +309,24 @@ function ns.PrintBags()
         if f and f:GetParent() == hider then parked = parked + 1 end
     end
     print(("  Blizzard bag frames parked: %d of %d"):format(parked, #BlizzardFrames()))
+
+    -- what the old-expansions filter sees: items per expansion, "?" = not cached yet
+    local perExpansion = {}
+    for _, bag in ipairs(ALL) do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) do
+            local info = C_Container.GetContainerItemInfo(bag, slot)
+            if info then
+                local e = ns.ItemExpansion(info.itemID)
+                e = e == nil and "?" or tostring(e)
+                perExpansion[e] = (perExpansion[e] or 0) + 1
+            end
+        end
+    end
+    local parts = {}
+    for e, n in pairs(perExpansion) do parts[#parts + 1] = e .. ":" .. n end
+    table.sort(parts)
+    print(("  current expansion %s; items per expansion %s"):format(
+        tostring(ns.CurrentExpansion()), table.concat(parts, "  ")))
 end
 
 -------------------------------------------------------------------
