@@ -45,6 +45,6 @@ D.RegisterModule("Cross", {
         D.Label(c, "Assistant indicator", -490, 15)
         D.Checkbox(c, "Show what the assistant will cast next", -512, db, "showAssist",
             function(v) ns.SetAssistShown(v) end)
-        D.Hint(c, "Green ring: castable now. Grey with a swirl: waiting is correct. Move it with /deck unlock.", -544)
+        D.Hint(c, "Green ring: castable now. Grey with a swirl: waiting is correct. Needs the assistant placed on one of your action bars. Move it with /deck unlock.", -544)
     end,
 })

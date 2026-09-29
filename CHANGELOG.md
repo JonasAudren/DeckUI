@@ -16,6 +16,14 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   can get out, and on a flight path it asks for an early landing. It works in
   combat, never shows up next to Blizzard's own button, and can be moved with
   `/deck unlock` like every other frame.
+- New, optional: an **assistant indicator** that shows the spell the
+  single-button assistant wants to cast next. A green ring means you can
+  cast it right now; grey with a cooldown swirl means it is not ready yet
+  and waiting is the right call. It answers the question a quiet button
+  cannot: is there really nothing to press, or am I missing something?
+  Switch it on in the Cross settings under "Assistant indicator" and move
+  it with `/deck unlock`. The assistant has to sit on one of your action
+  bars for it to work.
 
 ## 1.0.2
 
