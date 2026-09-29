@@ -50,7 +50,7 @@ jobs:
         shell: pwsh
         run: |
           # The suffix decides, and it stays part of the version: the archive
-          # and the six .toc then say the same as the file page, so a player
+          # and the seven .toc then say the same as the file page, so a player
           # can read off what they installed. A tag without a suffix is a full
           # release and reaches everyone - that is the one to be sure about
           # before pushing. A hand start with "auto" asks the same question,

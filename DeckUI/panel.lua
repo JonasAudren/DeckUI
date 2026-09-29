@@ -4,7 +4,7 @@ local D = DeckUI
 -- Window
 -------------------------------------------------------------------
 local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 720)   -- the General tab ends with a checkbox at -590, 28 high
+panel:SetSize(340, 748)   -- height follows the tab rows, see LayoutTabs
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -38,18 +38,33 @@ panel.tabs     = {}
 panel.contents = {}
 panel.tabOrder = {}
 
+-- Up to six tabs share one row; beyond that they go into two rows and
+-- the window grows by one row's height, content moving down with it.
+-- Seven in one row would leave 42 pixels each - too narrow for "General"
+-- in any readable size.
+local BASE_HEIGHT = 748   -- the General tab ends with a checkbox at -618, 28 high
+local ROW = 30
+
 local function LayoutTabs()
     local n = #panel.tabOrder
-    local w = math.min(100, (320 - (n - 1) * 4) / n)
+    local rows = n > 6 and 2 or 1
+    local perRow = math.ceil(n / rows)
+    local w = math.min(100, (320 - (perRow - 1) * 4) / perRow)
     -- six tabs leave 50 pixels each, where "General" in 13 would be cut off
     local size = w < 60 and 11 or 13
     for i, key in ipairs(panel.tabOrder) do
         local tab = panel.tabs[key]
+        local row, col = math.floor((i - 1) / perRow), (i - 1) % perRow
         tab:SetSize(w, 26)
         tab:GetFontString():SetFont(D.FONT, size, "OUTLINE")
         tab:ClearAllPoints()
-        tab:SetPoint("TOPLEFT", 10 + (i - 1) * (w + 4), -40)
+        tab:SetPoint("TOPLEFT", 10 + col * (w + 4), -40 - row * ROW)
     end
+    local top = -76 - (rows - 1) * ROW
+    for _, content in pairs(panel.contents) do
+        content:SetPoint("TOPLEFT", 10, top)
+    end
+    panel:SetHeight(BASE_HEIGHT + (rows - 1) * ROW)
 end
 
 function panel:AddTab(key, def)
@@ -120,11 +135,13 @@ panel:AddTab("General", {
             function(v) D.SetModuleEnabled("Bags", v) end)
         D.Checkbox(c, "Quests (objective tracker)", -140, function() return DeckUIDB.modules end, "Quests",
             function(v) D.SetModuleEnabled("Quests", v) end)
+        D.Checkbox(c, "Map (minimap and world map)", -168, function() return DeckUIDB.modules end, "Map",
+            function(v) D.SetModuleEnabled("Map", v) end)
 
-        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -172)
+        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -200)
 
-        D.Label(c, "Device", -204, 15)
-        local devBtn = D.Button(c, "Device", -226, function() end)
+        D.Label(c, "Device", -232, 15)
+        local devBtn = D.Button(c, "Device", -254, function() end)
         devBtn:SetWidth(300)
         devBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
         devBtn:SetScript("OnClick", function(b)
@@ -135,7 +152,7 @@ panel:AddTab("General", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, devBtn)
 
-        D.Checkbox(c, "Cross hotbar only on Steam Deck", -264, db, "crossDeckOnly",
+        D.Checkbox(c, "Cross hotbar only on Steam Deck", -292, db, "crossDeckOnly",
             function(v)
                 if not v and DeckUIDB.modules.Cross then
                     D.SetModuleEnabled("Cross", true)
@@ -145,15 +162,15 @@ panel:AddTab("General", {
             end)
 
         local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
-        D.Checkbox(c, "Set Blizzard UI scale per device at login", -292, db, "applyUiScale",
+        D.Checkbox(c, "Set Blizzard UI scale per device at login", -320, db, "applyUiScale",
             function(v) if v then D.ApplyUiScale() else print("DeckUI: UI scale is no longer touched (current value stays until you change it in Options).") end end)
-        D.Slider(c, "UI scale on Steam Deck", -326, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
+        D.Slider(c, "UI scale on Steam Deck", -354, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
             function(v) if D.IsDeck() then D.ApplyUiScale() end end)
-        D.Slider(c, "UI scale on PC", -390, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
+        D.Slider(c, "UI scale on PC", -418, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
             function(v) if not D.IsDeck() then D.ApplyUiScale() end end)
 
-        D.Label(c, "Positions (per device)", -454, 15)
-        local unlockBtn = D.Button(c, "Unlock frames", -476, function() end)
+        D.Label(c, "Positions (per device)", -482, 15)
+        local unlockBtn = D.Button(c, "Unlock frames", -504, function() end)
         unlockBtn:SetScript("OnClick", function(b)
             D.SetUnlocked(not D.unlocked)
             b:SetText(D.unlocked and "Lock frames" or "Unlock frames")
@@ -164,10 +181,10 @@ panel:AddTab("General", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, unlockBtn)
 
-        D.Button(c, "Reset all positions", -516, D.ResetPositions)
+        D.Button(c, "Reset all positions", -544, D.ResetPositions)
 
-        D.Label(c, "Other", -568, 15)
-        D.Checkbox(c, "Show minimap button", -590, db, "showMinimap",
+        D.Label(c, "Other", -596, 15)
+        D.Checkbox(c, "Show minimap button", -618, db, "showMinimap",
             function(v) D.SetMinimapShown(v) end)
     end,
 })

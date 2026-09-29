@@ -16,13 +16,14 @@ D.MODULE_ADDONS = {
     Spec  = "DeckUI_Spec",
     Bags  = "DeckUI_Bags",
     Quests = "DeckUI_Quests",
+    Map   = "DeckUI_Map",
 }
-D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests" }
+D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests", "Map" }
 
 -- Modules that start switched off, for new installs and for players who
--- update into them alike. Replacing the bag window or the quest tracker
--- is not something an update should do to anyone unasked.
-D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true }
+-- update into them alike. Replacing the bag window, the quest tracker or
+-- the maps is not something an update should do to anyone unasked.
+D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true, Map = true }
 
 D.modules = {}   -- key -> { title = ..., build = function(content) end }
 
@@ -350,7 +351,7 @@ end
 -- Startup: load settings, load enabled modules
 -------------------------------------------------------------------
 local DEFAULTS = {
-    modules       = { Orbs = true, Cross = true, Spec = true, Bags = false, Quests = false },
+    modules       = { Orbs = true, Cross = true, Spec = true, Bags = false, Quests = false, Map = false },
     showMinimap   = true,
     minimapAngle  = 220,
     device        = "auto",

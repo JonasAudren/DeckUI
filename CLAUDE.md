@@ -19,18 +19,19 @@ DeckUI_Cross/    module: FFXIV-style cross hotbar (/dc)           libs/LibStub, 
 DeckUI_Spec/     module: spec switcher (/spec, /qs)
 DeckUI_Bags/     module: bags, bank, warband bank (/bags)        off by default
 DeckUI_Quests/   module: own objective tracker (/quests)        off by default
+DeckUI_Map/      module: square minimap, smaller world map (/deckmap) off by default
 ```
 Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
 `D.RegisterModule(key, { title, build = function(content) end })`. The hub loads
 enabled modules from `DeckUIDB.modules` at `ADDON_LOADED`.
 
-`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the six addon
+`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the seven addon
 folders at the **top level** (a wrapping folder would install everything one level too
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
-other libraries bundle. It aborts if the six `.toc` files disagree on version or interface.
+other libraries bundle. It aborts if the seven `.toc` files disagree on version or interface.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
-in all six at once - `package.ps1 -Version` only stamps the staged copies, so without
+in all seven at once - `package.ps1 -Version` only stamps the staged copies, so without
 the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
 changelog the release sends along: the `## <version>` section of `CHANGELOG.md` when there
 is one, otherwise the commit subjects since the previous tag. Write the section - the
@@ -255,13 +256,53 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
 - `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have
   widgets, and the secure button state.
 
+## Map module (not yet tested in game)
+
+A square minimap in a DeckUI frame and a smaller world map. Built from Blizzard's 12.1.0
+source (read 2026-09-29).
+- **The minimap moves out of Edit Mode's reach.** `MinimapCluster` is an Edit Mode system
+  (`Enum.EditModeSystem.Minimap`); its SetPoint/SetScale/ClearAllPoints are Edit Mode
+  overrides re-applied on every layout update (EDIT_MODE_LAYOUTS_UPDATED, spec change, ...).
+  Edit Mode never touches `Minimap` itself, so `Minimap` is reparented into our frame and the
+  cluster is parked under a hidden parent. Nothing in the minimap is protected.
+- Blizzard's pieces come along: tracking, calendar, addon compartment (on mouse-over, like
+  the zoom buttons), mail/crafting indicators and instance difficulty (always). Blizzard
+  re-anchors some of them (`SetHeaderUnderneath`, `MiniMapIndicatorFrame_UpdatePosition`),
+  so they are re-placed from post-hooks on those. Zone text, clock and coordinates are ours.
+- Square: `Minimap:SetMaskTexture(WHITE8x8)`, the round `MinimapCompassTexture` at alpha 0,
+  and the global `GetMinimapShape() = "SQUARE"` - an addon convention Blizzard does not
+  define; LibDBIcon and DeckUI's own minimap button (`D.UpdateMinimapButton`) read it.
+- **The world map is only scaled** (`WorldMapFrame:SetScale`): it is a UI panel re-anchored by
+  the panel manager on every update, which divides by the frame's scale - a scale survives,
+  a SetPoint would not. Never call `UpdateUIPanelPositions` from our code: it would run the
+  panel manager tainted, the classic path to panels blocked in combat.
+- **The world map is a minimal window** (owner's choice B+C, 2026-09-29): frame art at alpha 0,
+  a thin DeckUI edge, breadcrumbs/close/filter/floor/side-panel toggle only under the mouse,
+  maximize button invisible and unclickable, CVar `miniWorldMap` = 1 and `questLogOpen` = 0 at
+  login. **The 67-pixel title band stays**: Blizzard's fixed `TITLE_CANVAS_SPACER_FRAME_HEIGHT`,
+  and shrinking it means changing the size `Minimize()` hands to the panel manager - tainted,
+  that blocks panels in combat.
+- **The world map is movable** because it left the panel manager: `UIPanelLayout-defined` =
+  true and no `UIPanelLayout-area`, so Show/HideUIPanel just show and hide it (the BankFrame
+  trick from Bags), Escape via UISpecialFrames, dragged by a 24-px strip above the breadcrumbs
+  (a drag on the map pans it). Other left panels no longer make room for it.
+- **The quest log beside it** (QuestMapFrame) is restyled the same way: parchment backgrounds,
+  `questlog-frame` borders and the side tabs' `common-sidetab` art at alpha 0 or replaced by
+  flat colour, one dark panel behind the content. Quest lines, headers and rewards stay.
+- Coordinates and fading on the world map are Blizzard's own CVars (`worldMapShowPlayerCoords`,
+  `worldMapShowCursorCoords`, `mapFade` - the last has no checkbox in the game's options),
+  driven through `ns.cvars`, a table proxy so `D.Checkbox` can write CVars.
+- `Enum.AddOnRestrictionType.Map` exists ("a map that applies addon restrictions"), but
+  nothing says which maps or APIs; minimap coordinates are simply blank when the position
+  API returns nothing. `/deckmap debug` prints whether the restriction is active.
+
 ## Testing checklist (owner does this in-game)
 
 1. `/console scriptErrors 1`, `/reload`, no error window.
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all six tabs works without error.
+5. Every checkbox / slider / button in all seven tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked

@@ -32,11 +32,25 @@ border:SetSize(54, 54)
 border:SetPoint("TOPLEFT")
 border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
 
+-- Round maps keep the button on a circle. A square one (GetMinimapShape,
+-- the convention addon button libraries use; DeckUI Map sets it) puts it
+-- on the square's edge instead: the circle through the corners, clamped
+-- to the sides - otherwise a small square map has it sitting on the map.
 local function UpdatePosition()
     local angle = math.rad(DeckUIDB.minimapAngle or 220)
+    local x, y = math.cos(angle), math.sin(angle)
+    if GetMinimapShape and GetMinimapShape() == "SQUARE" then
+        local edge = Minimap:GetWidth() / 2 + 6
+        local r = edge * math.sqrt(2)
+        x = math.max(-edge, math.min(edge, x * r))
+        y = math.max(-edge, math.min(edge, y * r))
+    else
+        x, y = x * RADIUS, y * RADIUS
+    end
     mmb:ClearAllPoints()
-    mmb:SetPoint("CENTER", Minimap, "CENTER", math.cos(angle) * RADIUS, math.sin(angle) * RADIUS)
+    mmb:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
+D.UpdateMinimapButton = UpdatePosition
 
 local function OnDragUpdate()
     local mx, my = Minimap:GetCenter()
