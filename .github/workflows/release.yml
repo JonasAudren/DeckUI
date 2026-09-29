@@ -39,7 +39,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # The changelog is built from the commits since the previous tag,
           # and the default shallow clone carries neither tags nor history.
@@ -105,7 +105,7 @@ jobs:
           ./upload-curseforge.ps1 @params
 
       - name: Keep the built zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: DeckUI-${{ steps.plan.outputs.version }}
           path: ${{ steps.build.outputs.zip }}
