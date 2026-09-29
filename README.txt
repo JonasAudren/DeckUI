@@ -4,13 +4,15 @@ DeckUI
 A compact, controller-friendly interface for World of Warcraft on the Steam
 Deck - that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with three load-on-demand modules. Enable or disable each one
+DeckUI is a hub with four load-on-demand modules. Enable or disable each one
 in /deck; what you do not use is never loaded.
 
   DeckUI          the hub: device detection, settings window, movable frames
   DeckUI Orbs     round unit frames (player, target, focus, pet, boss)
   DeckUI Cross    FFXIV-style cross hotbar for controller and keyboard
   DeckUI Spec     one-click specialization switcher
+  DeckUI Bags     all bags in one window with search and sorting
+                  (off until you switch it on in /deck)
 
 Requires World of Warcraft Retail, Interface 120100 (Midnight).
 License: MIT, see LICENSE.txt. The bundled libraries and their
@@ -20,16 +22,16 @@ licences are listed in THIRD-PARTY.txt.
 Installation
 ------------
 1. Quit the game completely.
-2. Copy all four folders into
+2. Copy all five folders into
 
      World of Warcraft\_retail_\Interface\AddOns\
 
    so that you end up with AddOns\DeckUI, AddOns\DeckUI_Orbs,
-   AddOns\DeckUI_Cross and AddOns\DeckUI_Spec.
+   AddOns\DeckUI_Cross, AddOns\DeckUI_Spec and AddOns\DeckUI_Bags.
 3. Start the game. In the addon list on the character screen, DeckUI,
-   DeckUI Orbs, DeckUI Cross and DeckUI Spec must all be checked. The three
-   modules are marked "load on demand" and depend on the hub - if the hub is
-   unchecked, nothing loads.
+   DeckUI Orbs, DeckUI Cross, DeckUI Spec and DeckUI Bags must all be
+   checked. The four modules are marked "load on demand" and depend on
+   the hub - if the hub is unchecked, nothing loads.
 4. Log in. The orbs, the cross hotbar and the spec bar are there.
 
 A full restart is needed after installing or updating; /reload is not enough
@@ -84,6 +86,8 @@ Commands
   /dc                      jump to the Cross tab
   /spec  or  /qs           toggle the spec bar
   /spec config             jump to the Spec tab
+  /bags                    open/close the bags (like B)
+  /bags config             jump to the Bags tab
 
 Diagnostics for the cross hotbar, useful when reporting a problem:
 

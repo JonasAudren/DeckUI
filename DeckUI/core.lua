@@ -14,8 +14,14 @@ D.MODULE_ADDONS = {
     Orbs  = "DeckUI_Orbs",
     Cross = "DeckUI_Cross",
     Spec  = "DeckUI_Spec",
+    Bags  = "DeckUI_Bags",
 }
-D.MODULE_ORDER = { "Orbs", "Cross", "Spec" }
+D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags" }
+
+-- Modules that start switched off, for new installs and for players who
+-- update into them alike. Replacing the bag window is not something an
+-- update should do to anyone unasked.
+D.MODULE_OFF_BY_DEFAULT = { Bags = true }
 
 D.modules = {}   -- key -> { title = ..., build = function(content) end }
 
@@ -266,8 +272,24 @@ function D.MakeMovable(frame, key, db)
     end)
 
     table.insert(D.movables, entry)
+    frame.deckMovable = entry
     ApplyPosition(entry)
     overlay:SetShown(D.unlocked)
+end
+
+-- Windows (the bag window) are also dragged directly, without /deck unlock,
+-- the way every window in the game is. Same saved position, same per-device
+-- table, so /deck reset still brings them back. Call after D.MakeMovable.
+-- Unlike the HUD frames these are not protected, so combat does not matter.
+function D.MakeDraggable(frame)
+    local entry = frame.deckMovable
+    frame:EnableMouse(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        if entry then SavePosition(entry) end
+    end)
 end
 
 function D.SetUnlocked(state)
@@ -298,7 +320,7 @@ end
 -- Startup: load settings, load enabled modules
 -------------------------------------------------------------------
 local DEFAULTS = {
-    modules       = { Orbs = true, Cross = true, Spec = true },
+    modules       = { Orbs = true, Cross = true, Spec = true, Bags = false },
     showMinimap   = true,
     minimapAngle  = 220,
     device        = "auto",
@@ -329,7 +351,7 @@ ev:SetScript("OnEvent", function(self, event, name)
         if DeckUIDB[k] == nil then DeckUIDB[k] = v end
     end
     for _, key in ipairs(D.MODULE_ORDER) do
-        if DeckUIDB.modules[key] == nil then DeckUIDB.modules[key] = true end
+        if DeckUIDB.modules[key] == nil then DeckUIDB.modules[key] = not D.MODULE_OFF_BY_DEFAULT[key] end
     end
     -- one-time migration: Cross used to be Deck-only by default
     if not DeckUIDB.migratedCrossPC then

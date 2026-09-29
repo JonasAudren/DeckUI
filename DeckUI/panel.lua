@@ -4,7 +4,7 @@ local D = DeckUI
 -- Window
 -------------------------------------------------------------------
 local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 660)
+panel:SetSize(340, 690)   -- the General tab ends with a checkbox at -562, 28 high
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -113,11 +113,13 @@ panel:AddTab("General", {
             function(v) D.SetModuleEnabled("Cross", v) end)
         D.Checkbox(c, "Spec (spec switcher)", -84, function() return DeckUIDB.modules end, "Spec",
             function(v) D.SetModuleEnabled("Spec", v) end)
+        D.Checkbox(c, "Bags (bags and banks)", -112, function() return DeckUIDB.modules end, "Bags",
+            function(v) D.SetModuleEnabled("Bags", v) end)
 
-        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -116)
+        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -144)
 
-        D.Label(c, "Device", -148, 15)
-        local devBtn = D.Button(c, "Device", -170, function() end)
+        D.Label(c, "Device", -176, 15)
+        local devBtn = D.Button(c, "Device", -198, function() end)
         devBtn:SetWidth(300)
         devBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
         devBtn:SetScript("OnClick", function(b)
@@ -128,7 +130,7 @@ panel:AddTab("General", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, devBtn)
 
-        D.Checkbox(c, "Cross hotbar only on Steam Deck", -208, db, "crossDeckOnly",
+        D.Checkbox(c, "Cross hotbar only on Steam Deck", -236, db, "crossDeckOnly",
             function(v)
                 if not v and DeckUIDB.modules.Cross then
                     D.SetModuleEnabled("Cross", true)
@@ -138,15 +140,15 @@ panel:AddTab("General", {
             end)
 
         local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
-        D.Checkbox(c, "Set Blizzard UI scale per device at login", -236, db, "applyUiScale",
+        D.Checkbox(c, "Set Blizzard UI scale per device at login", -264, db, "applyUiScale",
             function(v) if v then D.ApplyUiScale() else print("DeckUI: UI scale is no longer touched (current value stays until you change it in Options).") end end)
-        D.Slider(c, "UI scale on Steam Deck", -270, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
+        D.Slider(c, "UI scale on Steam Deck", -298, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
             function(v) if D.IsDeck() then D.ApplyUiScale() end end)
-        D.Slider(c, "UI scale on PC", -334, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
+        D.Slider(c, "UI scale on PC", -362, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
             function(v) if not D.IsDeck() then D.ApplyUiScale() end end)
 
-        D.Label(c, "Positions (per device)", -398, 15)
-        local unlockBtn = D.Button(c, "Unlock frames", -420, function() end)
+        D.Label(c, "Positions (per device)", -426, 15)
+        local unlockBtn = D.Button(c, "Unlock frames", -448, function() end)
         unlockBtn:SetScript("OnClick", function(b)
             D.SetUnlocked(not D.unlocked)
             b:SetText(D.unlocked and "Lock frames" or "Unlock frames")
@@ -157,10 +159,10 @@ panel:AddTab("General", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, unlockBtn)
 
-        D.Button(c, "Reset all positions", -460, D.ResetPositions)
+        D.Button(c, "Reset all positions", -488, D.ResetPositions)
 
-        D.Label(c, "Other", -512, 15)
-        D.Checkbox(c, "Show minimap button", -534, db, "showMinimap",
+        D.Label(c, "Other", -540, 15)
+        D.Checkbox(c, "Show minimap button", -562, db, "showMinimap",
             function(v) D.SetMinimapShown(v) end)
     end,
 })

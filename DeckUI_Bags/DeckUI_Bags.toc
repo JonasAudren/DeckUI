@@ -1,0 +1,17 @@
+## Interface: 120100
+## Title: DeckUI Bags
+## Notes: DeckUI module: bags, character bank and warband bank in one grid each
+## Author: Gottlieb
+## Version: 1.0.3
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/JonasAudren/DeckUI
+## X-Curse-Project-ID: 1699742
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckBagsDB
+
+core.lua
+bags.lua
+bank.lua
+config.lua

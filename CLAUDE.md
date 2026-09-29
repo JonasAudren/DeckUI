@@ -17,18 +17,19 @@ DeckUI_Orbs/     module: round unit frames on oUF (/orbs)         libs/oUF
 DeckUI_Cross/    module: FFXIV-style cross hotbar (/dc)           libs/LibStub, CallbackHandler, LibActionButton-1.0
                  assist.lua: the assistant indicator, a movable frame of its own
 DeckUI_Spec/     module: spec switcher (/spec, /qs)
+DeckUI_Bags/     module: bag window, later the banks (/bags)    off by default
 ```
 Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
 `D.RegisterModule(key, { title, build = function(content) end })`. The hub loads
 enabled modules from `DeckUIDB.modules` at `ADDON_LOADED`.
 
-`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the four addon
+`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the five addon
 folders at the **top level** (a wrapping folder would install everything one level too
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
-other libraries bundle. It aborts if the four `.toc` files disagree on version or interface.
+other libraries bundle. It aborts if the five `.toc` files disagree on version or interface.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
-in all four at once - `package.ps1 -Version` only stamps the staged copies, so without
+in all five at once - `package.ps1 -Version` only stamps the staged copies, so without
 the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
 changelog the release sends along: the `## <version>` section of `CHANGELOG.md` when there
 is one, otherwise the commit subjects since the previous tag. Write the section - the
@@ -173,13 +174,33 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - oUF: `ClassPower` / `Runes` dots are StatusBars with a masked WHITE8x8 fill; `[deck:hpshort]`
   is our custom tag.
 
+## Bags module (in progress, not yet tested in game)
+
+Built from Blizzard's 12.1.0 source (Gethe/wow-ui-source, `live`, read 2026-09-29), not from
+memory - the bank changed completely in 11.2. Plan: one grid first, categories second.
+- **Blizzard's bag frames keep running, parked under a hidden frame**; our window shows while
+  `IsAnyBagOpen()` says so (hooks on the open/close functions plus a 0.2 s poll). We do not
+  replace `ToggleAllBags` and friends: the bank's `OnShow` calls `OpenAllBags`, and our code in
+  that call chain would taint the bank frame for the rest of it.
+- Item buttons are **Blizzard's `ContainerFrameItemButtonTemplate`**, with no click script of
+  ours: its handler covers every case (potion in combat, merchant, auction house, bank deposit,
+  split). It learns its bag from an attribute (`SetBagID`) precisely so that stays untainted.
+  The grid scales as a whole; the template's overlays are laid out for 37 px.
+- Bank facts for the next step: `Enum.BagIndex.Bank`, `BankBag_1..7` and `ReagentBank` are
+  gone. Bank slots are ordinary bags: `CharacterBankTab_1..6` (6-11), `AccountBankTab_1..5`
+  (12-16). A right click on a bag item at the bank deposits into
+  `BankFrame:GetActiveBankType()`, which is nil unless Blizzard's `BankFrame` and its panel
+  are shown - so the bank has to be parked like the bags, not replaced.
+  Sorting a bank is `C_Container.SortBank(bankType)`, the only form Blizzard's code uses.
+- `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked.
+
 ## Testing checklist (owner does this in-game)
 
 1. `/console scriptErrors 1`, `/reload`, no error window.
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all four tabs works without error.
+5. Every checkbox / slider / button in all five tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked

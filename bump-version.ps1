@@ -1,15 +1,15 @@
 <#
-    bump-version.ps1 - raise ## Version in the four .toc files at once.
+    bump-version.ps1 - raise ## Version in the five .toc files at once.
 
     package.ps1 -Version stamps the release version into the staged copies
     only, so the repository keeps whatever its .toc files say. That is right
     for the build, but it means the repository and CurseForge drift apart
-    unless the version is raised here first. Four files, one line each, and
+    unless the version is raised here first. Five files, one line each, and
     the build only prints a yellow note when they disagree - easy to forget,
     hence this script.
 
     ## Interface can be raised in the same go, for the day a game patch
-    lands: package.ps1 aborts when the four files disagree on it.
+    lands: package.ps1 aborts when the five files disagree on it.
 
     The files are written through .NET without a BOM and keep their line
     endings, for the reason package.ps1 explains: Set-Content puts a BOM in
@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root   = $PSScriptRoot
-$addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec")
+$addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec", "DeckUI_Bags")
 
 $newVersion = $Version -replace "^v", ""
 
