@@ -17,19 +17,20 @@ DeckUI_Orbs/     module: round unit frames on oUF (/orbs)         libs/oUF
 DeckUI_Cross/    module: FFXIV-style cross hotbar (/dc)           libs/LibStub, CallbackHandler, LibActionButton-1.0
                  assist.lua: the assistant indicator, a movable frame of its own
 DeckUI_Spec/     module: spec switcher (/spec, /qs)
-DeckUI_Bags/     module: bag window, later the banks (/bags)    off by default
+DeckUI_Bags/     module: bags, bank, warband bank (/bags)        off by default
+DeckUI_Quests/   module: own objective tracker (/quests)        off by default
 ```
 Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
 `D.RegisterModule(key, { title, build = function(content) end })`. The hub loads
 enabled modules from `DeckUIDB.modules` at `ADDON_LOADED`.
 
-`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the five addon
+`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the six addon
 folders at the **top level** (a wrapping folder would install everything one level too
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
-other libraries bundle. It aborts if the five `.toc` files disagree on version or interface.
+other libraries bundle. It aborts if the six `.toc` files disagree on version or interface.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
-in all five at once - `package.ps1 -Version` only stamps the staged copies, so without
+in all six at once - `package.ps1 -Version` only stamps the staged copies, so without
 the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
 changelog the release sends along: the `## <version>` section of `CHANGELOG.md` when there
 is one, otherwise the commit subjects since the previous tag. Write the section - the
@@ -221,13 +222,46 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
 - `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked;
   `/bags bank` prints the bank types, their lock state, tabs and slots.
 
+## Quests module (quests tested in game 2026-09-29; the rest not yet)
+
+Our own objective tracker, replacing Blizzard's completely. Built from Blizzard's 12.1.0
+source (read 2026-09-29). Sections in Blizzard's order: Scenario (with Mythic+, delve header,
+bonus steps, scenario spells), Zone widgets, Campaign, Quests, Collections, Achievements,
+Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
+- Sections register with `ns.RegisterSection(key, { title, order, Collect, Init })`;
+  `core.lua` draws whatever entries they return, redraws at most once per frame, and a
+  section that errors shows an error line instead of taking the others down.
+- **Blizzard's tracker is switched off the kiosk way**: `SetCanAddModules(false)` +
+  `RemoveAllModules()` at PLAYER_LOGIN, before `ObjectiveTrackerManager:Init` (which waits for
+  PLAYER_ENTERING_WORLD), so no module is ever added and none registers an event. Then
+  `ObjectiveTrackerFrame:Hide()` - switched on mid-session, the modules are frozen but alive.
+  The frame keeps its own QUEST_ACCEPTED auto-watch (CVar `autoQuestWatch`).
+  **Do not go back to removing single modules** (`container:RemoveModule`): that writes into
+  Blizzard's module list and taints every later layout of the modules left behind - their
+  quest item and scenario spell buttons would be blocked in combat. That was the first
+  version, replaced the same day once everything was covered here.
+- **Quest items and scenario spells are `SecureActionButtonTemplate`** (type "item" /
+  "spell") - Blizzard's buttons call `UseQuestLogSpecialItem` / `CastSpellByID` from
+  untainted code, which ours is not. Secure buttons cannot be moved in combat, and neither
+  can anything anchored to them, so they hang off UIParent at screen coordinates copied from
+  the rows out of combat and are re-placed on PLAYER_REGEN_ENABLED. Spell cooldowns go into
+  the Cooldown frame untouched (secret values, see the Cross notes).
+- **Widgets** (zone set `C_UIWidgetManager.GetObjectiveTrackerWidgetSetID()`, the delve header
+  = step widgetSetID, scenario sets 514 top / 252 bottom) live in our own
+  `UIWidgetContainerTemplate` frames. A container not drawn is parked off-screen with alpha 0,
+  **never hidden**: the widget layout runs in OnUpdate, and a hidden frame gets none.
+- Blizzard shows no +2/+3 chest times; ours use the keystone rule (80% / 60% of the limit).
+- The tracker grows from its top edge (`D.PinTopLeft`); `/quests reset` brings it back.
+- `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have
+  widgets, and the secure button state.
+
 ## Testing checklist (owner does this in-game)
 
 1. `/console scriptErrors 1`, `/reload`, no error window.
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all five tabs works without error.
+5. Every checkbox / slider / button in all six tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked

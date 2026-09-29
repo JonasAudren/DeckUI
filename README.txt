@@ -4,7 +4,7 @@ DeckUI
 A compact, controller-friendly interface for World of Warcraft on the Steam
 Deck - that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with four load-on-demand modules. Enable or disable each one
+DeckUI is a hub with five load-on-demand modules. Enable or disable each one
 in /deck; what you do not use is never loaded.
 
   DeckUI          the hub: device detection, settings window, movable frames
@@ -12,6 +12,8 @@ in /deck; what you do not use is never loaded.
   DeckUI Cross    FFXIV-style cross hotbar for controller and keyboard
   DeckUI Spec     one-click specialization switcher
   DeckUI Bags     all bags in one window with search and sorting
+                  (off until you switch it on in /deck)
+  DeckUI Quests   a compact objective tracker
                   (off until you switch it on in /deck)
 
 Requires World of Warcraft Retail, Interface 120100 (Midnight).
@@ -22,16 +24,17 @@ licences are listed in THIRD-PARTY.txt.
 Installation
 ------------
 1. Quit the game completely.
-2. Copy all five folders into
+2. Copy all six folders into
 
      World of Warcraft\_retail_\Interface\AddOns\
 
    so that you end up with AddOns\DeckUI, AddOns\DeckUI_Orbs,
-   AddOns\DeckUI_Cross, AddOns\DeckUI_Spec and AddOns\DeckUI_Bags.
+   AddOns\DeckUI_Cross, AddOns\DeckUI_Spec, AddOns\DeckUI_Bags and
+   AddOns\DeckUI_Quests.
 3. Start the game. In the addon list on the character screen, DeckUI,
-   DeckUI Orbs, DeckUI Cross, DeckUI Spec and DeckUI Bags must all be
-   checked. The four modules are marked "load on demand" and depend on
-   the hub - if the hub is unchecked, nothing loads.
+   DeckUI Orbs, DeckUI Cross, DeckUI Spec, DeckUI Bags and DeckUI Quests
+   must all be checked. The five modules are marked "load on demand" and
+   depend on the hub - if the hub is unchecked, nothing loads.
 4. Log in. The orbs, the cross hotbar and the spec bar are there.
 
 A full restart is needed after installing or updating; /reload is not enough
@@ -88,6 +91,9 @@ Commands
   /spec config             jump to the Spec tab
   /bags                    open/close the bags (like B)
   /bags config             jump to the Bags tab
+  /quests                  fold or unfold the quest tracker
+  /quests config           jump to the Quests tab
+  /quests reset            bring the quest tracker back to its default place
 
 Diagnostics for the cross hotbar, useful when reporting a problem:
 

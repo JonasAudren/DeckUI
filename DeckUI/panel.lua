@@ -4,7 +4,7 @@ local D = DeckUI
 -- Window
 -------------------------------------------------------------------
 local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 690)   -- the General tab ends with a checkbox at -562, 28 high
+panel:SetSize(340, 720)   -- the General tab ends with a checkbox at -590, 28 high
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -41,9 +41,12 @@ panel.tabOrder = {}
 local function LayoutTabs()
     local n = #panel.tabOrder
     local w = math.min(100, (320 - (n - 1) * 4) / n)
+    -- six tabs leave 50 pixels each, where "General" in 13 would be cut off
+    local size = w < 60 and 11 or 13
     for i, key in ipairs(panel.tabOrder) do
         local tab = panel.tabs[key]
         tab:SetSize(w, 26)
+        tab:GetFontString():SetFont(D.FONT, size, "OUTLINE")
         tab:ClearAllPoints()
         tab:SetPoint("TOPLEFT", 10 + (i - 1) * (w + 4), -40)
     end
@@ -115,11 +118,13 @@ panel:AddTab("General", {
             function(v) D.SetModuleEnabled("Spec", v) end)
         D.Checkbox(c, "Bags (bags and banks)", -112, function() return DeckUIDB.modules end, "Bags",
             function(v) D.SetModuleEnabled("Bags", v) end)
+        D.Checkbox(c, "Quests (objective tracker)", -140, function() return DeckUIDB.modules end, "Quests",
+            function(v) D.SetModuleEnabled("Quests", v) end)
 
-        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -144)
+        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -172)
 
-        D.Label(c, "Device", -176, 15)
-        local devBtn = D.Button(c, "Device", -198, function() end)
+        D.Label(c, "Device", -204, 15)
+        local devBtn = D.Button(c, "Device", -226, function() end)
         devBtn:SetWidth(300)
         devBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
         devBtn:SetScript("OnClick", function(b)
@@ -130,7 +135,7 @@ panel:AddTab("General", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, devBtn)
 
-        D.Checkbox(c, "Cross hotbar only on Steam Deck", -236, db, "crossDeckOnly",
+        D.Checkbox(c, "Cross hotbar only on Steam Deck", -264, db, "crossDeckOnly",
             function(v)
                 if not v and DeckUIDB.modules.Cross then
                     D.SetModuleEnabled("Cross", true)
@@ -140,15 +145,15 @@ panel:AddTab("General", {
             end)
 
         local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
-        D.Checkbox(c, "Set Blizzard UI scale per device at login", -264, db, "applyUiScale",
+        D.Checkbox(c, "Set Blizzard UI scale per device at login", -292, db, "applyUiScale",
             function(v) if v then D.ApplyUiScale() else print("DeckUI: UI scale is no longer touched (current value stays until you change it in Options).") end end)
-        D.Slider(c, "UI scale on Steam Deck", -298, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
+        D.Slider(c, "UI scale on Steam Deck", -326, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
             function(v) if D.IsDeck() then D.ApplyUiScale() end end)
-        D.Slider(c, "UI scale on PC", -362, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
+        D.Slider(c, "UI scale on PC", -390, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
             function(v) if not D.IsDeck() then D.ApplyUiScale() end end)
 
-        D.Label(c, "Positions (per device)", -426, 15)
-        local unlockBtn = D.Button(c, "Unlock frames", -448, function() end)
+        D.Label(c, "Positions (per device)", -454, 15)
+        local unlockBtn = D.Button(c, "Unlock frames", -476, function() end)
         unlockBtn:SetScript("OnClick", function(b)
             D.SetUnlocked(not D.unlocked)
             b:SetText(D.unlocked and "Lock frames" or "Unlock frames")
@@ -159,10 +164,10 @@ panel:AddTab("General", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, unlockBtn)
 
-        D.Button(c, "Reset all positions", -488, D.ResetPositions)
+        D.Button(c, "Reset all positions", -516, D.ResetPositions)
 
-        D.Label(c, "Other", -540, 15)
-        D.Checkbox(c, "Show minimap button", -562, db, "showMinimap",
+        D.Label(c, "Other", -568, 15)
+        D.Checkbox(c, "Show minimap button", -590, db, "showMinimap",
             function(v) D.SetMinimapShown(v) end)
     end,
 })

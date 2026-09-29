@@ -15,13 +15,14 @@ D.MODULE_ADDONS = {
     Cross = "DeckUI_Cross",
     Spec  = "DeckUI_Spec",
     Bags  = "DeckUI_Bags",
+    Quests = "DeckUI_Quests",
 }
-D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags" }
+D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests" }
 
 -- Modules that start switched off, for new installs and for players who
--- update into them alike. Replacing the bag window is not something an
--- update should do to anyone unasked.
-D.MODULE_OFF_BY_DEFAULT = { Bags = true }
+-- update into them alike. Replacing the bag window or the quest tracker
+-- is not something an update should do to anyone unasked.
+D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true }
 
 D.modules = {}   -- key -> { title = ..., build = function(content) end }
 
@@ -292,6 +293,23 @@ function D.MakeDraggable(frame)
     end)
 end
 
+-- Re-anchors a frame by its top-left corner without moving it, and saves
+-- that. After a drag WoW anchors a frame by whichever corner is nearest,
+-- so one dropped in the lower half hangs from its bottom edge - and a
+-- tracker that then shrinks (folded, fewer quests) collapses towards
+-- where its old bottom was, far from its title. Reported 2026-09-29 as
+-- "minimised, the window is gone".
+function D.PinTopLeft(frame)
+    local left, top = frame:GetLeft(), frame:GetTop()
+    if not (left and top) then return false end
+    -- GetLeft/GetTop and SetPoint offsets are both in the frame's own
+    -- (scaled) coordinates, so they carry over unchanged
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+    if frame.deckMovable then SavePosition(frame.deckMovable) end
+    return true
+end
+
 function D.SetUnlocked(state)
     if state and InCombatLockdown() then
         print("DeckUI: not possible in combat.")
@@ -302,6 +320,18 @@ function D.SetUnlocked(state)
         entry.overlay:SetShown(state)
     end
     print("DeckUI: frames " .. (state and "unlocked" or "locked"))
+end
+
+-- One frame back to its default place (current device only), for a frame
+-- that ended up somewhere it cannot be seen or reached.
+function D.ResetPosition(frame)
+    local entry = frame.deckMovable
+    if not entry or InCombatLockdown() then return end
+    Positions(entry)[entry.key] = nil
+    if frame.defaultPoint then
+        frame:ClearAllPoints()
+        frame:SetPoint(unpack(frame.defaultPoint))
+    end
 end
 
 function D.ResetPositions()
@@ -320,7 +350,7 @@ end
 -- Startup: load settings, load enabled modules
 -------------------------------------------------------------------
 local DEFAULTS = {
-    modules       = { Orbs = true, Cross = true, Spec = true, Bags = false },
+    modules       = { Orbs = true, Cross = true, Spec = true, Bags = false, Quests = false },
     showMinimap   = true,
     minimapAngle  = 220,
     device        = "auto",
