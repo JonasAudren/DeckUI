@@ -252,6 +252,88 @@ function ns.SetBlizzardBarsHidden(state)
     end
 end
 
+-------------------------------------------------------------------
+-- Leave vehicle / taxi
+-------------------------------------------------------------------
+-- Blizzard's leave button went missing along with the bars we hide, which
+-- strands the player in a vehicle with no way out on the Deck. So we carry
+-- our own, and show it exactly when leaving is possible and none of
+-- Blizzard's leave buttons can actually be seen - that way it never shows
+-- twice, whichever frame the button hangs under on this client.
+-- VehicleExit and TaxiRequestEarlyLanding are not protected (Blizzard's own
+-- button calls them from plain Lua), so a normal button does, in combat too.
+local LEAVE_SIZE = 40
+
+local leave = CreateFrame("Button", "DeckCrossLeaveVehicle", UIParent)
+leave:SetSize(LEAVE_SIZE, LEAVE_SIZE)
+leave.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", 0, 220 }
+leave:SetPoint(unpack(leave.defaultPoint))
+leave:Hide()
+
+leave:SetNormalTexture("Interface\\Vehicles\\UI-Vehicles-Button-Exit-Up")
+leave:SetPushedTexture("Interface\\Vehicles\\UI-Vehicles-Button-Exit-Down")
+leave:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+for _, tex in ipairs({ leave:GetNormalTexture(), leave:GetPushedTexture() }) do
+    tex:SetTexCoord(0.140625, 0.859375, 0.140625, 0.859375)
+end
+
+leave:SetScript("OnClick", function()
+    if UnitOnTaxi("player") then
+        TaxiRequestEarlyLanding()
+    else
+        VehicleExit()
+    end
+end)
+leave:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText(UnitOnTaxi("player") and (TAXI_CANCEL or "Request stop") or (LEAVE_VEHICLE or "Leave vehicle"))
+    GameTooltip:Show()
+end)
+leave:SetScript("OnLeave", GameTooltip_Hide)
+
+local function BlizzardLeaveVisible()
+    local main = _G["MainMenuBarVehicleLeaveButton"]
+    if main and main:IsVisible() then return true end
+    local override = _G["OverrideActionBar"]
+    if override and override.LeaveButton and override.LeaveButton:IsVisible() then return true end
+    return false
+end
+
+local function CanLeave()
+    return CanExitVehicle() or UnitOnTaxi("player")
+end
+
+-- Polled rather than event-driven: taxis have no clean start event, and
+-- Blizzard updates its own button on the same events we would listen to,
+-- so asking "is theirs visible" right then would race it.
+local leaveElapsed = 0
+local leavePoll = CreateFrame("Frame")
+leavePoll:SetScript("OnUpdate", function(_, dt)
+    leaveElapsed = leaveElapsed + dt
+    if leaveElapsed < 0.2 then return end
+    leaveElapsed = 0
+    -- While frames are unlocked it stays visible, or it could never be
+    -- dragged anywhere outside a vehicle.
+    leave:SetShown(D.unlocked or (CanLeave() and not BlizzardLeaveVisible()))
+end)
+
+local function PrintLeave()
+    local b = _G["MainMenuBarVehicleLeaveButton"]
+    if not b then
+        print("  MainMenuBarVehicleLeaveButton not found")
+    else
+        local chain, frame = {}, b:GetParent()
+        while frame and #chain < 10 do
+            table.insert(chain, frame:GetName() or "(unnamed)")
+            if frame == UIParent then break end
+            frame = frame:GetParent()
+        end
+        print(string.format("  leave button: shown=%s visible=%s parents=%s",
+            tostring(b:IsShown()), tostring(b:IsVisible()), table.concat(chain, " > ")))
+    end
+    print(string.format("  can leave=%s  ours shown=%s", tostring(CanLeave()), tostring(leave:IsShown())))
+end
+
 function ns.PrintBars()
     local bars = BARS
     print("DeckUI Cross: hideBlizzardBars=" .. tostring(DeckCrossDB.hideBlizzardBars))
@@ -267,6 +349,7 @@ function ns.PrintBars()
             print("  " .. why)
         end
     end
+    PrintLeave()
 end
 
 -------------------------------------------------------------------
@@ -368,6 +451,7 @@ local function Init()
     DeckCrossDB.pcKeys   = nil
     if DeckCrossDB.hideBlizzardBars == nil then DeckCrossDB.hideBlizzardBars = true end
     D.MakeMovable(ns.anchor, "Cross Hotbar", DeckCrossDB)
+    D.MakeMovable(leave, "Leave vehicle", DeckCrossDB)
     ns.ApplyBindings()
     ns.ApplyLabels()
     ns.SetBlizzardBarsHidden(DeckCrossDB.hideBlizzardBars)
