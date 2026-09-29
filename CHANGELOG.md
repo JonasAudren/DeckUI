@@ -8,6 +8,15 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.0.3
+
+- **You can leave vehicles again.** Hiding Blizzard's action bars took the
+  leave-vehicle button with them, so once you were in a vehicle there was no
+  way out on the Steam Deck. DeckUI now brings its own. It appears whenever you
+  can get out, and on a flight path it asks for an early landing. It works in
+  combat, never shows up next to Blizzard's own button, and can be moved with
+  `/deck unlock` like every other frame.
+
 ## 1.0.2
 
 - The settings window reads properly now: percentages sit below their
