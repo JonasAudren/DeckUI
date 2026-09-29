@@ -8,6 +8,34 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.2.0
+
+- **New module: DeckUI Quests.** A compact tracker of its own that takes
+  over everything Blizzard's "All Objectives" window showed. Like Bags it
+  starts switched off: tick "Quests" in `/deck` -> General.
+  - **Quests and campaign** with their objectives and progress bars,
+    finished steps in green, the quest you are heading for in gold.
+    Left-click opens the quest log, shift-click stops tracking, right-click
+    brings the usual menu: focus, map, share, abandon.
+  - **Quest items** get a button beside their quest that works in combat
+    too.
+  - **World quests and bonus objectives** of the zone you are in, plus the
+    world quests you track, with time left when one is about to expire.
+  - **Dungeons, delves and scenarios:** stages and objectives, the delve
+    header with tier and lives, bonus steps, and a button for scenario
+    spells. In a **Mythic+** key: the timer, how long you have left for +3
+    and +2, deaths with the time they cost, and the affixes.
+  - **Everything else** you can track: achievements, the Traveler's Log,
+    neighbourhood endeavors, collections (with a hint where to find them)
+    and recipes, counting the reagents in your bags, bank and warband bank.
+    Zone widgets such as capture bars show up too.
+  - Fold a section by clicking its heading, or the whole tracker with the
+    "-" in its corner. Taller than your height limit, it scrolls. Drag it
+    by its frame; width, size, text size and height limit are set
+    separately for the Steam Deck and the PC in the new Quests tab.
+    `/quests reset` brings it back if it ever ends up out of sight.
+- The settings tabs use a slightly smaller font, so six of them fit.
+
 ## 1.1.0
 
 - **New module: DeckUI Bags.** Your bags, your character bank and your

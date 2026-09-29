@@ -2,7 +2,7 @@
 
 A compact, controller-friendly interface for World of Warcraft on the **Steam Deck** – that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with four load-on-demand modules; enable or disable each one in `/deck`.
+DeckUI is a hub with five load-on-demand modules; enable or disable each one in `/deck`.
 
 ## DeckUI Orbs – round unit frames
 - Player and target as large orbs: health fills the orb, power runs as a ring around it, cast bar inside the orb
@@ -34,6 +34,15 @@ DeckUI is a hub with four load-on-demand modules; enable or disable each one in 
 - **Old-expansions filter**: dims everything from the current expansion so leftovers stand out
 - Columns and size per device (Steam Deck / PC)
 
+## DeckUI Quests – objective tracker (off until you switch it on)
+- Takes over everything Blizzard's "All Objectives" window shows, in one compact, scrollable list
+- Quests and campaign with progress bars; left-click quest log, shift-click untrack, right-click menu (focus, map, share, abandon)
+- **Quest item and scenario spell buttons** beside their line, usable in combat
+- World quests and bonus objectives of your zone, with time left
+- **Dungeons, delves, scenarios**: stages, delve header, bonus steps – and in **Mythic+** the timer, time left for +3/+2, deaths and affixes
+- Achievements, Traveler's Log, neighbourhood endeavors, collections and recipes (reagents counted across bags, bank and warband bank), zone widgets
+- Fold single sections or the whole tracker; width, size, text size and height limit per device
+
 ## Steam Deck / PC detection
 DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → General → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
 
@@ -48,6 +57,7 @@ ConsolePort ships as several separate addons, so the fix is one checkbox: unchec
 - `/deck device` – show the detected device, `/deck deck` / `pc` / `auto` – force one
 - `/orbs`, `/dc`, `/spec` – jump to a module tab
 - `/bags` – open or close the bags, `/bags config` – the Bags tab
+- `/quests` – fold or unfold the tracker, `/quests config` – the Quests tab, `/quests reset` – bring it back into view
 
 ## Setup on the Steam Deck
 1. `/dc` → "Set up gamepad (LT/RT)" once (enables the gamepad, LT = Shift, RT = Ctrl)
@@ -65,6 +75,7 @@ DeckUI ships diagnostic commands whose output makes a report much easier to act 
 - `/dc bars` – which Blizzard bars were found and hidden
 - `/dc overlay` – the visible parts of a cross button
 - `/bags debug` / `/bags bank` – what the bag and bank windows are built from
+- `/quests debug` – whether Blizzard's tracker is off, and the state of the tracker's buttons
 
 Turning on Lua errors with `/console scriptErrors 1` before reproducing the problem gives you the actual error text, which is worth more than any description.
 
