@@ -8,6 +8,33 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.1.0
+
+- **New module: DeckUI Bags.** Your bags, your character bank and your
+  warband bank, each in one window instead of a stack of small ones. It
+  starts switched off, so nothing changes until you want it: tick "Bags"
+  in `/deck` -> General.
+  - **Bags** open wherever Blizzard's would - B, the bag bar, the mailbox,
+    a merchant, the auction house - and right clicks do what they always
+    did: use, sell, post, deposit, even a potion in combat.
+  - **Categories:** items sort themselves into New, Equipment, Consumables,
+    Trade Goods, Quest, Other and Junk, best quality first. All your free
+    slots fold into one empty slot with a number on it. Prefer every slot
+    where it really is? One button switches to a plain grid.
+  - **Bank:** opens at the banker next to your bags. Switch between your
+    character bank and the warband bank, one tab at a time, deposit
+    everything with one click, buy new tabs, and move gold in and out of
+    the warband bank. A locked warband bank tells you why.
+  - **Find things:** search, sorting, gold, the currencies you track,
+    item level on gear and a coin on grey items even when no merchant is
+    open.
+  - **Clear out old stuff:** the pocket-watch button dims everything from
+    the current expansion, so only what is left over from earlier ones
+    stays lit.
+  - Drag a window by its frame to move it. Columns and size are set
+    separately for the Steam Deck and the PC in the new Bags tab.
+- The settings window is a little taller, to fit the fourth module switch.
+
 ## 1.0.3
 
 - **You can leave vehicles again.** Hiding Blizzard's action bars took the

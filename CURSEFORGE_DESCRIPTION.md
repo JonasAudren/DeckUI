@@ -2,7 +2,7 @@
 
 A compact, controller-friendly interface for World of Warcraft on the **Steam Deck** – that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with three load-on-demand modules; enable or disable each one in `/deck`.
+DeckUI is a hub with four load-on-demand modules; enable or disable each one in `/deck`.
 
 ## DeckUI Orbs – round unit frames
 - Player and target as large orbs: health fills the orb, power runs as a ring around it, cast bar inside the orb
@@ -25,6 +25,14 @@ DeckUI is a hub with three load-on-demand modules; enable or disable each one in
 ## DeckUI Spec – spec switcher
 - One round icon per specialization, click to switch (out of combat), gold ring on the active spec
 
+## DeckUI Bags – bags and banks (off until you switch it on)
+- All bags in one window that opens wherever Blizzard's would; right clicks use, sell, post and deposit as always
+- **Categories**: New, Equipment, Consumables, Trade Goods, Quest, Other, Junk – all free slots folded into one with a count; or a plain grid, one click away
+- **Character bank and warband bank** in one window: one tab at a time, deposit everything, buy tabs, move warband gold
+- Search, sorting, gold and tracked currencies, item level on gear, junk marked even away from a merchant
+- **Old-expansions filter**: dims everything from the current expansion so leftovers stand out
+- Columns and size per device (Steam Deck / PC)
+
 ## Steam Deck / PC detection
 DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → General → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
 
@@ -38,6 +46,7 @@ ConsolePort ships as several separate addons, so the fix is one checkbox: unchec
 - `/deck` – settings, `/deck unlock` / `lock` – move frames, `/deck reset` – reset positions
 - `/deck device` – show the detected device, `/deck deck` / `pc` / `auto` – force one
 - `/orbs`, `/dc`, `/spec` – jump to a module tab
+- `/bags` – open or close the bags, `/bags config` – the Bags tab
 
 ## Setup on the Steam Deck
 1. `/dc` → "Set up gamepad (LT/RT)" once (enables the gamepad, LT = Shift, RT = Ctrl)
@@ -54,6 +63,7 @@ DeckUI ships diagnostic commands whose output makes a report much easier to act 
 - `/dc page` – the active action bar page and the slot behind a button (use this when buttons are blank or show the wrong thing)
 - `/dc bars` – which Blizzard bars were found and hidden
 - `/dc overlay` – the visible parts of a cross button
+- `/bags debug` / `/bags bank` – what the bag and bank windows are built from
 
 Turning on Lua errors with `/console scriptErrors 1` before reproducing the problem gives you the actual error text, which is worth more than any description.
 
