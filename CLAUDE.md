@@ -92,9 +92,9 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   (`ResolveBar` in `DeckUI_Cross/input.lua`). Hide by reparenting to a hidden frame +
   visibility state driver + SetParent hook.
 - **Hiding the bars took Blizzard's leave-vehicle button with it** (reported 2026-09-29), which
-  left no way out of a vehicle on the Deck. Presumably `MainMenuBarVehicleLeaveButton` hangs
-  under the main bar now - not yet confirmed; `/dc bars` prints its parent chain, so check that
-  in a vehicle and replace this line with the answer. The fix does not depend on it: we carry our own
+  left no way out of a vehicle on the Deck. `MainMenuBarVehicleLeaveButton` is a child of
+  Action Bar 1 (`MainActionBar`) - confirmed 2026-09-29 with `/dc bars`, which prints its parent
+  chain: `MainActionBar > DeckCrossBarHider > UIParent`. The fix does not depend on it: we carry our own
   `DeckCrossLeaveVehicle` (movable, "Leave vehicle"), shown whenever `CanExitVehicle()` or
   `UnitOnTaxi` and none of Blizzard's leave buttons `IsVisible()`, so it never doubles up.
   It is polled (0.2 s) on purpose: taxis have no clean start event, and Blizzard updates its
