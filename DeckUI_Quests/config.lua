@@ -7,7 +7,7 @@ local device = function() return ns.DeviceDB() end
 local function Store(key)
     return function(v)
         ns.DeviceDB()[key] = v
-        ns.RequestUpdate()
+        ns.RequestRedraw()
     end
 end
 

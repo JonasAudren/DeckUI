@@ -400,6 +400,14 @@ ns.RegisterSection("recipes", {
 -------------------------------------------------------------------
 -- Blizzard's collections module untracks a collected appearance while it
 -- lays out; with it switched off, that happens here.
+-- The three that fire constantly while playing only concern a few
+-- sections; every other event here redraws them all.
+local NARROW = {
+    CRITERIA_UPDATE         = { "achievements", "scenario" },
+    BAG_UPDATE_DELAYED      = { "recipes", "initiatives" },
+    CURRENCY_DISPLAY_UPDATE = { "recipes", "initiatives" },
+}
+
 local ev = CreateFrame("Frame")
 for _, e in ipairs({
     "ZONE_CHANGED_NEW_AREA", "PLAYER_ENTERING_WORLD",
@@ -419,5 +427,6 @@ ev:SetScript("OnEvent", function(_, event, arg1)
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
         RequestInitiatives()
     end
-    ns.RequestUpdate()
+    local only = NARROW[event]
+    if only then ns.RequestUpdate(unpack(only)) else ns.RequestUpdate() end
 end)

@@ -274,6 +274,13 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
 - Sections register with `ns.RegisterSection(key, { title, order, Collect, Init })`;
   `core.lua` draws whatever entries they return, redraws at most once per frame, and a
   section that errors shows an error line instead of taking the others down.
+  **What a Collect returned is kept per section** (code review, 2026-09-30):
+  `ns.RequestUpdate()` drops all of it, `ns.RequestUpdate("recipes", ...)` only the named
+  sections, `ns.RequestRedraw()` only lays out again (fold, scroll, move, widget layout,
+  settings). `ns.ticking[key]` re-collects just that section - `true` each second (Mythic+
+  timer), `"minute"` once a minute (world quest countdowns). tracking.lua narrows its three
+  noisy events (`CRITERIA_UPDATE`, `BAG_UPDATE_DELAYED`, `CURRENCY_DISPLAY_UPDATE`); every
+  other event still drops everything. A section that looks stale is missing its event.
 - **Blizzard's tracker is switched off the kiosk way**: `SetCanAddModules(false)` +
   `RemoveAllModules()` at PLAYER_LOGIN, before `ObjectiveTrackerManager:Init` (which waits for
   PLAYER_ENTERING_WORLD), so no module is ever added and none registers an event. Then

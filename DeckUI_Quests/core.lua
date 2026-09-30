@@ -68,7 +68,7 @@ collapse.text:SetFont(D.FONT, 16, "OUTLINE")
 collapse.text:SetPoint("CENTER")
 collapse:SetScript("OnClick", function()
     DeckQuestsDB.collapsed = not DeckQuestsDB.collapsed
-    ns.RequestUpdate()
+    ns.RequestRedraw()
 end)
 
 -- Content scrolls when it is taller than the height limit; the Deck's
@@ -85,7 +85,7 @@ scroll:SetScript("OnMouseWheel", function(self, delta)
     self:SetVerticalScroll(math.min(max, math.max(0, self:GetVerticalScroll() - delta * 30)))
     -- the secure item and spell buttons sit on UIParent at screen
     -- coordinates copied from the rows; a redraw moves them along
-    ns.RequestUpdate()
+    ns.RequestRedraw()
 end)
 ns.content = content
 
@@ -163,7 +163,7 @@ local function Head()
         h:SetScript("OnClick", function(self)
             local folded = DeckQuestsDB.folded
             folded[self.key] = not folded[self.key] or nil
-            ns.RequestUpdate()
+            ns.RequestRedraw()
         end)
         heads[usedHeads] = h
     end
@@ -249,6 +249,16 @@ local function DrawEntry(entry, y, width, textSize)
     return y + ENTRY_GAP
 end
 
+-- What each section's Collect returned last, by section key. Drawing
+-- reuses it; only a section whose data changed collects again. Before,
+-- every loot, currency tick or criteria update rebuilt all eleven
+-- sections, and in Mythic+ that ran every second (code review,
+-- 2026-09-30). ns.RequestUpdate(key, ...) drops the named sections, with
+-- no key all of them; ns.RequestRedraw() only lays out again.
+local collected = {}
+local NOTHING = {}
+local ERROR = { 1, 0.3, 0.3 }
+
 local function Draw()
     ReleaseAll()
     wipe(ns.drawn)
@@ -265,11 +275,16 @@ local function Draw()
     local anything = false
     if not DeckQuestsDB.collapsed then
         for _, section in ipairs(ordered) do
-            local ok, entries = pcall(section.Collect)
-            if not ok then
-                -- one broken section must not take the others with it
-                entries = { { key = section.key .. "-error", title = section.title .. ": error",
-                    color = { 1, 0.3, 0.3 }, lines = { { text = tostring(entries) } } } }
+            local entries = collected[section.key]
+            if entries == nil then
+                local ok
+                ok, entries = pcall(section.Collect)
+                if not ok then
+                    -- one broken section must not take the others with it
+                    entries = { { key = section.key .. "-error", title = section.title .. ": error",
+                        color = ERROR, lines = { { text = tostring(entries) } } } }
+                end
+                collected[section.key] = entries or NOTHING
             end
             if entries and #entries > 0 then
                 anything = true
@@ -320,7 +335,7 @@ end
 -- our layout callback asks the tracker to redraw around the new height.
 local function WidgetLayout(container, sortedWidgets)
     DefaultWidgetLayout(container, sortedWidgets)
-    ns.RequestUpdate()
+    ns.RequestRedraw()
 end
 
 function ns.NewWidgetContainer()
@@ -471,7 +486,7 @@ secureEvents:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 secureEvents:RegisterEvent("PLAYER_REGEN_ENABLED")
 secureEvents:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_REGEN_ENABLED" then
-        if pendingPlace then ns.RequestUpdate() end
+        if pendingPlace then ns.RequestRedraw() end
     else
         ns.UpdateSecureStates()
     end
@@ -483,12 +498,24 @@ end)
 -- Quest events come in floods (QUEST_LOG_UPDATE fires several times a
 -- second while questing), so they only mark the tracker dirty and one
 -- redraw runs on the next frame. Sections with a clock ask for a redraw
--- through ns.ticking: true every second (the Mythic+ timer), "minute"
--- once a minute (world quest countdowns, which count minutes).
+-- through ns.ticking, keyed like the sections: true every second (the
+-- Mythic+ timer), "minute" once a minute (world quest countdowns, which
+-- count minutes). Only the ticking section collects again.
 local dirty = true
 ns.ticking = {}
 
-function ns.RequestUpdate() dirty = true end
+function ns.RequestUpdate(...)
+    local n = select("#", ...)
+    if n == 0 then
+        wipe(collected)
+    else
+        for i = 1, n do collected[(select(i, ...))] = nil end
+    end
+    dirty = true
+end
+
+-- the same content in a new place or size: fold, scroll, move, settings
+function ns.RequestRedraw() dirty = true end
 
 local updater = CreateFrame("Frame")
 local sinceTick, seconds = 0, 0
@@ -497,10 +524,10 @@ updater:SetScript("OnUpdate", function(_, dt)
     if sinceTick >= 1 then
         sinceTick = 0
         seconds = (seconds + 1) % 60
-        for _, rate in pairs(ns.ticking) do
+        for key, rate in pairs(ns.ticking) do
             if rate == true or seconds == 0 then
+                collected[key] = nil
                 dirty = true
-                break
             end
         end
     end
@@ -583,7 +610,7 @@ local function Init()
     -- the secure buttons hang beside the rows and have to follow a move
     tracker:HookScript("OnDragStop", function()
         D.PinTopLeft(tracker)
-        ns.RequestUpdate()
+        ns.RequestRedraw()
     end)
 
     DisableBlizzardTracker()
@@ -618,7 +645,7 @@ SlashCmdList.DECKQUESTS = function(msg)
         D.ToggleConfig("Quests")
     elseif msg == "reset" then
         D.ResetPosition(tracker)
-        ns.RequestUpdate()
+        ns.RequestRedraw()
         print("DeckUI Quests: tracker back at its default place (top right).")
     elseif msg == "debug" then
         local point, rel, relPoint, x, y = tracker:GetPoint()
@@ -632,6 +659,6 @@ SlashCmdList.DECKQUESTS = function(msg)
         ns.PrintBlizzardModules()
     else
         DeckQuestsDB.collapsed = not DeckQuestsDB.collapsed
-        ns.RequestUpdate()
+        ns.RequestRedraw()
     end
 end
