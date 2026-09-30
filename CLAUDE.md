@@ -66,7 +66,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - Device detection: `D.DetectDevice()` – 1280x800 screen or active gamepad = "deck", else "pc";
   `DeckUIDB.device` = auto|deck|pc overrides. `D.IsDeck()` is the only thing modules should ask.
 - Key bindings per device: WoW's CVar `synchronizeBindings` = 0 keeps them in the local WTF
-  folder instead of on the server (General tab, "Keep key bindings on this device"). The CVar
+  folder instead of on the server (Devices tab, "Keep on this device: Key bindings"). The CVar
   lives in Config.wtf, so it is per machine by itself - no DeckUIDB entry. Switching it on
   saves the loaded bindings locally first; switching it off does *not* save, which would
   upload this machine's set over the server's. `/deck device` prints the state.
@@ -82,8 +82,19 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `IsAssistedCombatAction` and put back with `C_AssistedCombat.GetActionSpell()`. **A copy
   where every slot reads empty is never stored** - that is bars not loaded yet, and restoring
   it would wipe them. `/deck bars` prints the key, the saved layout and the last result.
+- **Edit Mode layout per device** (`DeckUI/editmode.lua`, `DeckUIDB.keepLayouts`, off by
+  default; not yet tested in game). Blizzard's layouts and the choice of the active one are
+  server-side, per character and spec. The owner makes one layout per device in Edit Mode;
+  DeckUI learns by *name* which one is active on this device (`DeckUIDB.editLayouts`, keyed
+  like the bars) and switches back at login, /reload and spec change. The name is read from
+  `EditModeManagerFrame.layoutInfo` (presets first, then saved layouts - `activeLayout`
+  indexes that merged list), read only. **`C_EditMode.SetActiveLayout` from an addon leaves
+  Edit Mode's manager tainted for the session**, so every switch asks for a reload at once
+  (own prompt window, not a StaticPopup), and nothing is learned until that reload - should
+  the manager not have caught up, learning the old name would undo the switch.
+  `/deck layout` prints active and saved layout.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`, `/deck bars`,
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`, `/deck bars`, `/deck layout`,
   `/deck build`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
@@ -326,7 +337,7 @@ source (read 2026-09-29).
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all seven tabs works without error.
+5. Every checkbox / slider / button in all eight tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked

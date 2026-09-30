@@ -56,6 +56,8 @@ end
 local function Key()
     return D.DeviceKey(), UnitName("player") .. "-" .. GetRealmName(), SpecID()
 end
+-- device, "name-realm", specID - editmode.lua keys its layouts the same way
+D.CharSpecKey = Key
 
 -- the stored copy for this device, character and spec (create makes it)
 local function Layout(create)

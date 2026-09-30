@@ -13,4 +13,5 @@ core.lua
 widgets.lua
 panel.lua
 actionbars.lua
+editmode.lua
 minimap.lua

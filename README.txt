@@ -83,6 +83,8 @@ Commands
   /deck deck               force Steam Deck mode (test it while on the PC)
   /deck pc                 force PC mode
   /deck auto               back to automatic detection
+  /deck bars               print the action bar layout saved for this device
+  /deck layout             print the Edit Mode layout saved for this device
 
   Forcing a device takes full effect after /reload; it switches input,
   button labels, sizes and the saved positions to that device.
@@ -109,8 +111,14 @@ Diagnostics for the cross hotbar, useful when reporting a problem:
 
 General tab
 -----------
-Modules           Orbs, Cross and Spec on or off. Enabling takes effect
+Modules           each module on or off. Enabling takes effect
                   immediately, disabling after /reload.
+Show minimap button
+                  hide it if you prefer /deck.
+
+
+Devices tab
+-----------
 Device            cycles Auto / Steam Deck / PC. Auto means: Steam Deck if
                   the screen is 1280x800 or a gamepad is active, else PC.
 Cross hotbar only on Steam Deck
@@ -124,8 +132,19 @@ Unlock frames / Reset all positions
                   the overlays are labelled Player, Target, Focus, Boss
                   frames, Cross Hotbar and Spec bar. Reset only affects the
                   device you are currently on.
-Show minimap button
-                  hide it if you prefer /deck.
+Keep on this device
+                  Blizzard keeps key bindings, what sits on your action bars
+                  and the active Edit Mode layout on its server, so the Deck
+                  and the PC load the same ones. Tick a box on each device
+                  and it keeps its own:
+                  - Key bindings: WoW's own setting to store them locally.
+                  - Action bar layouts: per character and spec; put back at
+                    login, /reload and spec change.
+                  - Edit Mode layout: make one layout per device in Edit
+                    Mode. Switching asks for a reload, so Blizzard's frames
+                    pick the layout up cleanly.
+                  What is set up when you tick a box becomes that device's;
+                  later changes are remembered.
 
 
 DeckUI Orbs - round unit frames
@@ -238,7 +257,7 @@ Cross buttons light up but cast the wrong thing
 
 No cross hotbar on the PC
     Either the Cross module is off in the General tab, or "Cross hotbar only
-    on Steam Deck" is checked.
+    on Steam Deck" is checked in the Devices tab.
 
 Cross buttons are empty
     The crosses only display Action Bar 1 and 2. Put your spells on those two

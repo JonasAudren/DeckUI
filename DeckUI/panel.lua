@@ -4,7 +4,7 @@ local D = DeckUI
 -- Window
 -------------------------------------------------------------------
 local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 804)   -- height follows the tab rows, see LayoutTabs
+panel:SetSize(340, 700)   -- height follows the tab rows, see LayoutTabs
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -42,7 +42,7 @@ panel.tabOrder = {}
 -- the window grows by one row's height, content moving down with it.
 -- Seven in one row would leave 42 pixels each - too narrow for "General"
 -- in any readable size.
-local BASE_HEIGHT = 804   -- the General tab ends with a checkbox at -674, 28 high
+local BASE_HEIGHT = 700   -- the tallest tab, Cross, ends with a three-line hint at -544
 local ROW = 30
 
 local function LayoutTabs()
@@ -140,8 +140,25 @@ panel:AddTab("General", {
 
         D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -200)
 
-        D.Label(c, "Device", -232, 15)
-        local devBtn = D.Button(c, "Device", -254, function() end)
+        D.Label(c, "Other", -232, 15)
+        D.Checkbox(c, "Show minimap button", -254, db, "showMinimap",
+            function(v) D.SetMinimapShown(v) end)
+    end,
+})
+
+-------------------------------------------------------------------
+-- "Devices" tab: everything that differs between the Deck and the PC
+-------------------------------------------------------------------
+-- Its own tab since the "keep on this device" options joined: the General
+-- tab had grown to 832 pixels, too tall for the Deck's screen at 100% UI
+-- scale.
+panel:AddTab("Devices", {
+    title = "Devices",
+    build = function(c)
+        local db = function() return DeckUIDB end
+
+        D.Label(c, "Device", -6, 15)
+        local devBtn = D.Button(c, "Device", -28, function() end)
         devBtn:SetWidth(300)
         devBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
         devBtn:SetScript("OnClick", function(b)
@@ -152,7 +169,7 @@ panel:AddTab("General", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, devBtn)
 
-        D.Checkbox(c, "Cross hotbar only on Steam Deck", -292, db, "crossDeckOnly",
+        D.Checkbox(c, "Cross hotbar only on Steam Deck", -66, db, "crossDeckOnly",
             function(v)
                 if not v and DeckUIDB.modules.Cross then
                     D.SetModuleEnabled("Cross", true)
@@ -162,15 +179,15 @@ panel:AddTab("General", {
             end)
 
         local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
-        D.Checkbox(c, "Set Blizzard UI scale per device at login", -320, db, "applyUiScale",
+        D.Checkbox(c, "Set Blizzard UI scale per device at login", -94, db, "applyUiScale",
             function(v) if v then D.ApplyUiScale() else print("DeckUI: UI scale is no longer touched (current value stays until you change it in Options).") end end)
-        D.Slider(c, "UI scale on Steam Deck", -354, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
+        D.Slider(c, "UI scale on Steam Deck", -128, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
             function(v) if D.IsDeck() then D.ApplyUiScale() end end)
-        D.Slider(c, "UI scale on PC", -418, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
+        D.Slider(c, "UI scale on PC", -192, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
             function(v) if not D.IsDeck() then D.ApplyUiScale() end end)
 
-        D.Label(c, "Positions (per device)", -482, 15)
-        local unlockBtn = D.Button(c, "Unlock frames", -504, function() end)
+        D.Label(c, "Positions (per device)", -256, 15)
+        local unlockBtn = D.Button(c, "Unlock frames", -278, function() end)
         unlockBtn:SetScript("OnClick", function(b)
             D.SetUnlocked(not D.unlocked)
             b:SetText(D.unlocked and "Lock frames" or "Unlock frames")
@@ -178,17 +195,16 @@ panel:AddTab("General", {
         function unlockBtn:Refresh()
             self:SetText(D.unlocked and "Lock frames" or "Unlock frames")
         end
-        c.widgets = c.widgets or {}
         table.insert(c.widgets, unlockBtn)
 
-        D.Button(c, "Reset all positions", -544, D.ResetPositions)
+        D.Button(c, "Reset all positions", -318, D.ResetPositions)
 
-        D.Label(c, "Other", -596, 15)
-        D.Checkbox(c, "Show minimap button", -618, db, "showMinimap",
-            function(v) D.SetMinimapShown(v) end)
-        D.Checkbox(c, "Keep key bindings on this device", -646,
+        D.Label(c, "Keep on this device", -370, 15)
+        D.Checkbox(c, "Key bindings", -392,
             function() return D.bindingsCVar end, "localOnly", D.SetLocalBindings)
-        D.Checkbox(c, "Keep action bar layouts on this device", -674, db, "keepBars", D.SetKeepBars)
+        D.Checkbox(c, "Action bar layouts", -420, db, "keepBars", D.SetKeepBars)
+        D.Checkbox(c, "Edit Mode layout", -448, db, "keepLayouts", D.SetKeepLayouts)
+        D.Hint(c, "Blizzard keeps all three on its server, so every device loads the same. Tick them on each device: what is set up there when you tick a box becomes that device's, and later changes are remembered.", -484)
     end,
 })
 
@@ -210,6 +226,8 @@ SlashCmdList.DECKUI = function(msg)
         D.PrintBuild()
     elseif msg == "bars" then
         D.PrintBars()
+    elseif msg == "layout" then
+        D.PrintLayout()
     elseif msg == "deck" or msg == "pc" or msg == "auto" then
         D.SetDevice(msg)
     else

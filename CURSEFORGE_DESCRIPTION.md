@@ -51,7 +51,7 @@ DeckUI is a hub with six load-on-demand modules; enable or disable each one in `
 - Size and position per device
 
 ## Steam Deck / PC detection
-DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → General → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
+DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → Devices → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
 
 ## Works alongside ConsolePort
 Most of ConsolePort works fine next to DeckUI – its radial menus, camera targeting, interface navigation and inventory menus. Its **action bar** does not: it sits on the same LT/RT plus D-pad and face button combinations, it re-asserts its own key overrides over ours, and it unregisters the events on Blizzard's action buttons that DeckUI reads the pushed state from.
