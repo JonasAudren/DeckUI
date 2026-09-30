@@ -4,7 +4,7 @@ local D = DeckUI
 -- Window
 -------------------------------------------------------------------
 local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 748)   -- height follows the tab rows, see LayoutTabs
+panel:SetSize(340, 776)   -- height follows the tab rows, see LayoutTabs
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -42,7 +42,7 @@ panel.tabOrder = {}
 -- the window grows by one row's height, content moving down with it.
 -- Seven in one row would leave 42 pixels each - too narrow for "General"
 -- in any readable size.
-local BASE_HEIGHT = 748   -- the General tab ends with a checkbox at -618, 28 high
+local BASE_HEIGHT = 776   -- the General tab ends with a checkbox at -646, 28 high
 local ROW = 30
 
 local function LayoutTabs()
@@ -186,6 +186,8 @@ panel:AddTab("General", {
         D.Label(c, "Other", -596, 15)
         D.Checkbox(c, "Show minimap button", -618, db, "showMinimap",
             function(v) D.SetMinimapShown(v) end)
+        D.Checkbox(c, "Keep key bindings on this device", -646,
+            function() return D.bindingsCVar end, "localOnly", D.SetLocalBindings)
     end,
 })
 

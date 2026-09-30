@@ -65,6 +65,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `D.MigrateToDevice(db, {fields})` moves old flat fields to both devices once.
 - Device detection: `D.DetectDevice()` – 1280x800 screen or active gamepad = "deck", else "pc";
   `DeckUIDB.device` = auto|deck|pc overrides. `D.IsDeck()` is the only thing modules should ask.
+- Key bindings per device: WoW's CVar `synchronizeBindings` = 0 keeps them in the local WTF
+  folder instead of on the server (General tab, "Keep key bindings on this device"). The CVar
+  lives in Config.wtf, so it is per machine by itself - no DeckUIDB entry. Switching it on
+  saves the loaded bindings locally first; switching it off does *not* save, which would
+  upload this machine's set over the server's. `/deck device` prints the state.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
   (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`,
   `/deck build`, `/deck deck|pc|auto`) – they were essential for Midnight issues.

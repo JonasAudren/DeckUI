@@ -105,6 +105,34 @@ end
 
 function D.PrintDevice()
     print("DeckUI: " .. D.DeviceText())
+    print("DeckUI: key bindings " .. (D.bindingsCVar.localOnly
+        and "stay on this device (synchronizeBindings 0)"
+        or "are synced with the server (synchronizeBindings 1)"))
+end
+
+-- Key bindings per device. WoW keeps them on the server, so every machine
+-- logging into the account loads the same ones, and a change on the Deck
+-- lands on the PC. The client's own CVar synchronizeBindings = 0 keeps
+-- them in the local WTF folder instead - the CVar lives in Config.wtf, so
+-- it is itself per machine and needs no DeckUIDB entry. Blizzard's UI never
+-- touches it; confirmed present on 12.1.0 (owner's /dump, 2026-09-30).
+-- A table proxy, so the ordinary D.Checkbox can drive it.
+D.bindingsCVar = setmetatable({}, {
+    __index = function() return GetCVar("synchronizeBindings") == "0" end,
+    __newindex = function(_, _, v) SetCVar("synchronizeBindings", v and "0" or "1") end,
+})
+
+function D.SetLocalBindings(localOnly)
+    if localOnly then
+        -- write what is loaded now into the local copy, so this device
+        -- starts from the bindings it has instead of an older local file
+        if not InCombatLockdown() then SaveBindings(GetCurrentBindingSet()) end
+        print("DeckUI: key bindings now stay on this device.")
+    else
+        -- deliberately no SaveBindings here: it would upload this device's
+        -- bindings over the server's
+        print("DeckUI: key bindings are synced with the server again - the server's set loads at the next login.")
+    end
 end
 
 -- /deck build - the numbers a release depends on. The interface number in
