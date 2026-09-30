@@ -232,7 +232,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   move from beside each row to below it.
   Test mode ("Test" beside the heading, `/orbs test`, session only): five oUF frames for
   "player" in the party style, spawned on first use - secure like the real rows, so they
-  switch only out of combat - while the header's visibility is set to "hide". The same oUF as the orbs -
+  switch only out of combat - while the header's visibility is set to "hide".
+  **This oUF keeps a frame's unit in `self.__unit`, not `self.unit`** (events.lua) - custom
+  elements read `__unit`; with `self.unit` the class icon and the target edge never ran and
+  the icon showed the whole sheet of class circles (2026-09-30). The same oUF as the orbs -
   a separate module would need its own copy.
 
 ## Bags module (bag window tested in game 2026-09-29; bank not yet)

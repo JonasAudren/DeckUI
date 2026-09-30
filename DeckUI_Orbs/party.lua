@@ -65,12 +65,30 @@ oUF.Tags.Events["deck:partyhp"] = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION UN
 -------------------------------------------------------------------
 -- Two small elements of our own: the class icon and the target edge
 -------------------------------------------------------------------
+-- The icon stays hidden until the class is known: shown untouched, the
+-- circles texture is a sheet of every class at once (owner's report,
+-- 2026-09-30, when this element alone did not run for the rows). Blizzard's
+-- own class atlas (GetClassAtlas, SharedConstants.lua) needs no texture
+-- coordinates; the sheet with CLASS_ICON_TCOORDS is the fallback.
 local function UpdateClassIcon(self)
     local icon = self.DeckClassIcon
-    if not self.unit then return end
-    local _, class = UnitClass(self.unit)
-    local coords = class and CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
+    -- __unit is what oUF's own elements read (vehicle swaps included)
+    local unit = self.__unit or self.unit
+    if not icon or not unit then return end
+    local _, class = UnitClass(unit)
+    if (issecretvalue and issecretvalue(class)) or not class then
+        icon:Hide()
+        return
+    end
+    local atlas = GetClassAtlas and GetClassAtlas(class:lower())
+    if atlas and C_Texture.GetAtlasInfo(atlas) then
+        icon:SetAtlas(atlas)
+        icon:Show()
+        return
+    end
+    local coords = CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
     if coords then
+        icon:SetTexture(CLASS_ICONS)
         icon:SetTexCoord(unpack(coords))
         icon:Show()
     else
@@ -89,9 +107,10 @@ end, function(self)
 end)
 
 local function UpdateTargetEdge(self)
-    if not self.unit then return end
+    local unit = self.__unit or self.unit
+    if not unit then return end
     -- a secret boolean goes straight to the engine
-    self.DeckTargetEdge:SetAlphaFromBoolean(UnitIsUnit(self.unit, "target"), 1, 0)
+    self.DeckTargetEdge:SetAlphaFromBoolean(UnitIsUnit(unit, "target"), 1, 0)
 end
 
 oUF:AddElement("DeckTargetEdge", UpdateTargetEdge, function(self)
@@ -150,7 +169,12 @@ local function BuildRow(self, unit)
     local icon = self:CreateTexture(nil, "ARTWORK")
     icon:SetSize(ICON, ICON)
     icon:SetPoint("LEFT", 2, 0)
-    icon:SetTexture(CLASS_ICONS)
+    -- round, like the circles sheet: a mask over the icon alone
+    local mask = self:CreateMaskTexture()
+    mask:SetTexture(D.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    mask:SetAllPoints(icon)
+    icon:AddMaskTexture(mask)
+    icon:Hide()
     self.DeckClassIcon = icon
 
     local left = ICON + 8
@@ -185,6 +209,9 @@ local function BuildRow(self, unit)
     -- oUF's health colour is a plain green, like FFXIV's bars
     health.colorHealth = true
     health.colorDisconnected = true
+    -- the health bar updates for every member, whatever else does: the
+    -- class icon rides along
+    health.PostUpdate = function(bar) UpdateClassIcon(bar.__owner) end
     self.Health = health
 
     local power = CreateFrame("StatusBar", nil, self)
