@@ -1,7 +1,7 @@
 <#
     package.ps1 - build the CurseForge upload zip for DeckUI.
 
-    Writes dist\DeckUI-<version>.zip with the seven addon folders at the TOP
+    Writes dist\DeckUI-<version>.zip with the addon folders at the TOP
     LEVEL of the archive. A wrapping folder would install every addon one
     level too deep, so the archive layout is printed at the end for a look.
 
@@ -135,7 +135,7 @@ try {
             $text = (Get-Content $toc -Raw) -replace "(?m)^##\s+Version\s*:[^\r\n]*", "## Version: $buildVersion"
             [System.IO.File]::WriteAllText($toc, $text, $utf8NoBom)
         }
-        Write-Host ("  stamped version {0} into the seven .toc files" -f $buildVersion)
+        Write-Host ("  stamped version {0} into the {1} .toc files" -f $buildVersion, $addons.Count)
     }
 
     # --- zip it, entry names with forward slashes ---------------------
@@ -180,7 +180,7 @@ try {
         $bad   = @($names | Where-Object { $_ -like "*\*" })
         if ($bad.Count -gt 0) { throw "entry names contain backslashes: " + $bad[0] }
 
-        Write-Host "  top level of the archive (must be the seven addon folders):"
+        Write-Host ("  top level of the archive (must be the {0} addon folders):" -f $addons.Count)
         $groups = $names | Group-Object { ($_ -split "/")[0] } | Sort-Object Name
         foreach ($g in $groups) {
             $mark = "  "

@@ -26,8 +26,9 @@ D.MODULE_ADDONS = {
     Bags  = "DeckUI_Bags",
     Quests = "DeckUI_Quests",
     Map   = "DeckUI_Map",
+    Tooltip = "DeckUI_Tooltip",
 }
-D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests", "Map" }
+D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests", "Map", "Tooltip" }
 -- the module checkboxes in the General tab
 D.MODULE_TITLES = {
     Orbs   = "Orbs (unit frames)",
@@ -36,12 +37,13 @@ D.MODULE_TITLES = {
     Bags   = "Bags (bags and banks)",
     Quests = "Quests (objective tracker)",
     Map    = "Map (minimap and world map)",
+    Tooltip = "Tooltip (mouse-over window)",
 }
 
 -- Modules that start switched off, for new installs and for players who
 -- update into them alike. Replacing the bag window, the quest tracker or
 -- the maps is not something an update should do to anyone unasked.
-D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true, Map = true }
+D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true, Map = true, Tooltip = true }
 
 D.modules = {}   -- key -> { title = ..., build = function(content) end }
 

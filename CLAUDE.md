@@ -20,20 +20,21 @@ DeckUI_Spec/     module: spec switcher (/spec, /qs)
 DeckUI_Bags/     module: bags, bank, warband bank (/bags)        off by default
 DeckUI_Quests/   module: own objective tracker (/quests)        off by default
 DeckUI_Map/      module: square minimap, smaller world map (/deckmap) off by default
+DeckUI_Tooltip/  module: the mouse-over tooltip (/decktip)       off by default
 ```
 Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
 `D.RegisterModule(key, { title, build = function(content) end })`. The hub loads
 enabled modules from `DeckUIDB.modules` at `ADDON_LOADED`.
 
-`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the seven addon
+`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the eight addon
 folders at the **top level** (a wrapping folder would install everything one level too
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
-other libraries bundle. It aborts if the seven `.toc` files disagree on version or interface.
+other libraries bundle. It aborts if the eight `.toc` files disagree on version or interface.
 The list of addon folders lives once, in `release-common.ps1`, which both scripts dot-source
 (with `Get-TocField`); a new module is added there and to `D.MODULE_*` in `DeckUI/core.lua`.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
-in all seven at once - `package.ps1 -Version` only stamps the staged copies, so without
+in all eight at once - `package.ps1 -Version` only stamps the staged copies, so without
 the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
 changelog the release sends along: the `## <version>` section of `CHANGELOG.md` when there
 is one, otherwise the commit subjects since the previous tag. Write the section - the
@@ -373,13 +374,38 @@ source (read 2026-09-29).
   nothing says which maps or APIs; minimap coordinates are simply blank when the position
   API returns nothing. `/deckmap debug` prints whether the restriction is active.
 
+## Tooltip module (not yet tested in game)
+
+GameTooltip restyled and extended. Built from Blizzard's 12.1.0 source (read 2026-09-30).
+**GameTooltip is one frame the whole game shares** - the widget taint above applies to it
+just the same, so:
+- **Never write a field onto a tooltip, its `NineSlice` or `GameTooltipStatusBar`.** State
+  lives in our own tables keyed by frame (`backdrops`, `borderColor`). Only methods that
+  change what is drawn (alpha, colour, points, textures).
+- **Never call `tooltip:Show()`, `SetWatch` or `RefreshData`.** `GameTooltip_OnShow` does
+  padding arithmetic on widths that can be secret. The only rebuild we trigger is Blizzard's
+  own `GameTooltip:SetUnit("mouseover")` when an inspect answer arrives.
+- Look: a post-hook on `SharedTooltip_SetBackdropStyle` (re-run on every hide) sets the
+  NineSlice to alpha 0 - Blizzard only Shows/Hides it - and colours our BackdropTemplate
+  frame one level below the tooltip. The edge takes quality/class colour for one showing.
+- Place: a post-hook on `GameTooltip_SetDefaultAnchor` re-anchors only those tooltips to
+  `DeckTooltipAnchor` (movable, per device); owned tooltips keep their place.
+- Lines: `TooltipDataProcessor.AddTooltipPostCall` for Unit/Item/Spell - Blizzard runs them
+  before its own Show and again on `TOOLTIP_DATA_UPDATE`. Unit name, class and GUID are
+  secret for units that are not player-controlled: checked with `issecretvalue`, and a
+  target name that may be secret goes into `AddDoubleLine` whole, never concatenated.
+- Health bar: Blizzard's (it watches the unit securely), restyled with textures only.
+- Inspect for other players' spec/item level: one at a time, 1.5 s apart, 5 s timeout, not
+  in combat nor while Blizzard's inspect window is open; results cached by GUID for 5 min.
+- `/decktip debug` prints the styled count, anchor, scale, NineSlice alpha and inspect state.
+
 ## Testing checklist (owner does this in-game)
 
 1. `/console scriptErrors 1`, `/reload`, no error window.
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all eight tabs works without error.
+5. Every checkbox / slider / button in all nine tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked

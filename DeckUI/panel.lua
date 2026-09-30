@@ -131,10 +131,12 @@ panel:AddTab("General", {
                 function(v) D.SetModuleEnabled(key, v) end)
         end
 
-        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -200)
+        -- below the last module, however many there are
+        local y = -28 * #D.MODULE_ORDER - 32
+        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", y)
 
-        D.Label(c, "Other", -232, 15)
-        D.Checkbox(c, "Show minimap button", -254, db, "showMinimap",
+        D.Label(c, "Other", y - 32, 15)
+        D.Checkbox(c, "Show minimap button", y - 54, db, "showMinimap",
             function(v) D.SetMinimapShown(v) end)
     end,
 })

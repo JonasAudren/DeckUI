@@ -4,7 +4,7 @@ DeckUI
 A compact, controller-friendly interface for World of Warcraft on the Steam
 Deck - that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with six load-on-demand modules. Enable or disable each one
+DeckUI is a hub with seven load-on-demand modules. Enable or disable each one
 in /deck; what you do not use is never loaded.
 
   DeckUI          the hub: device detection, settings window, movable frames
@@ -17,6 +17,8 @@ in /deck; what you do not use is never loaded.
                   (off until you switch it on in /deck)
   DeckUI Map      a square minimap and a smaller world map
                   (off until you switch it on in /deck)
+  DeckUI Tooltip  the mouse-over tooltip in DeckUI's style, at a fixed place
+                  (off until you switch it on in /deck)
 
 Requires World of Warcraft Retail, Interface 120100 (Midnight).
 License: MIT, see LICENSE.txt. The bundled libraries and their
@@ -26,13 +28,13 @@ licences are listed in THIRD-PARTY.txt.
 Installation
 ------------
 1. Quit the game completely.
-2. Copy all seven folders into
+2. Copy all eight folders into
 
      World of Warcraft\_retail_\Interface\AddOns\
 
    so that you end up with AddOns\DeckUI, AddOns\DeckUI_Orbs,
    AddOns\DeckUI_Cross, AddOns\DeckUI_Spec, AddOns\DeckUI_Bags,
-   AddOns\DeckUI_Quests and AddOns\DeckUI_Map.
+   AddOns\DeckUI_Quests, AddOns\DeckUI_Map and AddOns\DeckUI_Tooltip.
 3. Start the game. In the addon list on the character screen, DeckUI,
    DeckUI Orbs, DeckUI Cross, DeckUI Spec, DeckUI Bags, DeckUI Quests and
    DeckUI Map must all be checked. The six modules are marked "load on
@@ -100,6 +102,7 @@ Commands
   /quests reset            bring the quest tracker back to its default place
   /deckmap                 jump to the Map tab
   /deckmap reset           bring the minimap back to its default place
+  /decktip                 jump to the Tooltip tab
 
 Diagnostics for the cross hotbar, useful when reporting a problem:
 
@@ -205,6 +208,25 @@ Options in the Cross tab:
   Show button labels
   Hide the Blizzard bars the crosses mirror
                            on by default, so nothing shows twice
+
+
+DeckUI Tooltip - the mouse-over window
+--------------------------------------
+A dark tooltip with a thin edge, like the rest of DeckUI. The edge takes the
+item's quality colour, or the class colour of a player. Tooltips that belong
+to a button or a frame stay beside it; all others appear at their own place,
+which /deck unlock moves - separately for the Steam Deck and the PC.
+
+Options in the Tooltip tab:
+
+  At its own place         on by default; off leaves Blizzard's corner
+  Size (this device)       saved separately for Deck and PC
+  Players in their class colour
+  Spec and item level of players
+                           others need a short look at their gear, so the
+                           line appears a moment later, never in combat
+  Whom the unit is targeting
+  Item, spell and NPC IDs while Shift is held
 
 
 DeckUI Spec - spec switcher
