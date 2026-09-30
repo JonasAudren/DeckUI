@@ -24,6 +24,27 @@ D.RegisterModule("Orbs", {
         c.widgets = c.widgets or {}
         table.insert(c.widgets, hpBtn)
 
+        -- two buttons in one row: health text on the left, the style of
+        -- player and target (orbs or Final Fantasy's bars) on the right
+        local STYLE_NAMES = { orbs = "Orbs", ff = "Final Fantasy" }
+        hpBtn:SetWidth(148)
+        hpBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
+        hpBtn:ClearAllPoints()
+        hpBtn:SetPoint("TOPLEFT", c, "TOPLEFT", 8, -262)
+        local styleBtn = D.Button(c, "Style", -262, function() end)
+        styleBtn:SetWidth(148)
+        styleBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
+        styleBtn:ClearAllPoints()
+        styleBtn:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -262)
+        local function StyleLabel() return "Style: " .. STYLE_NAMES[DeckOrbsDB.style or "orbs"] end
+        styleBtn:SetScript("OnClick", function(b)
+            DeckOrbsDB.style = (DeckOrbsDB.style == "ff") and "orbs" or "ff"
+            b:SetText(StyleLabel())
+            print("DeckUI Orbs: player and target as " .. STYLE_NAMES[DeckOrbsDB.style] .. " after /reload.")
+        end)
+        function styleBtn:Refresh() self:SetText(StyleLabel()) end
+        table.insert(c.widgets, styleBtn)
+
         D.Checkbox(c, "Show cast in orb",       -306, db, "showCast",       ns.SetCastShown)
         D.Checkbox(c, "Show buffs and debuffs", -334, db, "showAuras",      ns.SetAurasShown)
         D.Checkbox(c, "Only own debuffs on target", -362, db, "ownDebuffsOnly", ns.SetOwnDebuffsOnly)

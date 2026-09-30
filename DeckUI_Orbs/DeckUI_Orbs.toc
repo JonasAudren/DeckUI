@@ -14,5 +14,6 @@
 libs\oUF\oUF.xml
 core.lua
 layout.lua
+ffstyle.lua
 party.lua
 config.lua

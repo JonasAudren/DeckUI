@@ -30,6 +30,7 @@ ns.DEFAULTS = {
     buffMaxDuration = 300,
     hpText          = "percent",   -- "percent" | "absolute" | "both"
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
+    style           = "orbs",      -- player/target: "orbs" or "ff" (ffstyle.lua), needs /reload
 }
 
 -- Custom tag: abbreviated health (1.2M, 340K). Uses Blizzard's own
@@ -543,17 +544,24 @@ oUF:Factory(function(self)
     D.MigrateToDevice(DeckOrbsDB, { "scale" })
     ns.GLOW = DeckOrbsDB.glow
 
-    self:SetActiveStyle("DeckOrbsBig")
+    -- player and target: the orbs, or Final Fantasy's bars (ffstyle.lua)
+    local ff = DeckOrbsDB.style == "ff"
+    local player, target, tot
+    if ff then
+        player, target, tot = ns.SpawnFF(self)
+    else
+        self:SetActiveStyle("DeckOrbsBig")
 
-    local player = self:Spawn("player", "DeckOrbsPlayer")
-    player.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", -260, 140 }
-    player:SetPoint(unpack(player.defaultPoint))
-    D.MakeMovable(player, "Player", DeckOrbsDB)
+        player = self:Spawn("player", "DeckOrbsPlayer")
+        player.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", -260, 140 }
+        player:SetPoint(unpack(player.defaultPoint))
+        D.MakeMovable(player, "Player", DeckOrbsDB)
 
-    local target = self:Spawn("target", "DeckOrbsTarget")
-    target.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", 260, 140 }
-    target:SetPoint(unpack(target.defaultPoint))
-    D.MakeMovable(target, "Target", DeckOrbsDB)
+        target = self:Spawn("target", "DeckOrbsTarget")
+        target.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", 260, 140 }
+        target:SetPoint(unpack(target.defaultPoint))
+        D.MakeMovable(target, "Target", DeckOrbsDB)
+    end
 
     self:SetActiveStyle("DeckOrbsMedium")
 
@@ -564,13 +572,20 @@ oUF:Factory(function(self)
 
     self:SetActiveStyle("DeckOrbsSmall")
 
-    local tot = self:Spawn("targettarget", "DeckOrbsTargetTarget")
-    tot:SetFrameLevel(30)
-    tot:SetPoint("CENTER", target, "CENTER", 55, -45)
+    if not ff then
+        tot = self:Spawn("targettarget", "DeckOrbsTargetTarget")
+        tot:SetFrameLevel(30)
+        tot:SetPoint("CENTER", target, "CENTER", 55, -45)
+    end
 
     local pet = self:Spawn("pet", "DeckOrbsPet")
     pet:SetFrameLevel(30)
-    pet:SetPoint("CENTER", player, "CENTER", -55, -45)
+    if ff then
+        -- beside the parameter bar instead of on the orb's edge
+        pet:SetPoint("RIGHT", player, "LEFT", -8, 0)
+    else
+        pet:SetPoint("CENTER", player, "CENTER", -55, -45)
+    end
 
     -- boss orbs: a column on the right side, anchored to one movable holder
     self:SetActiveStyle("DeckOrbsBoss")

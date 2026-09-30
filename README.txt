@@ -172,6 +172,10 @@ Options in the Orbs tab:
   Class resource dots on player orb
                            combo points, holy power, runes and so on
   Announce target          shows the target's name large on every change
+  Style                    Orbs, or Final Fantasy: the player as long HP/MP bars
+                           with their numbers, the target as a wide bar at the
+                           top with its cast, status icons and its own target.
+                           Needs a /reload; focus, pet and boss stay orbs.
   Party list               Final Fantasy style rows for your party: class icon,
                            role, health with its number, a thin resource bar,
                            your buffs and all debuffs, a gold edge on the member

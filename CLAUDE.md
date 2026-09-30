@@ -219,6 +219,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   on is fine, doing arithmetic on them is not. `assist.lua` is built on exactly that line.
 - oUF: `ClassPower` / `Runes` dots are StatusBars with a masked WHITE8x8 fill; `[deck:hpshort]`
   is our custom tag.
+- **Final Fantasy style for player and target** (`DeckUI_Orbs/ffstyle.lua`,
+  `DeckOrbsDB.style` = "orbs" | "ff", the "Style" button, needs a /reload; not yet tested in
+  game): FFXIV's parameter bar for the player (HP/MP bars with numbers, class resources as
+  squares, cast below, buffs and debuffs above) and its wide target bar at the top (name,
+  percent, cast, status icons, the target's target beside it). Spawned instead of the big
+  orbs in the same Factory; focus, pet and boss stay orbs. Positions are saved under their
+  own keys ("Player (FF)", "Target (FF)"), so switching back keeps the orbs' places.
 - **Party list** (`DeckUI_Orbs/party.lua`, `DeckOrbsDB.showParty`, off by default, needs a
   /reload; not yet tested in game): FFXIV-style rows on oUF's group header - Blizzard's
   SecureGroupHeaderTemplate, which sorts members in combat by itself, sets the click
