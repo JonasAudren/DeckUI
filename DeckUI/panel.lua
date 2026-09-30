@@ -4,7 +4,7 @@ local D = DeckUI
 -- Window
 -------------------------------------------------------------------
 local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 700)   -- height follows the tab rows, see LayoutTabs
+panel:SetSize(340, 730)   -- height follows the tab rows, see LayoutTabs
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -42,7 +42,7 @@ panel.tabOrder = {}
 -- the window grows by one row's height, content moving down with it.
 -- Seven in one row would leave 42 pixels each - too narrow for "General"
 -- in any readable size.
-local BASE_HEIGHT = 700   -- the tallest tab, Cross, ends with a three-line hint at -544
+local BASE_HEIGHT = 730   -- the tallest tab, Cross, ends with a three-line hint at -574
 local ROW = 30
 
 local function LayoutTabs()

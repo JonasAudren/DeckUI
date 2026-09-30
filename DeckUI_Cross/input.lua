@@ -57,6 +57,30 @@ end
 -- MULTIACTIONBAR1BUTTONn), not to our buttons: only the native path
 -- runs the engine's press-and-hold repeat (single-button assistant,
 -- hold-to-cast). Our buttons just mirror the result visually.
+-- Camera zoom on LB + D-pad up/down (owner's wish, 2026-09-30). The
+-- binding UI cannot take LB + D-pad as one key: only Shift, Ctrl and Alt
+-- combine with another key, and on a gamepad a button becomes one of
+-- those only through GamePadEmulate*. Shift and Ctrl are LT/RT already, so
+-- LB becomes Alt - and stops being a button of its own.
+-- CAMERAZOOMIN/OUT (Bindings_Standard.xml) zoom smoothly while held and
+-- one step on a tap, like the mouse wheel.
+local LB = "PADLSHOULDER"
+
+local function ApplyZoomModifier()
+    if DeckCrossDB.lbZoom then
+        SetCVar("GamePadEmulateAlt", LB)
+    elseif GetCVar("GamePadEmulateAlt") == LB then
+        -- ours to undo; an Alt the player set up differently stays
+        SetCVar("GamePadEmulateAlt", "none")
+    end
+end
+
+local function BindZoom()
+    if not DeckCrossDB.lbZoom then return end
+    SetOverrideBinding(ns.header, true, "ALT-PADDUP", "CAMERAZOOMIN")
+    SetOverrideBinding(ns.header, true, "ALT-PADDDOWN", "CAMERAZOOMOUT")
+end
+
 local function BindPad()
     local idx = 0
     for group = 1, 3 do
@@ -83,7 +107,11 @@ function ns.ApplyBindings()
     ClearOverrideBindings(ns.header)
     -- PC: nothing to bind, the player's own key bindings already drive
     -- the native commands the crosses mirror.
-    if D.IsDeck() then BindPad() end
+    if D.IsDeck() then
+        BindPad()
+        ApplyZoomModifier()
+        BindZoom()
+    end
     bindingsPending = false
 end
 
@@ -103,8 +131,25 @@ function ns.SetupGamepad()
     SetCVar("GamePadEnable", "1")
     SetCVar("GamePadEmulateShift", "PADLTRIGGER")
     SetCVar("GamePadEmulateCtrl",  "PADRTRIGGER")
-    SetCVar("GamePadEmulateAlt",   "none")
+    SetCVar("GamePadEmulateAlt",   DeckCrossDB.lbZoom and LB or "none")
     print("DeckUI Cross: gamepad enabled, LT = left, RT = right, LT+RT = middle.")
+end
+
+function ns.SetLBZoom(on)
+    DeckCrossDB.lbZoom = on
+    if not D.IsDeck() then
+        print("DeckUI Cross: saved - LB zoom applies on the Steam Deck.")
+        return
+    end
+    if InCombatLockdown() then
+        print("DeckUI Cross: takes effect after combat.")
+    end
+    -- ApplyBindings sets the CVar and the bindings, or waits for combat end;
+    -- switched off, it only drops the zoom bindings, so undo Alt here
+    if not on then ApplyZoomModifier() end
+    ns.ApplyBindings()
+    print(on and "DeckUI Cross: LB + D-pad up/down zooms the camera (hold for a smooth zoom). LB now works as Alt."
+        or "DeckUI Cross: LB zoom off, LB is a button of its own again.")
 end
 
 -- SetBinding writes straight into the player's key bindings and there is

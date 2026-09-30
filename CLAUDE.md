@@ -190,6 +190,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   down, and the returning trigger brings no fresh key-down for the combination - the repeat
   does not resume. `/dc trace` prints modifier edges, casts and any re-applied bindings with
   timestamps to tell that apart from a cast that simply failed.
+- **Camera zoom on LB + D-pad up/down** (`DeckCrossDB.lbZoom`, off by default, Deck only;
+  not yet tested in game). The owner could not bind it: only Shift/Ctrl/Alt combine with
+  another key, and a gamepad button becomes one only through `GamePadEmulate*` - Shift/Ctrl
+  are LT/RT, and `SetupGamepad` used to force Alt to "none". With the option LB is Alt, and
+  `ALT-PADDUP`/`ALT-PADDDOWN` go to `CAMERAZOOMIN`/`CAMERAZOOMOUT` as override bindings
+  (smooth while held, one step on a tap - `Bindings_Standard.xml`). Switched off, Alt goes
+  back to "none" only if it is still LB.
 - Gamepad glyph atlases (`Gamepad_Ltr_Face_*`) do not exist on this client; we ship our own
   TGA glyphs in `DeckUI_Cross/textures/`.
 - Health/power values may be *secret values*: display them via tags / Blizzard helpers

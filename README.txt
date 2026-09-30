@@ -194,6 +194,11 @@ the single-button assistant work, including its changing icon.
 
 Options in the Cross tab:
 
+  LB + D-pad up/down zooms the camera
+                           off by default, Steam Deck only. LB becomes Alt
+                           (the only way the game combines LB with another
+                           button), so it is no longer a button of its own.
+                           Hold for a smooth zoom, tap for one step.
   Size (this device)       saved separately for Deck and PC
   Out-of-combat opacity    dimmed out of combat, full brightness in combat or
                            whenever you touch it
