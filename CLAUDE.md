@@ -100,6 +100,14 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   (own prompt window, not a StaticPopup), and nothing is learned until that reload - should
   the manager not have caught up, learning the old name would undo the switch.
   `/deck layout` prints active and saved layout.
+- **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
+  General tab, off by default; not yet tested in game). Its numbers are secret in combat, so
+  only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.
+  UpdateStyle` (flat bar, dark background, no shadow edge, our font at Blizzard's size) and
+  `DamageMeterSessionWindowMixin.SetStyle` (flat header and background, a thin edge). Mixin
+  functions are copied into frames at creation, so the hooks go in at our ADDON_LOADED via
+  `EventUtil.ContinueOnAddOnLoaded`, and existing windows are styled once directly. The
+  "background opacity" setting keeps working: it sets the alpha of the textures we recolour.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
   (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`, `/deck bars`, `/deck layout`,
   `/deck build`, `/deck deck|pc|auto`) – they were essential for Midnight issues.

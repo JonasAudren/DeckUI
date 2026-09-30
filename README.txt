@@ -118,6 +118,10 @@ Modules           each module on or off. Enabling takes effect
                   immediately, disabling after /reload.
 Show minimap button
                   hide it if you prefer /deck.
+Damage meter in DeckUI's look
+                  Blizzard's own damage meter with flat bars, a dark
+                  background and a thin edge. Off by default; switching it
+                  off again needs a /reload.
 
 
 Devices tab

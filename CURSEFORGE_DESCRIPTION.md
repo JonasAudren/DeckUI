@@ -61,6 +61,9 @@ DeckUI is a hub with seven load-on-demand modules; enable or disable each one in
 - Whom the unit is targeting, with a warning when it is you
 - Hold Shift for item, spell and NPC IDs
 
+## Blizzard's damage meter in DeckUI's look
+One checkbox in the General tab gives the game's built-in damage meter flat bars, a dark background and a thin edge, matching the rest of DeckUI.
+
 ## Steam Deck and PC
 DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → Devices → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
 

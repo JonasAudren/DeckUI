@@ -138,6 +138,8 @@ panel:AddTab("General", {
         D.Label(c, "Other", y - 32, 15)
         D.Checkbox(c, "Show minimap button", y - 54, db, "showMinimap",
             function(v) D.SetMinimapShown(v) end)
+        D.Checkbox(c, "Damage meter in DeckUI's look", y - 82, db, "styleDamageMeter",
+            D.SetDamageMeterStyled)
     end,
 })
 

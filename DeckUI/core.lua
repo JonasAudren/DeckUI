@@ -439,6 +439,7 @@ local DEFAULTS = {
     uiScalePC     = 0.71,
     keepBars      = false,   -- action bar layout per device (actionbars.lua)
     keepLayouts   = false,   -- Edit Mode layout per device (editmode.lua)
+    styleDamageMeter = false, -- Blizzard's damage meter in DeckUI's look (damagemeter.lua)
 }
 
 -- Blizzard's whole-UI scale, set per device at login when enabled
