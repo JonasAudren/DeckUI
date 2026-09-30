@@ -10,6 +10,15 @@ D.FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 D.MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 D.DISC = "Interface\\Minimap\\UI-Minimap-Background"
 
+-- A round mask over the whole frame: add it to every texture that should
+-- be cut to a circle (orbs, rings, spec and cross buttons, auras).
+function D.RoundMask(frame)
+    local mask = frame:CreateMaskTexture()
+    mask:SetTexture(D.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    mask:SetAllPoints(frame)
+    return mask
+end
+
 D.MODULE_ADDONS = {
     Orbs  = "DeckUI_Orbs",
     Cross = "DeckUI_Cross",

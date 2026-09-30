@@ -114,15 +114,23 @@ local function Coordinates()
     return ("%.1f, %.1f"):format(x * 100, y * 100)
 end
 
-local ticker = 0
+-- Coordinates five times a second (they follow the player), the clock
+-- once a second (it shows minutes); text is only set when it changed.
+local ticker, clockTicker = 0, 1
+local shownClock, shownCoords
 holder:SetScript("OnUpdate", function(_, dt)
-    ticker = ticker + dt
+    ticker, clockTicker = ticker + dt, clockTicker + dt
     if ticker < 0.2 then return end
     ticker = 0
-    if DeckMapDB.clock then clock:SetText(GameTime_GetTime(false)) end
+    if DeckMapDB.clock and clockTicker >= 1 then
+        clockTicker = 0
+        local text = GameTime_GetTime(false)
+        if text ~= shownClock then clock:SetText(text); shownClock = text end
+    end
     if DeckMapDB.coordinates then
         -- inside most instances there is no position to give
-        coords:SetText(Coordinates() or "")
+        local text = Coordinates() or ""
+        if text ~= shownCoords then coords:SetText(text); shownCoords = text end
     end
 end)
 
@@ -196,6 +204,8 @@ end
 local hoverCheck = CreateFrame("Frame")
 local sinceHover = 0
 hoverCheck:SetScript("OnUpdate", function(_, dt)
+    -- with the option off everything is shown already (ns.ApplyHover)
+    if not (DeckMapDB and DeckMapDB.buttonsOnHover) then return end
     sinceHover = sinceHover + dt
     if sinceHover < 0.1 then return end
     sinceHover = 0

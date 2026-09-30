@@ -47,9 +47,7 @@ frame:SetPoint(unpack(frame.defaultPoint))
 frame:Hide()
 ns.assist = frame
 
-local mask = frame:CreateMaskTexture()
-mask:SetTexture(D.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-mask:SetAllPoints(frame)
+local mask = D.RoundMask(frame)
 
 local ring = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
 ring:SetSize(SIZE + 6, SIZE + 6)

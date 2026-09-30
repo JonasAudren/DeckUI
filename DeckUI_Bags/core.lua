@@ -87,13 +87,26 @@ local ARMOR  = Enum.ItemClass and Enum.ItemClass.Armor or 4
 local WEAPON = Enum.ItemClass and Enum.ItemClass.Weapon or 2
 local POOR   = Enum.ItemQuality and Enum.ItemQuality.Poor or 0
 
-local function ItemLevel(bag, slot, itemID)
+-- Remembered by the item's link, which carries its bonus and upgrade IDs,
+-- so every refresh (loot, a moved item) does not ask again for all gear.
+-- Only found levels are kept: an item whose data has not arrived yet is
+-- asked again next time.
+local levels, numLevels = {}, 0
+
+local function ItemLevel(bag, slot, itemID, link)
     if not itemID then return nil end
+    if link and levels[link] then return levels[link] end
     local _, _, _, equipLoc, _, classID = C_Item.GetItemInfoInstant(itemID)
     if classID ~= ARMOR and classID ~= WEAPON then return nil end
     if not equipLoc or equipLoc == "" or equipLoc == "INVTYPE_NON_EQUIP_IGNORE" then return nil end
     local ok, level = pcall(C_Item.GetCurrentItemLevel, ItemLocation:CreateFromBagAndSlot(bag, slot))
-    if ok and type(level) == "number" and level > 1 then return level end
+    if ok and type(level) == "number" and level > 1 then
+        if link then
+            if numLevels >= 500 then wipe(levels); numLevels = 0 end
+            levels[link], numLevels = level, numLevels + 1
+        end
+        return level
+    end
     return nil
 end
 
@@ -155,7 +168,7 @@ function ns.UpdateButton(b)
     -- knowing what to sell before walking to the vendor is the point.
     b.JunkIcon:SetShown(DeckBagsDB.markJunk and info ~= nil and quality == POOR and not info.hasNoValue)
 
-    local level = DeckBagsDB.itemLevel and info and ItemLevel(bag, slot, info.itemID)
+    local level = DeckBagsDB.itemLevel and info and ItemLevel(bag, slot, info.itemID, info.hyperlink)
     b.DeckLevel:SetText(level or "")
     b.DeckFree:SetText((not info and b.freeCount) or "")
 end

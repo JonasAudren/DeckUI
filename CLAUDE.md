@@ -50,7 +50,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - **Everything in English**: code, comments, menu texts, chat messages, README.
   Slash commands (`/deck`, `/orbs`, `/dc`, `/spec`) and SavedVariables names
   (`DeckUIDB`, `DeckOrbsDB`, `DeckCrossDB`, `DeckSpecDB`) never change.
-- Font: `D.FONT = STANDARD_TEXT_FONT` (locale-safe). Masks: `D.MASK`, disc texture `D.DISC`.
+- Font: `D.FONT = STANDARD_TEXT_FONT` (locale-safe). Masks: `D.MASK`, disc texture `D.DISC`;
+  `D.RoundMask(frame)` makes the round mask every orb, ring and round button uses.
 - Widgets: `D.Label / D.Hint / D.Button / D.Slider / D.Checkbox` from `DeckUI/widgets.lua`.
   **Explanatory lines go through `D.Hint`**, which limits the width so the text wraps inside
   the panel - never place newlines by hand, they fight the wrapping and strand single words
@@ -303,6 +304,7 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   `C_LFGList.CanCreateScenarioGroup`; its ID is the 13th return of `C_Scenario.GetInfo`).
   The quest one reads its quest from an attribute (`SetUp`), so the click runs Blizzard's
   code. Not secure buttons: they sit on the rows, one frame level above them.
+  Styled like the map's buttons (art at alpha 0, dark square, thin edge) - textures only.
 - **No Blizzard UI widgets in the tracker** (removed 2026-09-30). It used to host the zone
   set, the delve header (step widgetSetID) and scenario sets 514/252 in its own
   `UIWidgetContainerTemplate` frames - and that taints: widget frames come from one pool the
@@ -312,10 +314,13 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   number value, while execution tainted by 'DeckUI_Quests')"* in `InitPartitions`. **Never
   call `RegisterForWidgetSet` from addon code.** What a widget shows is drawn from the
   `C_UIWidgetManager.Get*WidgetVisualizationInfo` data with frames of our own.
-  So far the delve header: `DelveEntry` in scenario.lua reads
-  `GetScenarioHeaderDelvesWidgetVisualizationInfo` for the stage's widget set (tier, the
-  currencies = lives, the spells = the delve's effects) and re-collects on `UPDATE_UI_WIDGET`
-  for that set only. Zone widgets and scenario sets 514/252 are not shown at all for now.
+  `ns.WidgetLines(section, setID)` in core.lua reads the common kinds (StatusBar,
+  DoubleStatusBar, the text kinds, scenario currencies) into lines; bars take the raw,
+  possibly secret numbers (`line.range`), a percentage only when they are plain. It serves
+  the zone set ("Zone" section) and the scenario's sets 514/252 plus the stage set.
+  The delve header is `DelveEntry` in scenario.lua (tier, lives, the delve's effects, the
+  treasure). `UPDATE_UI_WIDGET` re-collects only the section that shows the widget's set;
+  a widget with `hasTimer` ticks its section each second. Other widget kinds are skipped.
 - Blizzard shows no +2/+3 chest times; ours use the keystone rule (80% / 60% of the limit).
 - The tracker grows from its top edge (`D.PinTopLeft`); `/quests reset` brings it back.
 - `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have

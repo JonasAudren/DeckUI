@@ -86,9 +86,7 @@ ns.auraContainers = {}
 ns.targetDebuffs  = {}
 
 local function StyleAuraButton(element, button, options)
-    local mask = button:CreateMaskTexture()
-    mask:SetTexture(ns.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(button)
+    local mask = D.RoundMask(button)
 
     local bg = button:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
@@ -170,9 +168,7 @@ local function CreateDots(self, s, count)
         bar:SetMinMaxValues(0, 1)
         bar:SetValue(0)
 
-        local mask = bar:CreateMaskTexture()
-        mask:SetTexture(ns.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        mask:SetAllPoints(bar)
+        local mask = D.RoundMask(bar)
         bar:GetStatusBarTexture():AddMaskTexture(mask)
 
         local bg = bar:CreateTexture(nil, "BACKGROUND")

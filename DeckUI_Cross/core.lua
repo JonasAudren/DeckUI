@@ -184,9 +184,7 @@ local function ShowPushed(b, on)
 end
 
 local function MakeRound(b, size)
-    local mask = b:CreateMaskTexture()
-    mask:SetTexture(D.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(b)
+    local mask = D.RoundMask(b)
 
     -- NOTE: Blizzard's template draws the icon in the BACKGROUND layer,
     -- so everything of ours that must sit behind it goes to the lowest

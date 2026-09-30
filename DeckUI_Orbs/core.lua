@@ -1,7 +1,6 @@
 local ADDON, ns = ...
 local D = DeckUI
 
-ns.MASK = D.MASK
 ns.DISC = D.DISC
 ns.FONT = D.FONT
 
@@ -25,49 +24,30 @@ function ns.SetGlow(value)
     end
 end
 
-function ns.CreateOrb(parent, size)
+-- A round, vertically filling bar with a dark disc behind it: the orb
+-- itself sits above its ring, which shows through as the outer band.
+local function RoundBar(parent, size, levelOffset, bgShade, bgAlpha)
     local bar = CreateFrame("StatusBar", nil, parent)
     bar:SetSize(size, size)
     bar:SetPoint("CENTER")
-    bar:SetFrameLevel(parent:GetFrameLevel() + 2)
+    bar:SetFrameLevel(parent:GetFrameLevel() + levelOffset)
     bar:SetOrientation("VERTICAL")
     bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
 
-    local mask = bar:CreateMaskTexture()
-    mask:SetTexture(ns.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(bar)
+    local mask = D.RoundMask(bar)
     bar:GetStatusBarTexture():AddMaskTexture(mask)
 
     local bg = bar:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.08, 0.08, 0.08, 1)
+    bg:SetColorTexture(bgShade, bgShade, bgShade, bgAlpha)
     bg:AddMaskTexture(mask)
 
     AddGlow(bar, mask)
     return bar
 end
 
-function ns.CreateRing(parent, size)
-    local bar = CreateFrame("StatusBar", nil, parent)
-    bar:SetSize(size, size)
-    bar:SetPoint("CENTER")
-    bar:SetFrameLevel(parent:GetFrameLevel() + 1)
-    bar:SetOrientation("VERTICAL")
-    bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
-
-    local mask = bar:CreateMaskTexture()
-    mask:SetTexture(ns.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(bar)
-    bar:GetStatusBarTexture():AddMaskTexture(mask)
-
-    local bg = bar:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
-    bg:AddMaskTexture(mask)
-
-    AddGlow(bar, mask)
-    return bar
-end
+function ns.CreateOrb(parent, size) return RoundBar(parent, size, 2, 0.08, 1) end
+function ns.CreateRing(parent, size) return RoundBar(parent, size, 1, 0.1, 0.9) end
 
 function ns.CreateCastOverlay(orb, size)
     local bar = CreateFrame("StatusBar", nil, orb)
@@ -78,9 +58,7 @@ function ns.CreateCastOverlay(orb, size)
     bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
     bar:SetStatusBarColor(1, 0.85, 0.3, 0.55)
 
-    local mask = bar:CreateMaskTexture()
-    mask:SetTexture(ns.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(bar)
+    local mask = D.RoundMask(bar)
     bar:GetStatusBarTexture():AddMaskTexture(mask)
 
     return bar

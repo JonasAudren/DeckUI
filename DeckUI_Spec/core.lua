@@ -20,9 +20,7 @@ local function MakeButton(i, name, icon)
     b:SetSize(SIZE, SIZE)
     b:SetPoint("LEFT", (i - 1) * (SIZE + GAP), 0)
 
-    local mask = b:CreateMaskTexture()
-    mask:SetTexture(D.MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(b)
+    local mask = D.RoundMask(b)
 
     local ring = b:CreateTexture(nil, "BACKGROUND", nil, -8)
     ring:SetSize(SIZE + 6, SIZE + 6)
