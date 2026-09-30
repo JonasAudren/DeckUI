@@ -70,15 +70,20 @@ end
 -- the fields Blizzard's own template uses (UIWidgetTemplateScenarioHeader
 -- Delves.lua, 12.1.0): headerText, tierText, the currencies (the lives),
 -- the spells (the delve's effects) and the tooltips.
-local delveSetID   -- the stage's widget set, for UPDATE_UI_WIDGET
+-- 514 and 252: the fixed sets Blizzard's scenario module shows above and
+-- below its blocks (its XML, 12.1.0)
+local SCENARIO_TOP_SET, SCENARIO_BOTTOM_SET = 514, 252
 
 local function Shown(info)
     return info and info.shownState ~= Enum.WidgetShownState.Hidden
 end
 
+-- the treasure in the header's corner
+local REWARD = Enum.UIWidgetRewardShownState or {}
+
 local function DelveEntry(widgetSetID)
-    delveSetID = widgetSetID
     if not widgetSetID or widgetSetID == 0 then return nil end
+    ns.WatchWidgetSet("scenario", widgetSetID)
     local header
     for _, w in ipairs(C_UIWidgetManager.GetAllWidgetsBySetID(widgetSetID) or {}) do
         if w.widgetType == Enum.UIWidgetVisualizationType.ScenarioHeaderDelves then
@@ -92,11 +97,12 @@ local function DelveEntry(widgetSetID)
     if header.tierText and header.tierText ~= "" then
         title = ("%s - Tier %s"):format(title, header.tierText)
     end
-    local lines = {}
-    for _, c in ipairs(header.currencies or {}) do
-        local icon = c.iconFileID and ("|T%d:0|t "):format(c.iconFileID) or ""
-        local text = ((c.leadingText or "") .. " " .. (c.text or "")):gsub("^%s+", "")
-        lines[#lines + 1] = { text = icon .. text }
+    local lines = ns.CurrencyLines(header.currencies, {})
+    local reward = header.rewardInfo
+    if reward and reward.shownState == REWARD.ShownEarned then
+        lines[#lines + 1] = { text = "Treasure earned", done = true }
+    elseif reward and reward.shownState == REWARD.ShownUnearned then
+        lines[#lines + 1] = { text = "Treasure not earned yet" }
     end
     for _, sp in ipairs(header.spells or {}) do
         if Shown(sp) then
@@ -123,6 +129,13 @@ local function DelveEntry(widgetSetID)
                     GameTooltip:AddLine(" ")
                     GameTooltip:AddLine(sp.tooltip, nil, nil, nil, true)
                 end
+            end
+            -- Blizzard's own words for the treasure, earned or not
+            local rewardText = reward and (reward.shownState == REWARD.ShownEarned
+                and reward.earnedTooltip or reward.unearnedTooltip)
+            if reward and reward.shownState ~= REWARD.Hidden and rewardText and rewardText ~= "" then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine(rewardText, nil, nil, nil, true)
             end
             GameTooltip:Show()
         end,
@@ -284,7 +297,6 @@ local function Collect()
     -- the 13th return is the scenario's ID (Blizzard's tracker reads it so)
     local name, currentStage, numStages, _, _, _, _, _, _, _, _, _, scenarioID = C_Scenario.GetInfo()
     if not name or not numStages or numStages == 0 then
-        delveSetID = nil
         return entries
     end
 
@@ -300,13 +312,18 @@ local function Collect()
         elseif stageName and stageName ~= "" and stageName ~= name then
             title = name .. " - " .. stageName
         end
-        Add({ key = "stage", title = title, lines = showCriteria and CriteriaLines() or {},
-            findGroup = FindScenarioGroup(scenarioID) })
+        -- the scenario's fixed widget sets frame the stage's own lines
+        -- (the stage's own set holds the delve header, drawn above, and
+        -- may hold more widgets - bars, texts - which go here too)
+        local lines = ns.WidgetLines("scenario", SCENARIO_TOP_SET)
+        ns.WidgetLines("scenario", widgetSetID, lines)
+        for _, l in ipairs(showCriteria and CriteriaLines() or {}) do lines[#lines + 1] = l end
+        ns.WidgetLines("scenario", SCENARIO_BOTTOM_SET, lines)
+        Add({ key = "stage", title = title, lines = lines, findGroup = FindScenarioGroup(scenarioID) })
         if showCriteria then
             for _, e in ipairs(SpellEntries(allSpellInfo)) do Add(e) end
         end
     else
-        delveSetID = nil
         Add({ key = "stage", title = name, lines = { { text = COMPLETE or "Complete", done = true } } })
     end
 
@@ -329,15 +346,9 @@ for _, e in ipairs({
     "SCENARIO_BONUS_VISIBILITY_UPDATE", "SCENARIO_CRITERIA_SHOW_STATE_UPDATE", "CRITERIA_COMPLETE",
     "CHALLENGE_MODE_START", "CHALLENGE_MODE_COMPLETED", "CHALLENGE_MODE_RESET",
     "CHALLENGE_MODE_DEATH_COUNT_UPDATED", "WORLD_STATE_TIMER_START", "WORLD_STATE_TIMER_STOP",
-    "ACTIVE_DELVE_DATA_UPDATE", "UPDATE_UI_WIDGET",
+    "ACTIVE_DELVE_DATA_UPDATE",
 }) do pcall(ev.RegisterEvent, ev, e) end
 ev:SetScript("OnEvent", function(_, event, arg)
-    if event == "UPDATE_UI_WIDGET" then
-        -- fires for every widget in the game; only the delve header's set
-        -- concerns this section (lives lost, an effect added)
-        if delveSetID and arg and arg.widgetSetID == delveSetID then ns.RequestUpdate("scenario") end
-        return
-    end
     if event == "SCENARIO_CRITERIA_SHOW_STATE_UPDATE" then showCriteria = arg and true or false end
     ns.RequestUpdate()
 end)

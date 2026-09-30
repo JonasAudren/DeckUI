@@ -15,7 +15,9 @@ local D = DeckUI
 --     OnEnter = function(row) | nil,
 --     secure = { type = "item" | "spell", value = link | spellID, icon, logIndex } | nil,
 --     findGroup = { kind = "quest" | "scenario", id = questID | scenarioID } | nil }
--- A line may carry color = {r,g,b} to override the done/normal colours.
+-- A line may carry color = {r,g,b} to override the done/normal colours,
+-- and range = { min, max, value } with barText instead of bar: a widget's
+-- raw numbers, which may be secret and go straight into the StatusBar.
 -- Nothing here knows about quests; that keeps the drawing in one place.
 -------------------------------------------------------------------
 local PAD        = 8
@@ -182,6 +184,30 @@ local EYE_TEMPLATES = {
     scenario = "ScenarioObjectiveTrackerFindGroupButtonTemplate",
 }
 local eyes = { quest = {}, scenario = {} }
+
+-- DeckUI's look, like the world map's buttons: Blizzard's square-button
+-- art at alpha 0, a dark square with a thin edge behind the eye, a faint
+-- white highlight. Only textures change; the click stays Blizzard's.
+local function StyleEye(b, side)
+    for _, tex in ipairs({ b:GetNormalTexture(), b:GetPushedTexture(), b:GetDisabledTexture() }) do
+        tex:SetAlpha(0)
+    end
+    local bg = b:CreateTexture(nil, "BACKGROUND", nil, -8)
+    bg:SetColorTexture(0.05, 0.05, 0.05, 0.95)
+    bg:SetSize(side, side)
+    bg:SetPoint("CENTER")
+    local edge = CreateFrame("Frame", nil, b, "BackdropTemplate")
+    edge:SetAllPoints(bg)
+    edge:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    edge:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+    local hl = b:GetHighlightTexture()
+    if hl then
+        hl:SetColorTexture(1, 1, 1, 0.08)
+        hl:ClearAllPoints()
+        hl:SetPoint("TOPLEFT", bg, "TOPLEFT", 1, -1)
+        hl:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT", -1, 1)
+    end
+end
 local usedEyes = { quest = 0, scenario = 0 }
 
 local function Eye(kind)
@@ -194,12 +220,16 @@ local function Eye(kind)
             return nil
         end
         b = made
+        local side
         if kind == "quest" then
             b:SetSize(20, 20)
+            side = 20
         else
             -- the scenario eye is 36x46 art with fixed-size textures
             b:SetScale(0.5)
+            side = 40
         end
+        StyleEye(b, side)
         eyes[kind][usedEyes[kind]] = b
     end
     b:Show()
@@ -212,7 +242,9 @@ local function PlaceEye(entry, row)
     if not b then return end
     if f.kind == "quest" then b:SetUp(f.id) else b:SetScenarioID(f.id) end
     b:ClearAllPoints()
-    b:SetPoint("CENTER", row, "TOPRIGHT", -10, -8)
+    -- offsets count in the button's own scale (the scenario eye is at 0.5)
+    local s = b:GetScale()
+    b:SetPoint("CENTER", row, "TOPRIGHT", -10 / s, -8 / s)
     -- above the row, which covers the whole entry and would take the click
     b:SetFrameLevel(row:GetFrameLevel() + 2)
 end
@@ -268,13 +300,21 @@ local function DrawEntry(entry, y, width, textSize)
             fs:SetTextColor(unpack(line.color or (line.done and DONE) or LINE))
             y = y + fs:GetStringHeight() + LINE_GAP
         end
-        if line.bar then
+        if line.bar or line.range then
             local b = Bar()
             b:ClearAllPoints()
             b:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent + 8, -y)
             b:SetSize(math.min(160, width - indent - 16), BAR_HEIGHT)
-            b:SetValue(line.bar)
-            b.text:SetText(math.floor(line.bar * 100 + 0.5) .. "%")
+            if line.range then
+                -- handed on untouched: StatusBar takes secret values
+                b:SetMinMaxValues(line.range[1], line.range[2])
+                b:SetValue(line.range[3])
+                b.text:SetText(line.barText or "")
+            else
+                b:SetMinMaxValues(0, 1)
+                b:SetValue(line.bar)
+                b.text:SetText(math.floor(line.bar * 100 + 0.5) .. "%")
+            end
             y = y + BAR_HEIGHT + LINE_GAP
         end
     end
@@ -369,6 +409,111 @@ end
 -- 'DeckUI_Quests')" in UIWidgetTemplateBase.lua InitPartitions (owner's
 -- report, 2026-09-30). Whatever a widget showed has to be drawn from the
 -- widget data API with frames of our own, never with Blizzard's widgets.
+--
+-- ns.WidgetLines(section, setID) does that for the common kinds: text
+-- (TextWithState, TextWithSubtext, IconAndText, IconTextAndBackground),
+-- bars (StatusBar, DoubleStatusBar) and scenario currencies. Other kinds
+-- are skipped. The fields are the ones Blizzard's templates read
+-- (Blizzard_UIWidgets, 12.1.0). Numbers may be secret: bars get them raw,
+-- a percentage is only worked out when they are plain.
+local VIS = Enum.UIWidgetVisualizationType or {}
+local HIDDEN = 0   -- WidgetShownState.Hidden and IconAndTextWidgetState.Hidden
+local watchedSets = {}   -- widget set -> section key, for UPDATE_UI_WIDGET
+
+local function Plain(...)
+    if not issecretvalue then return true end
+    for i = 1, select("#", ...) do
+        if issecretvalue((select(i, ...))) then return false end
+    end
+    return true
+end
+
+local function Percent(min, max, value)
+    if not Plain(min, max, value) or max <= min then return "" end
+    return math.floor((value - min) / (max - min) * 100 + 0.5) .. "%"
+end
+
+local function NonEmpty(text) return text and text ~= "" and text or nil end
+
+local function Icon(fileID) return fileID and ("|T%d:0|t "):format(fileID) or "" end
+
+-- "Lives: 3" with its icon, as the delve and scenario headers show them
+function ns.CurrencyLines(currencies, lines)
+    for _, cur in ipairs(currencies or {}) do
+        local text = ((cur.leadingText or "") .. " " .. (cur.text or "")):gsub("^%s+", "")
+        lines[#lines + 1] = { text = Icon(cur.iconFileID) .. text }
+    end
+    return lines
+end
+
+local READERS = {}
+local function Reader(kind, get, read)
+    if kind and C_UIWidgetManager[get] then
+        READERS[kind] = { get = C_UIWidgetManager[get], read = read }
+    end
+end
+
+Reader(VIS.StatusBar, "GetStatusBarWidgetVisualizationInfo", function(info, lines)
+    if NonEmpty(info.text) then lines[#lines + 1] = { text = info.text } end
+    lines[#lines + 1] = {
+        range = { info.barMin, info.barMax, info.barValue },
+        barText = NonEmpty(info.overrideBarText) or Percent(info.barMin, info.barMax, info.barValue),
+    }
+end)
+Reader(VIS.DoubleStatusBar, "GetDoubleStatusBarWidgetVisualizationInfo", function(info, lines)
+    if NonEmpty(info.text) then lines[#lines + 1] = { text = info.text } end
+    lines[#lines + 1] = { range = { info.leftBarMin, info.leftBarMax, info.leftBarValue },
+        barText = Percent(info.leftBarMin, info.leftBarMax, info.leftBarValue) }
+    lines[#lines + 1] = { range = { info.rightBarMin, info.rightBarMax, info.rightBarValue },
+        barText = Percent(info.rightBarMin, info.rightBarMax, info.rightBarValue) }
+end)
+local function TextOnly(info, lines)
+    if NonEmpty(info.text) then lines[#lines + 1] = { text = info.text } end
+    if NonEmpty(info.subText) then lines[#lines + 1] = { text = info.subText } end
+end
+Reader(VIS.TextWithState, "GetTextWithStateWidgetVisualizationInfo", TextOnly)
+Reader(VIS.TextWithSubtext, "GetTextWithSubtextWidgetVisualizationInfo", TextOnly)
+Reader(VIS.IconAndText, "GetIconAndTextWidgetVisualizationInfo", TextOnly)
+Reader(VIS.IconTextAndBackground, "GetIconTextAndBackgroundWidgetVisualizationInfo", TextOnly)
+Reader(VIS.ScenarioHeaderCurrenciesAndBackground, "GetScenarioHeaderCurrenciesAndBackgroundWidgetVisualizationInfo",
+    function(info, lines)
+        if NonEmpty(info.headerText) then lines[#lines + 1] = { text = info.headerText } end
+        ns.CurrencyLines(info.currencies, lines)
+    end)
+
+-- The lines for every widget of a set this tracker can read. A widget with
+-- a timer re-collects its section each second (Blizzard's frame counts it
+-- down itself); a widget that fails to read is skipped, not the section.
+function ns.WidgetLines(section, setID, lines)
+    lines = lines or {}
+    if not setID or setID == 0 then return lines end
+    watchedSets[setID] = section
+    for _, w in ipairs(C_UIWidgetManager.GetAllWidgetsBySetID(setID) or {}) do
+        local reader = READERS[w.widgetType]
+        if reader then
+            pcall(function()
+                local info = reader.get(w.widgetID)
+                if info and (info.shownState or info.state) ~= HIDDEN then
+                    reader.read(info, lines)
+                    if info.hasTimer then ns.ticking[section] = true end
+                end
+            end)
+        end
+    end
+    return lines
+end
+
+-- A widget changed: only the section showing its set collects again.
+function ns.WatchWidgetSet(section, setID)
+    if setID and setID ~= 0 then watchedSets[setID] = section end
+end
+
+local widgetEvents = CreateFrame("Frame")
+widgetEvents:RegisterEvent("UPDATE_UI_WIDGET")
+widgetEvents:SetScript("OnEvent", function(_, _, info)
+    local section = info and watchedSets[info.widgetSetID]
+    if section then ns.RequestUpdate(section) end
+end)
 
 -------------------------------------------------------------------
 -- Secure buttons beside entries: quest items and scenario spells

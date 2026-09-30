@@ -2,9 +2,9 @@ local ADDON, ns = ...
 local D = DeckUI
 
 -------------------------------------------------------------------
--- Everything else Blizzard's tracker showed: collections, achievements,
--- the Traveler's Log, neighbourhood endeavors and recipes. (Not the zone
--- widgets - see core.lua on why no Blizzard widget is hosted here.)
+-- Everything else Blizzard's tracker showed: zone widgets (drawn from
+-- their data - see core.lua on why no Blizzard widget is hosted here),
+-- collections, achievements, the Traveler's Log, endeavors and recipes.
 -------------------------------------------------------------------
 -- Each follows its Blizzard module (12.1.0, read 2026-09-29) - same data,
 -- same clicks: left opens where it lives, shift-left stops tracking,
@@ -32,6 +32,20 @@ end
 local function Requirement(text)
     return (text or ""):gsub(" / ", "/")
 end
+
+-------------------------------------------------------------------
+-- Zone widgets (capture bars, zone objectives), drawn from their data
+-------------------------------------------------------------------
+ns.RegisterSection("zone", {
+    title = "Zone",
+    order = 15,
+    Collect = function()
+        ns.ticking.zone = nil   -- a widget with a timer sets it again
+        local lines = ns.WidgetLines("zone", C_UIWidgetManager.GetObjectiveTrackerWidgetSetID())
+        if #lines == 0 then return {} end
+        return { { key = "zone-widgets", title = GetRealZoneText(), lines = lines } }
+    end,
+})
 
 -------------------------------------------------------------------
 -- Collections: tracked appearances, mounts and decor

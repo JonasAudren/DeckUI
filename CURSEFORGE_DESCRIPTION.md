@@ -40,7 +40,7 @@ DeckUI is a hub with six load-on-demand modules; enable or disable each one in `
 - **Quest item and scenario spell buttons** beside their line, usable in combat
 - World quests and bonus objectives of your zone, with time left
 - **Dungeons, delves, scenarios**: stages, delve header, bonus steps – and in **Mythic+** the timer, time left for +3/+2, deaths and affixes
-- Achievements, Traveler's Log, neighbourhood endeavors, collections and recipes (reagents counted across bags, bank and warband bank)
+- Achievements, Traveler's Log, neighbourhood endeavors, collections and recipes (reagents counted across bags, bank and warband bank), zone widgets such as capture bars
 - Fold single sections or the whole tracker; width, size, text size and height limit per device
 
 ## DeckUI Map – minimap and world map (off until you switch it on)
