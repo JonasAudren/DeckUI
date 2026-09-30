@@ -449,11 +449,10 @@ ns.CleanOverlay = CleanOverlay
 local assistedButtons = {}   -- button -> true while it holds the assistant action
 local lastAssistSpell
 
--- Which spell is the assistant's own action? Measured 2026-09-23: this
--- client's C_AssistedCombat offers GetActionSpell, GetNextCastSpell,
--- GetRotationSpells and IsAIAvailable - the IsAssistedCombatAction(slot) we
--- used before is simply not there, which is why nothing assistant-related
--- ever lit up. So ask for the spell and compare it against the slot instead.
+-- The spell behind the assistant's own action, for /dc assist. It does NOT
+-- find the assistant's buttons: a slot holding the assistant reports the
+-- spell it recommends right now, so comparing spells against slots cannot
+-- work - IsAssistedSlot below asks the action bar instead.
 local function AssistSpellID()
     if not (C_AssistedCombat and C_AssistedCombat.GetActionSpell) then return nil end
     local ok, id = pcall(C_AssistedCombat.GetActionSpell)
@@ -530,14 +529,6 @@ local function UpdateNoTargetVeil()
 end
 ns.UpdateNoTargetVeil = UpdateNoTargetVeil
 
--- For /dc trace: without a button holding the assistant action there is
--- nothing to veil and nothing to repaint, which is worth saying out loud
--- before anyone hunts a veil that cannot appear.
--- /dc assist - why is the ring not red? Four things have to line up: the
--- client must offer the API, a cross button must actually hold the
--- assistant action, the flag must be set, and SetGroup must have written
--- the colour. This prints all four, so the broken link names itself
--- instead of being guessed at.
 -- A rejected cast flashes where the press was: the button that is lit right
 -- now, and failing that the assistant's buttons, because a held key can have
 -- let the glow lapse between two attempts. The token guards against an older
@@ -566,6 +557,11 @@ function ns.FlashFailed()
     for b in pairs(assistedButtons) do FlashButton(b) end
 end
 
+-- /dc assist - why is the ring not red? Four things have to line up: the
+-- client must offer the API, a cross button must actually hold the
+-- assistant action, the flag must be set, and SetGroup must have written
+-- the colour. This prints all four, so the broken link names itself
+-- instead of being guessed at.
 function ns.PrintAssist()
     local want = AssistSpellID()
     local api  = (C_ActionBar and C_ActionBar.IsAssistedCombatAction) and "yes" or "MISSING"
@@ -662,6 +658,9 @@ function ns.PrintAssist()
     end
 end
 
+-- For /dc trace: without a button holding the assistant action there is
+-- nothing to veil and nothing to repaint, which is worth saying out loud
+-- before anyone hunts a veil that cannot appear.
 function ns.AssistedStatus()
     local n = 0
     for _ in pairs(assistedButtons) do n = n + 1 end

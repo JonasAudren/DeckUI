@@ -73,6 +73,9 @@ local function WorldTooltip(questID)
     end
 end
 
+-- set by TaskEntry while CollectWorld runs: is any countdown on screen?
+local anyTimed = false
+
 local function TaskEntry(questID, watched)
     local isInArea, _, numObjectives, taskName = GetTaskInfo(questID)
     if not numObjectives then return nil end
@@ -100,8 +103,6 @@ local function Watched(questID)
     return C_QuestLog.GetQuestWatchType(questID) ~= nil
 end
 
-local anyTimed = false
-
 local function CollectWorld()
     local entries, seen = {}, {}
     anyTimed = false
@@ -119,8 +120,10 @@ local function CollectWorld()
             if e then entries[#entries + 1] = e end
         end
     end
-    -- a countdown on screen wants a redraw each second; none, no clock
-    ns.ticking.world = anyTimed or nil
+    -- the countdown counts minutes, so a redraw a minute is enough; none,
+    -- no clock. (The flag used to be declared below TaskEntry, which then
+    -- wrote a global - the countdown never ticked on its own.)
+    ns.ticking.world = anyTimed and "minute" or nil
     return entries
 end
 

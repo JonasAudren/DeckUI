@@ -423,6 +423,8 @@ local function StyleQuestLog()
 end
 
 ns.OnInit(function()
+    -- every part below needs the map; without it the init chain would stop
+    if not WorldMapFrame then return end
     ns.ApplyWorldMapScale()
     ApplyMapCVars()
     StyleWorldMap()

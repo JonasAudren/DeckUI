@@ -58,10 +58,19 @@ function D.DetectDevice()
     return "pc", "no gamepad, screen " .. w .. "x" .. h
 end
 
+-- Auto detection is decided once, at PLAYER_LOGIN, and kept for the
+-- session. Asked afresh it was both slow on hot paths (every D.DeviceDB()
+-- call, the quest tracker redraws once a frame) and wrong: a gamepad
+-- plugged in or dropped mid-session flipped the device, sending saved
+-- positions into the other device's table while the Cross bindings made
+-- at login stayed. A different device already needed a /reload.
+local detected, detectedWhy
+
 -- effective device after override
 function D.GetDevice()
     local o = DeckUIDB and DeckUIDB.device or "auto"
     if o == "deck" or o == "pc" then return o, "manual" end
+    if detected then return detected, detectedWhy end
     return D.DetectDevice()
 end
 
@@ -97,8 +106,11 @@ end
 function D.DeviceText()
     local o = DeckUIDB.device or "auto"
     if o == "auto" then
-        local d, why = D.DetectDevice()
-        return "Device: Auto (" .. D.DEVICE_NAMES[d] .. ", " .. why .. ")"
+        local d, why = D.GetDevice()
+        local now = D.DetectDevice()
+        -- the device is kept for the session; say so when it has changed since
+        local note = now ~= d and (", now " .. D.DEVICE_NAMES[now] .. " - /reload to switch") or ""
+        return "Device: Auto (" .. D.DEVICE_NAMES[d] .. ", " .. why .. note .. ")"
     end
     return "Device: " .. D.DEVICE_NAMES[o] .. " (manual)"
 end
@@ -428,5 +440,6 @@ end)
 local login = CreateFrame("Frame")
 login:RegisterEvent("PLAYER_LOGIN")
 login:SetScript("OnEvent", function()
+    detected, detectedWhy = D.DetectDevice()
     D.ApplyUiScale()
 end)

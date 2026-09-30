@@ -25,6 +25,7 @@ local D = DeckUI
 -- right away, and nothing else of Blizzard's is touched.
 -------------------------------------------------------------------
 local LOGIN_DELAY = 3   -- Edit Mode reads its layouts after PLAYER_ENTERING_WORLD
+local MAX_TRIES = 30    -- one a second while Edit Mode is not initialised
 
 local ready = false     -- learning only once this device's layout is in place
 local pending = false   -- a switch waits for the end of combat
@@ -101,10 +102,21 @@ end
 -------------------------------------------------------------------
 -- When
 -------------------------------------------------------------------
-local function Sync()
-    if not DeckUIDB.keepLayouts then return end
+-- A spec change fires two events, and each starts a delayed sync; the
+-- generation lets only the newest chain act, so a layout is never
+-- switched (and the reload asked for) twice.
+local generation = 0
+local switchedTo        -- asked for this session, waiting for the reload
+
+local function Sync(gen, tries)
+    gen, tries = gen or generation, tries or 0
+    if gen ~= generation or not DeckUIDB.keepLayouts then return end
     if not LayoutInfo() then
-        C_Timer.After(1, Sync)   -- Edit Mode not initialised yet
+        if tries >= MAX_TRIES then
+            lastResult = "Edit Mode never initialised, gave up"
+            return
+        end
+        C_Timer.After(1, function() Sync(gen, tries + 1) end)
         return
     end
     if InCombatLockdown() then
@@ -120,9 +132,13 @@ local function Sync()
         lastResult = ("first time here - \"%s\" became this device's layout"):format(tostring(have))
     elseif want == have then
         lastResult = ("\"%s\" already active"):format(want)
+    elseif switchedTo == want then
+        -- asked already; Blizzard's manager catches up with the reload
+        return
     else
         local index = IndexOf(want)
         if index then
+            switchedTo = want
             C_EditMode.SetActiveLayout(index)
             lastResult = ("switched from \"%s\" to \"%s\", reload pending"):format(tostring(have), want)
             print(("DeckUI: Edit Mode layout switched to \"%s\" for this device."):format(want))
@@ -143,7 +159,9 @@ end
 
 local function Resync()
     ready = false
-    C_Timer.After(LOGIN_DELAY, Sync)
+    generation = generation + 1
+    local gen = generation
+    C_Timer.After(LOGIN_DELAY, function() Sync(gen) end)
 end
 
 local ev = CreateFrame("Frame")

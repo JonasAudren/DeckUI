@@ -83,6 +83,9 @@ scroll:EnableMouseWheel(true)
 scroll:SetScript("OnMouseWheel", function(self, delta)
     local max = math.max(0, content:GetHeight() - self:GetHeight())
     self:SetVerticalScroll(math.min(max, math.max(0, self:GetVerticalScroll() - delta * 30)))
+    -- the secure item and spell buttons sit on UIParent at screen
+    -- coordinates copied from the rows; a redraw moves them along
+    ns.RequestUpdate()
 end)
 ns.content = content
 
@@ -479,20 +482,27 @@ end)
 -------------------------------------------------------------------
 -- Quest events come in floods (QUEST_LOG_UPDATE fires several times a
 -- second while questing), so they only mark the tracker dirty and one
--- redraw runs on the next frame. Sections with a clock (the Mythic+
--- timer) ask for a redraw every second through ns.ticking.
+-- redraw runs on the next frame. Sections with a clock ask for a redraw
+-- through ns.ticking: true every second (the Mythic+ timer), "minute"
+-- once a minute (world quest countdowns, which count minutes).
 local dirty = true
 ns.ticking = {}
 
 function ns.RequestUpdate() dirty = true end
 
 local updater = CreateFrame("Frame")
-local sinceTick = 0
+local sinceTick, seconds = 0, 0
 updater:SetScript("OnUpdate", function(_, dt)
     sinceTick = sinceTick + dt
     if sinceTick >= 1 then
         sinceTick = 0
-        if next(ns.ticking) then dirty = true end
+        seconds = (seconds + 1) % 60
+        for _, rate in pairs(ns.ticking) do
+            if rate == true or seconds == 0 then
+                dirty = true
+                break
+            end
+        end
     end
     if dirty and DeckQuestsDB and DeckQuestsDB.folded then   -- after Init
         dirty = false

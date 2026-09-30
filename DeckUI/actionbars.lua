@@ -37,6 +37,7 @@ end
 local RANDOM_MOUNT = 0x0FFFFFFF   -- "summon random favorite mount"
 local SETTLE = 1.0                -- seconds of quiet before a copy is taken
 local LOGIN_DELAY = 3             -- the bars arrive from the server after login
+local MAX_TRIES = 10              -- LOGIN_DELAY apart while the bars read empty
 
 local ready = false               -- copies are only taken once the bars are ours
 local pending = false             -- a restore waits for the end of combat
@@ -224,8 +225,13 @@ end
 -------------------------------------------------------------------
 -- When
 -------------------------------------------------------------------
-local function Sync()
-    if not DeckUIDB.keepBars then return end
+-- Login and a spec change can each start a delayed sync; the generation
+-- lets only the newest chain act, so a layout is never placed twice.
+local generation = 0
+
+local function Sync(gen, tries)
+    gen, tries = gen or generation, tries or 0
+    if gen ~= generation or not DeckUIDB.keepBars then return end
     if InCombatLockdown() then
         pending = true
         return
@@ -242,8 +248,12 @@ local function Sync()
         lastResult = "first time here - the bars as they are became this device's layout"
     else
         -- bars still empty: try again later rather than store nothing
+        if tries >= MAX_TRIES then
+            lastResult = "bars never became readable, gave up until the next login"
+            return
+        end
         lastResult = "bars not readable yet, trying again"
-        C_Timer.After(LOGIN_DELAY, Sync)
+        C_Timer.After(LOGIN_DELAY, function() Sync(gen, tries + 1) end)
         return
     end
     -- the placed actions come back as slot events; their copy settles then
@@ -251,21 +261,27 @@ local function Sync()
 end
 
 local copyTimer
+local function TakeCopy()
+    copyTimer = nil
+    if not ready or InCombatLockdown() then return end
+    Snapshot()
+end
+
+-- In combat nothing is scheduled: the bars cannot change there anyway,
+-- and PLAYER_REGEN_ENABLED schedules a copy afterwards.
 local function ScheduleCopy()
-    if not ready or not DeckUIDB.keepBars then return end
+    if not ready or not DeckUIDB.keepBars or InCombatLockdown() then return end
     if copyTimer then copyTimer:Cancel() end
-    copyTimer = C_Timer.NewTimer(SETTLE, function()
-        copyTimer = nil
-        if not ready or InCombatLockdown() then return end
-        Snapshot()
-    end)
+    copyTimer = C_Timer.NewTimer(SETTLE, TakeCopy)
 end
 
 -- a spec change swaps every bar; no copies until this spec's are back
 local function Resync()
     ready = false
     if copyTimer then copyTimer:Cancel(); copyTimer = nil end
-    C_Timer.After(LOGIN_DELAY, Sync)
+    generation = generation + 1
+    local gen = generation
+    C_Timer.After(LOGIN_DELAY, function() Sync(gen) end)
 end
 
 local ev = CreateFrame("Frame")
