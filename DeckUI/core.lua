@@ -387,6 +387,7 @@ local DEFAULTS = {
     applyUiScale  = false,
     uiScaleDeck   = 0.8,
     uiScalePC     = 0.71,
+    keepBars      = false,   -- action bar layout per device (actionbars.lua)
 }
 
 -- Blizzard's whole-UI scale, set per device at login when enabled

@@ -12,4 +12,5 @@
 core.lua
 widgets.lua
 panel.lua
+actionbars.lua
 minimap.lua

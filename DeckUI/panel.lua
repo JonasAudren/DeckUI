@@ -4,7 +4,7 @@ local D = DeckUI
 -- Window
 -------------------------------------------------------------------
 local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 776)   -- height follows the tab rows, see LayoutTabs
+panel:SetSize(340, 804)   -- height follows the tab rows, see LayoutTabs
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -42,7 +42,7 @@ panel.tabOrder = {}
 -- the window grows by one row's height, content moving down with it.
 -- Seven in one row would leave 42 pixels each - too narrow for "General"
 -- in any readable size.
-local BASE_HEIGHT = 776   -- the General tab ends with a checkbox at -646, 28 high
+local BASE_HEIGHT = 804   -- the General tab ends with a checkbox at -674, 28 high
 local ROW = 30
 
 local function LayoutTabs()
@@ -188,6 +188,7 @@ panel:AddTab("General", {
             function(v) D.SetMinimapShown(v) end)
         D.Checkbox(c, "Keep key bindings on this device", -646,
             function() return D.bindingsCVar end, "localOnly", D.SetLocalBindings)
+        D.Checkbox(c, "Keep action bar layouts on this device", -674, db, "keepBars", D.SetKeepBars)
     end,
 })
 
@@ -207,6 +208,8 @@ SlashCmdList.DECKUI = function(msg)
         D.PrintDevice()
     elseif msg == "build" then
         D.PrintBuild()
+    elseif msg == "bars" then
+        D.PrintBars()
     elseif msg == "deck" or msg == "pc" or msg == "auto" then
         D.SetDevice(msg)
     else

@@ -70,8 +70,20 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   lives in Config.wtf, so it is per machine by itself - no DeckUIDB entry. Switching it on
   saves the loaded bindings locally first; switching it off does *not* save, which would
   upload this machine's set over the server's. `/deck device` prints the state.
+- **Action bar contents per device** (`DeckUI/actionbars.lua`, `DeckUIDB.keepBars`, off by
+  default; not yet tested in game). What sits on the bars is server-side per character and
+  spec, with no CVar - the owner lays out his bars differently on the Deck, and the PC loaded
+  that. So `DeckUIDB.barLayouts[device][name-realm][specID]` holds a copy, restored at login,
+  /reload and spec change (ACTIVE_PLAYER_SPECIALIZATION_CHANGED, not the talent one), taken
+  again a second after the last `ACTIONBAR_SLOT_CHANGED`. Only the player's pages: 1-10 and
+  13-15 (page 11 is skyriding, 12 and 16-18 vehicle/possess/override). Placing is the cursor
+  path (pick up, `PlaceAction`, `ClearCursor`), protected in combat, so a restore waits for
+  PLAYER_REGEN_ENABLED. Macros are stored by name (indices shift), the assistant by
+  `IsAssistedCombatAction` and put back with `C_AssistedCombat.GetActionSpell()`. **A copy
+  where every slot reads empty is never stored** - that is bars not loaded yet, and restoring
+  it would wipe them. `/deck bars` prints the key, the saved layout and the last result.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`,
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`, `/deck bars`,
   `/deck build`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
