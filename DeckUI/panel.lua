@@ -125,18 +125,11 @@ panel:AddTab("General", {
         local db = function() return DeckUIDB end
 
         D.Label(c, "Modules", -6, 15)
-        D.Checkbox(c, "Orbs (unit frames)",  -28, function() return DeckUIDB.modules end, "Orbs",
-            function(v) D.SetModuleEnabled("Orbs", v) end)
-        D.Checkbox(c, "Cross (action bar)", -56, function() return DeckUIDB.modules end, "Cross",
-            function(v) D.SetModuleEnabled("Cross", v) end)
-        D.Checkbox(c, "Spec (spec switcher)", -84, function() return DeckUIDB.modules end, "Spec",
-            function(v) D.SetModuleEnabled("Spec", v) end)
-        D.Checkbox(c, "Bags (bags and banks)", -112, function() return DeckUIDB.modules end, "Bags",
-            function(v) D.SetModuleEnabled("Bags", v) end)
-        D.Checkbox(c, "Quests (objective tracker)", -140, function() return DeckUIDB.modules end, "Quests",
-            function(v) D.SetModuleEnabled("Quests", v) end)
-        D.Checkbox(c, "Map (minimap and world map)", -168, function() return DeckUIDB.modules end, "Map",
-            function(v) D.SetModuleEnabled("Map", v) end)
+        local modules = function() return DeckUIDB.modules end
+        for i, key in ipairs(D.MODULE_ORDER) do
+            D.Checkbox(c, D.MODULE_TITLES[key], -28 * i, modules, key,
+                function(v) D.SetModuleEnabled(key, v) end)
+        end
 
         D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", -200)
 

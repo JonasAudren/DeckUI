@@ -20,11 +20,7 @@ local DEVICE_DEFAULTS = {
 }
 
 function ns.DeviceDB()
-    local d = D.DeviceDB(DeckMapDB)
-    for k, v in pairs(DEVICE_DEFAULTS[D.DeviceKey()]) do
-        if d[k] == nil then d[k] = v end
-    end
-    return d
+    return D.DeviceDB(DeckMapDB, DEVICE_DEFAULTS)
 end
 
 -- Shared, not per device

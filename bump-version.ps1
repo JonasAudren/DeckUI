@@ -34,7 +34,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root   = $PSScriptRoot
-$addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec", "DeckUI_Bags", "DeckUI_Quests", "DeckUI_Map")
+. (Join-Path $root "release-common.ps1")   # $addons, Get-TocField
 
 $newVersion = $Version -replace "^v", ""
 
@@ -45,13 +45,6 @@ if ($newVersion -notmatch "^\d+(\.\d+){1,3}([-.][0-9A-Za-z][0-9A-Za-z.-]*)?$") {
 }
 if ($Interface -and $Interface -notmatch "^\d{5,6}$") {
     throw "'$Interface' does not look like an interface number (expected e.g. 120100)"
-}
-
-function Get-TocField($path, $field) {
-    foreach ($line in Get-Content $path) {
-        if ($line -match "^##\s+$field\s*:\s*(.+?)\s*$") { return $matches[1] }
-    }
-    return $null
 }
 
 # Replace the one header line, and insist that it was there: a silent no-op

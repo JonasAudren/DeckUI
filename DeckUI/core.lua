@@ -19,6 +19,15 @@ D.MODULE_ADDONS = {
     Map   = "DeckUI_Map",
 }
 D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests", "Map" }
+-- the module checkboxes in the General tab
+D.MODULE_TITLES = {
+    Orbs   = "Orbs (unit frames)",
+    Cross  = "Cross (action bar)",
+    Spec   = "Spec (spec switcher)",
+    Bags   = "Bags (bags and banks)",
+    Quests = "Quests (objective tracker)",
+    Map    = "Map (minimap and world map)",
+}
 
 -- Modules that start switched off, for new installs and for players who
 -- update into them alike. Replacing the bag window, the quest tracker or
@@ -173,16 +182,34 @@ end
 
 -- Per-device settings: positions and sizes differ between the Deck's
 -- 1280x800 and a PC monitor, so modules keep them in db.perDevice[<device>].
--- D.DeviceDB(db) returns that table for the current device.
+-- D.DeviceDB(db) returns that table for the current device; with
+-- defaults = { deck = {...}, pc = {...} } it also fills what is missing.
 function D.DeviceKey()
     return D.IsDeck() and "deck" or "pc"
 end
 
-function D.DeviceDB(db)
+function D.DeviceDB(db, defaults)
     db.perDevice = db.perDevice or {}
     local key = D.DeviceKey()
     db.perDevice[key] = db.perDevice[key] or {}
-    return db.perDevice[key]
+    local d = db.perDevice[key]
+    for k, v in pairs(defaults and defaults[key] or {}) do
+        if d[k] == nil then d[k] = v end
+    end
+    return d
+end
+
+-- device, "name-realm", specID: the key for what is kept per device,
+-- character and spec (actionbars.lua, editmode.lua)
+local function SpecID()
+    local getSpec = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or GetSpecialization
+    local getInfo = C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo or GetSpecializationInfo
+    local index = getSpec and getSpec()
+    return index and getInfo and getInfo(index) or 0
+end
+
+function D.CharSpecKey()
+    return D.DeviceKey(), UnitName("player") .. "-" .. GetRealmName(), SpecID()
 end
 
 -- one-time migration of old flat fields into the per-device table of
@@ -391,7 +418,7 @@ end
 -- Startup: load settings, load enabled modules
 -------------------------------------------------------------------
 local DEFAULTS = {
-    modules       = { Orbs = true, Cross = true, Spec = true, Bags = false, Quests = false, Map = false },
+    modules       = {},   -- filled from MODULE_ORDER / MODULE_OFF_BY_DEFAULT below
     showMinimap   = true,
     minimapAngle  = 220,
     device        = "auto",

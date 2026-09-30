@@ -359,31 +359,11 @@ local function StyleTab(tab)
     if not tab or tab.deckStyled then return end
     tab.deckStyled = true
     Fade(tab.Background)
-    local bg = tab:CreateTexture(nil, "BACKGROUND", nil, -8)
-    bg:SetColorTexture(0.05, 0.05, 0.05, 0.95)
-    bg:SetPoint("TOPLEFT", 2, -2)
-    bg:SetPoint("BOTTOMRIGHT", -2, 2)
-    local edge = CreateFrame("Frame", nil, tab, "BackdropTemplate")
-    edge:SetPoint("TOPLEFT", 2, -2)
-    edge:SetPoint("BOTTOMRIGHT", -2, 2)
-    edge:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-    edge:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
-    -- the selected tab and the hover: flat colour instead of the glow art
-    if tab.SelectedTexture then
-        tab.SelectedTexture:SetColorTexture(0.9, 0.75, 0.2, 0.25)
-        tab.SelectedTexture:SetVertexColor(1, 1, 1, 1)
-        tab.SelectedTexture:ClearAllPoints()
-        tab.SelectedTexture:SetPoint("TOPLEFT", 3, -3)
-        tab.SelectedTexture:SetPoint("BOTTOMRIGHT", -3, 3)
-    end
     Fade(tab.TabGlow)
-    if tab.HighlightTexture then
-        tab.HighlightTexture:SetColorTexture(1, 1, 1, 0.08)
-        tab.HighlightTexture:SetVertexColor(1, 1, 1, 1)
-        tab.HighlightTexture:ClearAllPoints()
-        tab.HighlightTexture:SetPoint("TOPLEFT", 3, -3)
-        tab.HighlightTexture:SetPoint("BOTTOMRIGHT", -3, 3)
-    end
+    local square = Square(tab, tab, 2, -2, -2, 2)
+    -- the selected tab and the hover: flat colour instead of the glow art
+    Flat(tab.SelectedTexture, square, 0.9, 0.75, 0.2, 0.25)
+    Flat(tab.HighlightTexture, square, 1, 1, 1, 0.08)
 end
 
 local function StyleQuestLog()

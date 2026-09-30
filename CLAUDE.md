@@ -30,6 +30,8 @@ folders at the **top level** (a wrapping folder would install everything one lev
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
 other libraries bundle. It aborts if the seven `.toc` files disagree on version or interface.
+The list of addon folders lives once, in `release-common.ps1`, which both scripts dot-source
+(with `Get-TocField`); a new module is added there and to `D.MODULE_*` in `DeckUI/core.lua`.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
 in all seven at once - `package.ps1 -Version` only stamps the staged copies, so without
 the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
@@ -175,6 +177,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   barely a difference. The "assistant has no target" state therefore rides on the ring
   colour (`RING_NOTARGET`), set inside `SetGroup` itself - it repaints every dim tick, so a
   colour written anywhere else would be overwritten four times a second.
+  **Do not skip unchanged ticks**: LibActionButton sets a button back to alpha 1 whenever
+  its action updates (every page change), and only the next tick dims it again.
 - Assisted combat: the purple rotation highlight is hidden on cross buttons; the assistant's
   changing icon is painted by polling `C_AssistedCombat.GetNextCastSpell()` every 0.1 s. This
   **never ran before 2026-09-23** because the detection above asked a function that does not

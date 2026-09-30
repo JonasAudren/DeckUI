@@ -47,18 +47,7 @@ local function Secret(v)
     return issecretvalue and issecretvalue(v)
 end
 
-local function SpecID()
-    local getSpec = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or GetSpecialization
-    local getInfo = C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo or GetSpecializationInfo
-    local index = getSpec and getSpec()
-    return index and getInfo and getInfo(index) or 0
-end
-
-local function Key()
-    return D.DeviceKey(), UnitName("player") .. "-" .. GetRealmName(), SpecID()
-end
--- device, "name-realm", specID - editmode.lua keys its layouts the same way
-D.CharSpecKey = Key
+local Key = D.CharSpecKey
 
 -- the stored copy for this device, character and spec (create makes it)
 local function Layout(create)

@@ -170,12 +170,7 @@ local DEVICE_DEFAULTS = {
 }
 
 function ns.DeviceDB()
-    local d = D.DeviceDB(DeckBagsDB)
-    local defaults = DEVICE_DEFAULTS[D.DeviceKey()]
-    for k, v in pairs(defaults) do
-        if d[k] == nil then d[k] = v end
-    end
-    return d
+    return D.DeviceDB(DeckBagsDB, DEVICE_DEFAULTS)
 end
 
 function window.Layout()

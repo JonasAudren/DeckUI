@@ -31,7 +31,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root   = $PSScriptRoot
-$addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec", "DeckUI_Bags", "DeckUI_Quests", "DeckUI_Map")
+. (Join-Path $root "release-common.ps1")   # $addons, Get-TocField
 $extras = @("README.txt", "LICENSE.txt", "THIRD-PARTY.txt")   # shipped inside the DeckUI folder
 $dist   = Join-Path $root "dist"
 
@@ -49,13 +49,6 @@ $dropPaths = @(
     "DeckUI_Cross/libs/LibActionButton-1.0/LibStub",
     "DeckUI_Cross/libs/LibActionButton-1.0/CallbackHandler-1.0"
 )
-
-function Get-TocField($path, $field) {
-    foreach ($line in Get-Content $path) {
-        if ($line -match "^##\s+$field\s*:\s*(.+?)\s*$") { return $matches[1] }
-    }
-    return $null
-}
 
 # --- read the .toc headers --------------------------------------------
 $versions   = @()

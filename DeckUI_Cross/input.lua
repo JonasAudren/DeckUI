@@ -403,7 +403,6 @@ end
 local DIM, IDLE, ACTIVE, MID_IDLE = 0.35, 0.8, 1, 0.25
 local inCombat     = false
 local lastActivity = 0
-local dimmed       = nil     -- last applied state, to avoid needless updates
 
 -- Out of combat the hotbar is dimmed (DeckCrossDB.oocAlpha). Any activity
 -- (LT/RT, casting, pressing a button) brings it back to full; DIM_DELAY

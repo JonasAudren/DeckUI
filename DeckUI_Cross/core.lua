@@ -845,6 +845,12 @@ end
 -- drive the page state now that all buttons exist
 RegisterStateDriver(header, "page", PageMacro())
 
+-- Painted on every dim tick even when nothing changed, and that is
+-- load-bearing: LibActionButton sets a button back to alpha 1 whenever its
+-- action updates (a page change - druid forms, stealth, a vehicle), and
+-- only the next tick dims it again. Skipping unchanged ticks would leave
+-- freshly paged buttons at full brightness (found in the code review,
+-- 2026-09-30, while trying exactly that).
 function ns.SetGroupAlpha(left, right, mid)
     SetGroup(ns.groups[1], left,  left  == 1)
     SetGroup(ns.groups[2], right, right == 1)
