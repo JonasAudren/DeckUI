@@ -295,6 +295,29 @@ oUF:RegisterStyle("DeckOrbsBoss",   function(self, unit) BuildOrb(self, unit, SI
 ns.frames = {}
 ns.units  = {}
 
+-- The orbs are oUF's secure unit frames: their scale, showing and hiding
+-- (Enable/Disable) are blocked in combat, and the settings window can be
+-- opened there. Such a change is stored at once and applied when combat
+-- ends; the latest one per kind wins.
+local deferred = {}
+local function OutOfCombat(kind, fn)
+    if not InCombatLockdown() then
+        fn()
+        return
+    end
+    if not next(deferred) then print("DeckUI Orbs: takes effect after combat.") end
+    deferred[kind] = fn
+end
+
+local regen = CreateFrame("Frame")
+regen:RegisterEvent("PLAYER_REGEN_ENABLED")
+regen:SetScript("OnEvent", function()
+    for kind, fn in pairs(deferred) do
+        deferred[kind] = nil
+        fn()
+    end
+end)
+
 function ns.SetAlpha(value)
     DeckOrbsDB.alpha = value
     for _, frame in ipairs(ns.frames) do frame:SetAlpha(value) end
@@ -305,7 +328,9 @@ function ns.DeviceDB() return D.DeviceDB(DeckOrbsDB) end
 
 function ns.SetScale(value)
     ns.DeviceDB().scale = value
-    for _, frame in ipairs(ns.frames) do frame:SetScale(value) end
+    OutOfCombat("scale", function()
+        for _, frame in ipairs(ns.frames) do frame:SetScale(value) end
+    end)
 end
 
 function ns.SetCastShown(state)
@@ -340,7 +365,9 @@ function ns.SetFocusShown(state)
     DeckOrbsDB.showFocus = state
     local focus = ns.units.focus
     if not focus then return end
-    if state then focus:Enable() else focus:Disable() end
+    OutOfCombat("focus", function()
+        if state then focus:Enable() else focus:Disable() end
+    end)
 end
 
 function ns.SetHpText(mode)
@@ -368,12 +395,14 @@ end
 
 function ns.SetBossShown(state)
     DeckOrbsDB.showBoss = state
-    for _, frame in ipairs(ns.bossFrames or {}) do
-        if state then frame:Enable() else frame:Disable() end
-    end
-    if ns.bossHider then
-        if state then ns.HideBlizzardBoss() else ns.ShowBlizzardBoss() end
-    end
+    OutOfCombat("boss", function()
+        for _, frame in ipairs(ns.bossFrames or {}) do
+            if state then frame:Enable() else frame:Disable() end
+        end
+        if ns.bossHider then
+            if state then ns.HideBlizzardBoss() else ns.ShowBlizzardBoss() end
+        end
+    end)
 end
 
 function ns.SetClassPowerShown(state)
@@ -476,8 +505,13 @@ local function BlizzardBossFrames()
     return list
 end
 
+-- Blizzard's boss frames are secure too. A /reload in combat used to skip
+-- hiding them for good; now it waits for the end of combat.
 function ns.HideBlizzardBoss()
-    if InCombatLockdown() then return end
+    if InCombatLockdown() then
+        OutOfCombat("blizzardBoss", ns.HideBlizzardBoss)
+        return
+    end
     for _, f in ipairs(BlizzardBossFrames()) do
         if not f.DeckOrigParent then f.DeckOrigParent = f:GetParent() end
         f:SetParent(ns.bossHider)
@@ -485,7 +519,10 @@ function ns.HideBlizzardBoss()
 end
 
 function ns.ShowBlizzardBoss()
-    if InCombatLockdown() then return end
+    if InCombatLockdown() then
+        OutOfCombat("blizzardBoss", ns.ShowBlizzardBoss)
+        return
+    end
     for _, f in ipairs(BlizzardBossFrames()) do
         if f.DeckOrigParent then f:SetParent(f.DeckOrigParent) end
     end

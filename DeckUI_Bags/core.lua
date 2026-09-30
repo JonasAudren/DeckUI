@@ -143,6 +143,7 @@ function ns.UpdateButton(b)
     b:UpdateQuestItem(quest.isQuestItem, quest.questID, quest.isActive)
     b:UpdateNewItem(quality)
     b:UpdateItemContextMatching()
+    b.deckTexture = texture   -- for the cooldown-only pass
     b:UpdateCooldown(texture)
     b:SetReadable(info and info.isReadable)
     -- Dimming is the search's own overlay, so both filters simply combine.
@@ -363,12 +364,8 @@ function ns.LayoutWindow(w, sections, columns, scale, countBags)
     w.layoutBags, w.totalSlots = bags, total
 end
 
-function ns.RefreshWindow(w)
-    for _, bagButtons in pairs(w.grid.buttons) do
-        for _, b in pairs(bagButtons) do
-            if b:IsShown() then ns.UpdateButton(b) end
-        end
-    end
+-- the footer alone: free slots, money, currencies, the window's own extras
+local function RefreshFooter(w)
     local free = 0
     for _, bag in ipairs(w.layoutBags or {}) do
         free = free + (C_Container.GetContainerNumFreeSlots(bag) or 0)
@@ -377,6 +374,24 @@ function ns.RefreshWindow(w)
     w.money:SetText(GetMoneyString(w.Money() or 0, true))
     if w.showCurrencies then ns.UpdateCurrencies(w) end
     if w.OnRefresh then w:OnRefresh() end
+end
+
+function ns.RefreshWindow(w)
+    for _, bagButtons in pairs(w.grid.buttons) do
+        for _, b in pairs(bagButtons) do
+            if b:IsShown() then ns.UpdateButton(b) end
+        end
+    end
+    RefreshFooter(w)
+end
+
+-- BAG_UPDATE_COOLDOWN fires on every cast; only the swirls change
+local function RefreshCooldowns(w)
+    for _, bagButtons in pairs(w.grid.buttons) do
+        for _, b in pairs(bagButtons) do
+            if b:IsShown() then b:UpdateCooldown(b.deckTexture) end
+        end
+    end
 end
 
 -------------------------------------------------------------------
@@ -401,7 +416,15 @@ function ns.Flush(w)
     end
     if w.needRefresh then
         ns.RefreshWindow(w)
-        w.needRefresh = false
+        w.needRefresh, w.needFooter, w.needCooldowns = false, false, false
+    end
+    if w.needFooter then
+        RefreshFooter(w)
+        w.needFooter = false
+    end
+    if w.needCooldowns then
+        RefreshCooldowns(w)
+        w.needCooldowns = false
     end
 end
 
@@ -420,7 +443,7 @@ end
 local updater = CreateFrame("Frame")
 updater:SetScript("OnUpdate", function()
     for _, w in ipairs(windows) do
-        if w.needLayout or w.needRefresh then ns.Flush(w) end
+        if w.needLayout or w.needRefresh or w.needFooter or w.needCooldowns then ns.Flush(w) end
     end
 end)
 
@@ -429,6 +452,8 @@ local LAYOUT_EVENTS = {
     BAG_CONTAINER_UPDATE = true, BANK_TABS_CHANGED = true,
     BANK_TAB_SETTINGS_UPDATED = true,
 }
+-- events that change one part only, not every button
+local FOOTER_EVENTS = { PLAYER_MONEY = true, ACCOUNT_MONEY = true, CURRENCY_DISPLAY_UPDATE = true }
 
 local ev = CreateFrame("Frame")
 for _, e in ipairs({
@@ -449,7 +474,15 @@ ev:SetScript("OnEvent", function(_, event)
     -- item data arrives all the time; it only matters to the old-expansion
     -- filter, which asked for it
     if event == "ITEM_DATA_LOAD_RESULT" and not ns.oldOnly then return end
-    if LAYOUT_EVENTS[event] then ns.RequestLayout() else ns.RequestRefresh() end
+    if LAYOUT_EVENTS[event] then
+        ns.RequestLayout()
+    elseif FOOTER_EVENTS[event] then
+        for _, w in ipairs(windows) do w.needFooter = true end
+    elseif event == "BAG_UPDATE_COOLDOWN" then
+        for _, w in ipairs(windows) do w.needCooldowns = true end
+    else
+        ns.RequestRefresh()
+    end
     if MOVE_EVENTS[event] then
         for _, w in ipairs(windows) do
             if w.relayoutOnMove then w.needLayout = true end
