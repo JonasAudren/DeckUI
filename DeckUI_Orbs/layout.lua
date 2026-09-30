@@ -29,6 +29,7 @@ ns.DEFAULTS = {
     announceTarget  = true,
     buffMaxDuration = 300,
     hpText          = "percent",   -- "percent" | "absolute" | "both"
+    showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
 }
 
 -- Custom tag: abbreviated health (1.2M, 340K). Uses Blizzard's own
@@ -305,6 +306,8 @@ local function OutOfCombat(kind, fn)
     deferred[kind] = fn
 end
 
+ns.OutOfCombat = OutOfCombat
+
 local regen = CreateFrame("Frame")
 regen:RegisterEvent("PLAYER_REGEN_ENABLED")
 regen:SetScript("OnEvent", function()
@@ -320,7 +323,12 @@ function ns.SetAlpha(value)
 end
 
 -- scale is a per-device setting (Deck screen vs PC monitor)
-function ns.DeviceDB() return D.DeviceDB(DeckOrbsDB) end
+-- (the party list's size is per device too, and starts at 100%)
+local DEVICE_DEFAULTS = {
+    deck = { partyScale = 1, partyAcross = false },
+    pc   = { partyScale = 1, partyAcross = false },
+}
+function ns.DeviceDB() return D.DeviceDB(DeckOrbsDB, DEVICE_DEFAULTS) end
 
 function ns.SetScale(value)
     ns.DeviceDB().scale = value
@@ -591,6 +599,12 @@ end)
 
 -- Shortcut: opens the Orbs tab directly
 SLASH_DECKORBS1 = "/orbs"
-SlashCmdList.DECKORBS = function()
-    D.ToggleConfig("Orbs")
+SlashCmdList.DECKORBS = function(msg)
+    msg = (msg or ""):lower():trim()
+    if msg == "party" or msg == "test" then
+        -- party list test mode (party.lua)
+        ns.SetPartyTest(not ns.partyTest)
+    else
+        D.ToggleConfig("Orbs")
+    end
 end

@@ -172,6 +172,17 @@ Options in the Orbs tab:
   Class resource dots on player orb
                            combo points, holy power, runes and so on
   Announce target          shows the target's name large on every change
+  Party list               Final Fantasy style rows for your party: class icon,
+                           role, health with its number, a thin resource bar,
+                           your buffs and all debuffs, a gold edge on the member
+                           you target, faded out of range. Replaces Blizzard's
+                           party frames, needs a /reload, off by default; in a
+                           raid Blizzard's raid frames stay. /deck unlock moves it.
+  Side by side             the party in one row across instead of a column,
+                           per device; the auras then sit below each member
+  Party list size          saved separately for Deck and PC
+  Test (or /orbs test)     shows five rows of yourself, to set size, layout and
+                           place without a group; off again with a second click
 
 
 DeckUI Cross - cross hotbar

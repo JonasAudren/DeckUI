@@ -12,6 +12,7 @@ DeckUI is a hub with seven load-on-demand modules; enable or disable each one in
 - Class resource dots (combo points, holy power, runes, ...) around the player orb
 - Big target name announce on every target change
 - Class and reaction colours
+- Optional **party list in Final Fantasy XIV style**: class icon, role, health and resource bars, your buffs and all debuffs (dispellable ones marked), your target highlighted, faded out of range
 
 ## DeckUI Cross – FFXIV-style cross hotbar
 - Two halves of round buttons: **LT** = left, **RT** = right, **LT+RT** = the small middle crosses (24 slots)

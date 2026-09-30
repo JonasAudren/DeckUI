@@ -31,5 +31,24 @@ D.RegisterModule("Orbs", {
         D.Checkbox(c, "Show boss frames (hides Blizzard's)", -418, db, "showBoss", ns.SetBossShown)
         D.Checkbox(c, "Class resource dots on player orb", -446, db, "showClassPower", ns.SetClassPowerShown)
         D.Checkbox(c, "Announce target (big name)",   -474, db, "announceTarget", ns.SetAnnounceTarget)
+
+        D.Label(c, "Party list (Final Fantasy style)", -506, 15)
+        -- test mode beside the heading: five rows of yourself, session only
+        local testBtn = D.Button(c, "Test", -502, function()
+            ns.SetPartyTest(not ns.partyTest)
+        end)
+        testBtn:SetWidth(70)
+        testBtn:ClearAllPoints()
+        testBtn:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -502)
+        D.Checkbox(c, "Show the party list (hides Blizzard's; /reload)", -528, db, "showParty", function(v)
+            print("DeckUI Orbs: the party list " .. (v and "appears" or "goes") .. " after /reload.")
+        end)
+        D.Checkbox(c, "Side by side instead of stacked (this device)", -556, ns.DeviceDB, "partyAcross", function()
+            ns.ApplyPartyLayout()
+        end)
+        D.Slider(c, "Party list size (this device)", -584, 0.6, 1.6, 0.05, pct, ns.DeviceDB, "partyScale", function(v)
+            ns.DeviceDB().partyScale = v
+            ns.ApplyPartyScale()
+        end)
     end,
 })

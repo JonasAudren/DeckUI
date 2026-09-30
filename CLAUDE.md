@@ -219,6 +219,21 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   on is fine, doing arithmetic on them is not. `assist.lua` is built on exactly that line.
 - oUF: `ClassPower` / `Runes` dots are StatusBars with a masked WHITE8x8 fill; `[deck:hpshort]`
   is our custom tag.
+- **Party list** (`DeckUI_Orbs/party.lua`, `DeckOrbsDB.showParty`, off by default, needs a
+  /reload; not yet tested in game): FFXIV-style rows on oUF's group header - Blizzard's
+  SecureGroupHeaderTemplate, which sorts members in combat by itself, sets the click
+  attributes and, with `showParty`, hides Blizzard's party frames for the session (hence the
+  reload). Party only (`[group:raid] hide`); tanks, healers, damage. Range and "my target" use
+  `SetAlphaFromBoolean` (secret booleans go to the engine as they are); health text is the
+  `[deck:partyhp]` tag through `AbbreviateNumbers`. Its holder is movable per device; the
+  secure header is only scaled out of combat (`ns.OutOfCombat`). Stacked or side by side is
+  per device (`partyAcross`): the header's `point`/`xOffset`/`yOffset` attributes, whose
+  change runs Blizzard's SecureGroupHeader_Update (it re-anchors the members itself); auras
+  move from beside each row to below it.
+  Test mode ("Test" beside the heading, `/orbs test`, session only): five oUF frames for
+  "player" in the party style, spawned on first use - secure like the real rows, so they
+  switch only out of combat - while the header's visibility is set to "hide". The same oUF as the orbs -
+  a separate module would need its own copy.
 
 ## Bags module (bag window tested in game 2026-09-29; bank not yet)
 
