@@ -269,7 +269,7 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
 
 Our own objective tracker, replacing Blizzard's completely. Built from Blizzard's 12.1.0
 source (read 2026-09-29). Sections in Blizzard's order: Scenario (with Mythic+, delve header,
-bonus steps, scenario spells), Zone widgets, Campaign, Quests, Collections, Achievements,
+bonus steps, scenario spells), Campaign, Quests, Collections, Achievements,
 Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
 - Sections register with `ns.RegisterSection(key, { title, order, Collect, Init })`;
   `core.lua` draws whatever entries they return, redraws at most once per frame, and a
@@ -303,10 +303,19 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   `C_LFGList.CanCreateScenarioGroup`; its ID is the 13th return of `C_Scenario.GetInfo`).
   The quest one reads its quest from an attribute (`SetUp`), so the click runs Blizzard's
   code. Not secure buttons: they sit on the rows, one frame level above them.
-- **Widgets** (zone set `C_UIWidgetManager.GetObjectiveTrackerWidgetSetID()`, the delve header
-  = step widgetSetID, scenario sets 514 top / 252 bottom) live in our own
-  `UIWidgetContainerTemplate` frames. A container not drawn is parked off-screen with alpha 0,
-  **never hidden**: the widget layout runs in OnUpdate, and a hidden frame gets none.
+- **No Blizzard UI widgets in the tracker** (removed 2026-09-30). It used to host the zone
+  set, the delve header (step widgetSetID) and scenario sets 514/252 in its own
+  `UIWidgetContainerTemplate` frames - and that taints: widget frames come from one pool the
+  whole game shares, a frame set up from our code keeps fields written while tainted, and its
+  next user runs tainted too. In Midnight that is fatal the moment a secret value is involved:
+  a map POI tooltip failed with *"attempt to perform arithmetic on local 'barWidth' (a secret
+  number value, while execution tainted by 'DeckUI_Quests')"* in `InitPartitions`. **Never
+  call `RegisterForWidgetSet` from addon code.** What a widget shows is drawn from the
+  `C_UIWidgetManager.Get*WidgetVisualizationInfo` data with frames of our own.
+  So far the delve header: `DelveEntry` in scenario.lua reads
+  `GetScenarioHeaderDelvesWidgetVisualizationInfo` for the stage's widget set (tier, the
+  currencies = lives, the spells = the delve's effects) and re-collects on `UPDATE_UI_WIDGET`
+  for that set only. Zone widgets and scenario sets 514/252 are not shown at all for now.
 - Blizzard shows no +2/+3 chest times; ours use the keystone rule (80% / 60% of the limit).
 - The tracker grows from its top edge (`D.PinTopLeft`); `/quests reset` brings it back.
 - `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have

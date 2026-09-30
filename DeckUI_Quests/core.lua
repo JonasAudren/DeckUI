@@ -14,8 +14,7 @@ local D = DeckUI
 --     OnClick = function(button, mouseButton) | nil,
 --     OnEnter = function(row) | nil,
 --     secure = { type = "item" | "spell", value = link | spellID, icon, logIndex } | nil,
---     findGroup = { kind = "quest" | "scenario", id = questID | scenarioID } | nil,
---     widget = a widget container from ns.NewWidgetContainer (drawn instead of text) }
+--     findGroup = { kind = "quest" | "scenario", id = questID | scenarioID } | nil }
 -- A line may carry color = {r,g,b} to override the done/normal colours.
 -- Nothing here knows about quests; that keeps the drawing in one place.
 -------------------------------------------------------------------
@@ -241,22 +240,7 @@ local LINE  = { 0.8, 0.8, 0.8 }
 -- section can place something beside it (the quest item buttons).
 ns.drawn = {}
 
--- Widget containers not drawn this pass are parked off to the side rather
--- than hidden: a hidden container gets no OnUpdate, and Blizzard's widget
--- layout runs in OnUpdate - it would never lay out again.
-local widgets = {}
-
-local function DrawWidget(entry, y)
-    local c = entry.widget
-    c.drawn = true
-    c:ClearAllPoints()
-    c:SetPoint("TOPLEFT", content, "TOPLEFT", PAD, -y)
-    c:SetAlpha(1)
-    return y + c:GetHeight() + ENTRY_GAP
-end
-
 local function DrawEntry(entry, y, width, textSize)
-    if entry.widget then return DrawWidget(entry, y) end
     local indent = entry.indent or 0
     local row = Row()
     row.entry = entry
@@ -315,7 +299,6 @@ local ERROR = { 1, 0.3, 0.3 }
 local function Draw()
     ReleaseAll()
     wipe(ns.drawn)
-    for _, c in ipairs(widgets) do c.drawn = false end
     local d = ns.DeviceDB()
     local width, textSize = d.width, d.textSize
     tracker:SetScale(d.scale)
@@ -369,47 +352,23 @@ local function Draw()
     tracker:SetHeight(height)
     scroll:SetVerticalScroll(math.min(scroll:GetVerticalScroll(), math.max(0, y - (height - chrome))))
     tracker:SetShown(anything or DeckQuestsDB.collapsed or D.unlocked)
-    for _, c in ipairs(widgets) do
-        if not c.drawn then
-            c:ClearAllPoints()
-            c:SetPoint("TOPRIGHT", UIParent, "TOPLEFT", -2000, 0)
-            c:SetAlpha(0)
-        end
-    end
     ns.PlaceSecureButtons()
 end
 
 -------------------------------------------------------------------
--- Widget containers (zone widgets, the delve header, scenario widgets)
+-- No Blizzard UI widgets in here
 -------------------------------------------------------------------
--- Blizzard's UIWidgetContainerTemplate hosts a widget set in any frame;
--- containers are tracked one by one, so ours can hold the same set as
--- Blizzard's. It sizes itself (ResizeLayoutFrame) after each layout, and
--- our layout callback asks the tracker to redraw around the new height.
-local function WidgetLayout(container, sortedWidgets)
-    DefaultWidgetLayout(container, sortedWidgets)
-    ns.RequestRedraw()
-end
-
-function ns.NewWidgetContainer()
-    local c = CreateFrame("Frame", nil, content, "UIWidgetContainerTemplate")
-    c:SetPoint("TOPRIGHT", UIParent, "TOPLEFT", -2000, 0)
-    c:SetAlpha(0)
-    widgets[#widgets + 1] = c
-    return c
-end
-
--- Registering the same set again is a no-op, another ID replaces it and
--- nil unregisters - so this can simply be called on every Collect.
-function ns.SetWidgetSet(container, setID)
-    if container.setID == setID then return end
-    container.setID = setID
-    container:RegisterForWidgetSet(setID, setID and WidgetLayout or nil)
-end
-
-function ns.HasWidgets(container)
-    return container.setID ~= nil and container:IsShown() and (container:GetNumWidgetsShowing() or 0) > 0
-end
+-- The tracker used to host Blizzard's widget sets (zone widgets, the
+-- delve header, scenario sets 514/252) in UIWidgetContainerTemplate frames.
+-- That cannot be done cleanly: the widget frames come from ONE pool the
+-- whole game shares, and a frame set up from our code keeps fields written
+-- while tainted. The next user of that frame - a map POI tooltip, say -
+-- then runs tainted too, and in Midnight tainted code may not do
+-- arithmetic on secret values: "attempt to perform arithmetic on local
+-- 'barWidth' (a secret number value, while execution tainted by
+-- 'DeckUI_Quests')" in UIWidgetTemplateBase.lua InitPartitions (owner's
+-- report, 2026-09-30). Whatever a widget showed has to be drawn from the
+-- widget data API with frames of our own, never with Blizzard's widgets.
 
 -------------------------------------------------------------------
 -- Secure buttons beside entries: quest items and scenario spells
@@ -635,11 +594,6 @@ function ns.PrintBlizzardModules()
     local count = f and f.modules and #f.modules or 0
     print(("DeckUI Quests: Blizzard's tracker shown=%s, modules=%d"):format(
         tostring(f and f:IsShown()), count))
-    local n = 0
-    for _, c in ipairs(widgets) do
-        if ns.HasWidgets(c) then n = n + 1 end
-    end
-    print(("  widget containers with widgets: %d of %d"):format(n, #widgets))
     local shown = 0
     for _, b in ipairs(secureButtons) do if b:IsShown() then shown = shown + 1 end end
     print(("  secure buttons: %d shown, %d made, waiting for combat end=%s"):format(

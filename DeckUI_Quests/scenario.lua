@@ -62,18 +62,71 @@ local function CriteriaLines()
 end
 
 -------------------------------------------------------------------
--- Widgets: the delve header (tier, lives) and the scenario's own sets
+-- The delve header: tier, lives and the delve's effects, as text
 -------------------------------------------------------------------
--- The stage's widget set is the delve header; 514 and 252 are the fixed
--- sets Blizzard's scenario module shows above and below its blocks.
-local SCENARIO_TOP_SET, SCENARIO_BOTTOM_SET = 514, 252
-local stageWidgets, topWidgets, bottomWidgets
+-- Blizzard shows it as a widget (ScenarioHeaderDelves) in the stage's
+-- widget set. Hosting that widget tainted the game's shared widget frames
+-- (see core.lua), so the same data is read here and drawn as an entry -
+-- the fields Blizzard's own template uses (UIWidgetTemplateScenarioHeader
+-- Delves.lua, 12.1.0): headerText, tierText, the currencies (the lives),
+-- the spells (the delve's effects) and the tooltips.
+local delveSetID   -- the stage's widget set, for UPDATE_UI_WIDGET
 
-local function WidgetEntry(key, container)
-    if container and ns.HasWidgets(container) then
-        return { key = key, widget = container }
+local function Shown(info)
+    return info and info.shownState ~= Enum.WidgetShownState.Hidden
+end
+
+local function DelveEntry(widgetSetID)
+    delveSetID = widgetSetID
+    if not widgetSetID or widgetSetID == 0 then return nil end
+    local header
+    for _, w in ipairs(C_UIWidgetManager.GetAllWidgetsBySetID(widgetSetID) or {}) do
+        if w.widgetType == Enum.UIWidgetVisualizationType.ScenarioHeaderDelves then
+            local info = C_UIWidgetManager.GetScenarioHeaderDelvesWidgetVisualizationInfo(w.widgetID)
+            if Shown(info) then header = info break end
+        end
     end
-    return nil
+    if not header then return nil end
+
+    local title = header.headerText
+    if header.tierText and header.tierText ~= "" then
+        title = ("%s - Tier %s"):format(title, header.tierText)
+    end
+    local lines = {}
+    for _, c in ipairs(header.currencies or {}) do
+        local icon = c.iconFileID and ("|T%d:0|t "):format(c.iconFileID) or ""
+        local text = ((c.leadingText or "") .. " " .. (c.text or "")):gsub("^%s+", "")
+        lines[#lines + 1] = { text = icon .. text }
+    end
+    for _, sp in ipairs(header.spells or {}) do
+        if Shown(sp) then
+            local name = C_Spell.GetSpellName(sp.spellID)
+            local icon = C_Spell.GetSpellTexture(sp.spellID)
+            if name then
+                lines[#lines + 1] = { text = (icon and ("|T%d:0|t "):format(icon) or "") .. name }
+            end
+        end
+    end
+    return {
+        key = "delve",
+        title = title,
+        color = { 1, 0.82, 0 },
+        lines = lines,
+        OnEnter = function(row)
+            GameTooltip:SetOwner(row, "ANCHOR_LEFT")
+            GameTooltip:AddLine(header.headerText, 1, 1, 1)
+            if header.tooltip and header.tooltip ~= "" then
+                GameTooltip:AddLine(header.tooltip, nil, nil, nil, true)
+            end
+            for _, sp in ipairs(header.spells or {}) do
+                if Shown(sp) and sp.tooltip and sp.tooltip ~= "" then
+                    GameTooltip:AddLine(" ")
+                    GameTooltip:AddLine(sp.tooltip, nil, nil, nil, true)
+                end
+            end
+            GameTooltip:Show()
+        end,
+    }
 end
 
 -------------------------------------------------------------------
@@ -231,17 +284,15 @@ local function Collect()
     -- the 13th return is the scenario's ID (Blizzard's tracker reads it so)
     local name, currentStage, numStages, _, _, _, _, _, _, _, _, _, scenarioID = C_Scenario.GetInfo()
     if not name or not numStages or numStages == 0 then
-        ns.SetWidgetSet(stageWidgets, nil)
+        delveSetID = nil
         return entries
     end
 
-    Add(WidgetEntry("scenario-top", topWidgets))
     Add(KeystoneEntry())
 
     if currentStage and currentStage <= numStages then
         local stageName, _, _, _, _, _, _, _, allSpellInfo, _, _, widgetSetID = C_Scenario.GetStepInfo()
-        ns.SetWidgetSet(stageWidgets, widgetSetID)
-        Add(WidgetEntry("scenario-stage", stageWidgets))
+        Add(DelveEntry(widgetSetID))
 
         local title = name
         if numStages > 1 then
@@ -255,12 +306,11 @@ local function Collect()
             for _, e in ipairs(SpellEntries(allSpellInfo)) do Add(e) end
         end
     else
-        ns.SetWidgetSet(stageWidgets, nil)
+        delveSetID = nil
         Add({ key = "stage", title = name, lines = { { text = COMPLETE or "Complete", done = true } } })
     end
 
     for _, e in ipairs(BonusEntries()) do Add(e) end
-    Add(WidgetEntry("scenario-bottom", bottomWidgets))
     return entries
 end
 
@@ -269,11 +319,6 @@ ns.RegisterSection("scenario", {
     order = 10,
     Collect = Collect,
     Init = function()
-        stageWidgets  = ns.NewWidgetContainer()
-        topWidgets    = ns.NewWidgetContainer()
-        bottomWidgets = ns.NewWidgetContainer()
-        ns.SetWidgetSet(topWidgets, SCENARIO_TOP_SET)
-        ns.SetWidgetSet(bottomWidgets, SCENARIO_BOTTOM_SET)
         if C_Scenario.ShouldShowCriteria then showCriteria = C_Scenario.ShouldShowCriteria() end
     end,
 })
@@ -284,9 +329,15 @@ for _, e in ipairs({
     "SCENARIO_BONUS_VISIBILITY_UPDATE", "SCENARIO_CRITERIA_SHOW_STATE_UPDATE", "CRITERIA_COMPLETE",
     "CHALLENGE_MODE_START", "CHALLENGE_MODE_COMPLETED", "CHALLENGE_MODE_RESET",
     "CHALLENGE_MODE_DEATH_COUNT_UPDATED", "WORLD_STATE_TIMER_START", "WORLD_STATE_TIMER_STOP",
-    "ACTIVE_DELVE_DATA_UPDATE",
+    "ACTIVE_DELVE_DATA_UPDATE", "UPDATE_UI_WIDGET",
 }) do pcall(ev.RegisterEvent, ev, e) end
 ev:SetScript("OnEvent", function(_, event, arg)
+    if event == "UPDATE_UI_WIDGET" then
+        -- fires for every widget in the game; only the delve header's set
+        -- concerns this section (lives lost, an effect added)
+        if delveSetID and arg and arg.widgetSetID == delveSetID then ns.RequestUpdate("scenario") end
+        return
+    end
     if event == "SCENARIO_CRITERIA_SHOW_STATE_UPDATE" then showCriteria = arg and true or false end
     ns.RequestUpdate()
 end)
