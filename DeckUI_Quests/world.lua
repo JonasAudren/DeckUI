@@ -96,6 +96,7 @@ local function TaskEntry(questID, watched)
         OnEnter = WorldTooltip(questID),
         -- tasks in the area are in the quest log, and some carry an item
         secure = ns.QuestItem(C_QuestLog.GetLogIndexForQuestID(questID), false),
+        findGroup = ns.FindQuestGroup(questID),
     }
 end
 

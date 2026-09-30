@@ -120,6 +120,7 @@ local function QuestEntry(questID, logIndex, info)
         OnClick = QuestClick(questID, info, complete),
         OnEnter = QuestTooltip(questID),
         secure = ns.QuestItem(logIndex, complete),
+        findGroup = ns.FindQuestGroup(questID),
     }
 end
 

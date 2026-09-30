@@ -14,6 +14,7 @@ local D = DeckUI
 --     OnClick = function(button, mouseButton) | nil,
 --     OnEnter = function(row) | nil,
 --     secure = { type = "item" | "spell", value = link | spellID, icon, logIndex } | nil,
+--     findGroup = { kind = "quest" | "scenario", id = questID | scenarioID } | nil,
 --     widget = a widget container from ns.NewWidgetContainer (drawn instead of text) }
 -- A line may carry color = {r,g,b} to override the done/normal colours.
 -- Nothing here knows about quests; that keeps the drawing in one place.
@@ -171,7 +172,57 @@ local function Head()
     return h
 end
 
+-- The "find a group" eye beside an entry's title. Blizzard's own button
+-- templates (Blizzard_ObjectiveTrackerShared.xml / ScenarioObjectiveTracker
+-- .xml, 12.1.0) do the clicking: the quest one reads its quest from an
+-- attribute (SetUp), so LFGListUtil_FindQuestGroup runs from Blizzard's
+-- code, as it does on Blizzard's tracker. Not secure buttons - they may
+-- move in combat like the rows they sit on.
+local EYE_TEMPLATES = {
+    quest    = "QuestObjectiveFindGroupButtonTemplate",
+    scenario = "ScenarioObjectiveTrackerFindGroupButtonTemplate",
+}
+local eyes = { quest = {}, scenario = {} }
+local usedEyes = { quest = 0, scenario = 0 }
+
+local function Eye(kind)
+    usedEyes[kind] = usedEyes[kind] + 1
+    local b = eyes[kind][usedEyes[kind]]
+    if not b then
+        local ok, made = pcall(CreateFrame, "Button", nil, content, EYE_TEMPLATES[kind])
+        if not ok then
+            usedEyes[kind] = usedEyes[kind] - 1
+            return nil
+        end
+        b = made
+        if kind == "quest" then
+            b:SetSize(20, 20)
+        else
+            -- the scenario eye is 36x46 art with fixed-size textures
+            b:SetScale(0.5)
+        end
+        eyes[kind][usedEyes[kind]] = b
+    end
+    b:Show()
+    return b
+end
+
+local function PlaceEye(entry, row)
+    local f = entry.findGroup
+    local b = f and Eye(f.kind)
+    if not b then return end
+    if f.kind == "quest" then b:SetUp(f.id) else b:SetScenarioID(f.id) end
+    b:ClearAllPoints()
+    b:SetPoint("CENTER", row, "TOPRIGHT", -10, -8)
+    -- above the row, which covers the whole entry and would take the click
+    b:SetFrameLevel(row:GetFrameLevel() + 2)
+end
+
 local function ReleaseAll()
+    for kind, list in pairs(eyes) do
+        for i = 1, usedEyes[kind] do list[i]:Hide() end
+        usedEyes[kind] = 0
+    end
     for i = 1, usedTexts do texts[i]:Hide() end
     for i = 1, usedBars do bars[i]:Hide() end
     for i = 1, usedRows do rows[i]:Hide(); rows[i].entry = nil end
@@ -213,7 +264,8 @@ local function DrawEntry(entry, y, width, textSize)
 
     local head = Text()
     head:SetFont(D.FONT, textSize + 1, "OUTLINE")
-    head:SetWidth(width - indent)
+    -- room for the find-group eye at the right end of the title
+    head:SetWidth(width - indent - (entry.findGroup and 22 or 0))
     head:ClearAllPoints()
     head:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent, -y)
     head:SetText(entry.title or "")
@@ -246,6 +298,7 @@ local function DrawEntry(entry, y, width, textSize)
     row:ClearAllPoints()
     row:SetPoint("TOPLEFT", content, "TOPLEFT", PAD, -top)
     row:SetSize(width, math.max(y - top, 14))
+    PlaceEye(entry, row)
     return y + ENTRY_GAP
 end
 
@@ -468,6 +521,14 @@ function ns.PlaceSecureButtons()
         secureButtons[i]:Hide()
         secureButtons[i].secure = nil
     end
+end
+
+-- The eye for a quest, when Blizzard's tracker would show one
+function ns.FindQuestGroup(questID)
+    if QuestUtil and QuestUtil.CanCreateQuestGroup and QuestUtil.CanCreateQuestGroup(questID) then
+        return { kind = "quest", id = questID }
+    end
+    return nil
 end
 
 -- A quest's usable item, as Blizzard decides it (QuestUtil.QuestShowsItemByIndex)

@@ -296,6 +296,13 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   can anything anchored to them, so they hang off UIParent at screen coordinates copied from
   the rows out of combat and are re-placed on PLAYER_REGEN_ENABLED. Spell cooldowns go into
   the Cooldown frame untouched (secret values, see the Cross notes).
+- **The "find a group" eye** (reported missing 2026-09-30; not yet tested in game) is
+  Blizzard's own `QuestObjectiveFindGroupButtonTemplate` (quests, world quests, bonus
+  objectives, shown when `QuestUtil.CanCreateQuestGroup`) and
+  `ScenarioObjectiveTrackerFindGroupButtonTemplate` (the scenario stage, when
+  `C_LFGList.CanCreateScenarioGroup`; its ID is the 13th return of `C_Scenario.GetInfo`).
+  The quest one reads its quest from an attribute (`SetUp`), so the click runs Blizzard's
+  code. Not secure buttons: they sit on the rows, one frame level above them.
 - **Widgets** (zone set `C_UIWidgetManager.GetObjectiveTrackerWidgetSetID()`, the delve header
   = step widgetSetID, scenario sets 514 top / 252 bottom) live in our own
   `UIWidgetContainerTemplate` frames. A container not drawn is parked off-screen with alpha 0,

@@ -215,12 +215,21 @@ end
 -------------------------------------------------------------------
 -- The section
 -------------------------------------------------------------------
+-- the eye on the stage, when Blizzard's tracker would show one
+local function FindScenarioGroup(scenarioID)
+    if scenarioID and C_LFGList.CanCreateScenarioGroup and C_LFGList.CanCreateScenarioGroup(scenarioID) then
+        return { kind = "scenario", id = scenarioID }
+    end
+    return nil
+end
+
 local function Collect()
     ns.ticking.scenario = nil
     local entries = {}
     local function Add(e) if e then entries[#entries + 1] = e end end
 
-    local name, currentStage, numStages = C_Scenario.GetInfo()
+    -- the 13th return is the scenario's ID (Blizzard's tracker reads it so)
+    local name, currentStage, numStages, _, _, _, _, _, _, _, _, _, scenarioID = C_Scenario.GetInfo()
     if not name or not numStages or numStages == 0 then
         ns.SetWidgetSet(stageWidgets, nil)
         return entries
@@ -240,7 +249,8 @@ local function Collect()
         elseif stageName and stageName ~= "" and stageName ~= name then
             title = name .. " - " .. stageName
         end
-        Add({ key = "stage", title = title, lines = showCriteria and CriteriaLines() or {} })
+        Add({ key = "stage", title = title, lines = showCriteria and CriteriaLines() or {},
+            findGroup = FindScenarioGroup(scenarioID) })
         if showCriteria then
             for _, e in ipairs(SpellEntries(allSpellInfo)) do Add(e) end
         end
