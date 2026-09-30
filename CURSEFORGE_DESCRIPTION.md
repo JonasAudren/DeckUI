@@ -33,6 +33,7 @@ DeckUI is a hub with seven load-on-demand modules; enable or disable each one in
 - **Character bank and warband bank** in one window: one tab at a time, deposit everything, buy tabs, move warband gold
 - Search, sorting, gold and tracked currencies, item level on gear, junk marked even away from a merchant
 - **Old-expansions filter**: dims everything from the current expansion so leftovers stand out
+- **Auction filter**: dims everything the auction house would not take
 - Columns and size per device (Steam Deck / PC)
 
 ## DeckUI Quests – objective tracker (off until you switch it on)

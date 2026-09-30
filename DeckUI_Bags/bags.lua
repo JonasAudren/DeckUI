@@ -199,7 +199,7 @@ end
 -- the view button joins the row right of the search box
 local viewButton = CreateFrame("Button", nil, window)
 viewButton:SetSize(24, 24)
-viewButton:SetPoint("RIGHT", window.old, "LEFT", -4, 0)
+viewButton:SetPoint("RIGHT", window.auction, "LEFT", -4, 0)
 window.search:SetPoint("RIGHT", viewButton, "LEFT", -6, 0)
 viewButton:SetNormalAtlas("bags-icon-multiple")
 viewButton:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")

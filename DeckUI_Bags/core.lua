@@ -138,6 +138,25 @@ function ns.IsOld(itemID)
 end
 ns.CurrentExpansion = CurrentExpansion
 
+-------------------------------------------------------------------
+-- "Auctionable only": dims everything the auction house would refuse
+-------------------------------------------------------------------
+-- Blizzard's own test, the one its bags use when an item is clicked at
+-- the auction house (ContainerFrame.lua, 12.1.0):
+-- C_AuctionHouse.IsSellItemValid(location, false) - bound, quest and
+-- conjured items and the like are refused, without an error message.
+-- Session only, like the old-expansions filter, and combinable with it
+-- and with the search. Whether the call answers away from the auction
+-- house as it does there was not measured when this was written.
+ns.auctionOnly = false
+
+function ns.IsAuctionable(bag, slot)
+    local location = ItemLocation:CreateFromBagAndSlot(bag, slot)
+    if not location:IsValid() then return false end
+    local ok, valid = pcall(C_AuctionHouse.IsSellItemValid, location, false)
+    return ok and valid == true
+end
+
 function ns.UpdateButton(b)
     local bag, slot = b:GetBagID(), b:GetID()
     local info = C_Container.GetContainerItemInfo(bag, slot)
@@ -162,6 +181,7 @@ function ns.UpdateButton(b)
     -- Dimming is the search's own overlay, so both filters simply combine.
     local matches = not (info and info.isFiltered)
     if ns.oldOnly and info then matches = matches and ns.IsOld(info.itemID) end
+    if ns.auctionOnly and info then matches = matches and ns.IsAuctionable(bag, slot) end
     b:SetMatchesSearch(matches)
 
     -- Blizzard marks junk only while a merchant is open. We mark it always:
@@ -215,8 +235,9 @@ function ns.NewWindow(name, titleText, opts)
     w.close = close
 
     -- The buttons right of the search box line up from the right edge:
-    -- sort, the old-expansions filter, and whatever a window adds (it then
-    -- re-anchors the search box's right edge to its own button).
+    -- sort, the old-expansions filter, the auction filter, and whatever a
+    -- window adds (it then re-anchors the search box's right edge to its
+    -- own button).
     local sort = CreateFrame("Button", nil, w)
     sort:SetSize(24, 24)
     sort:SetPoint("TOPRIGHT", -12, -32)
@@ -250,13 +271,32 @@ function ns.NewWindow(name, titleText, opts)
     old:SetScript("OnLeave", GameTooltip_Hide)
     w.old = old
 
+    local auction = CreateFrame("Button", nil, w)
+    auction:SetSize(24, 24)
+    auction:SetPoint("RIGHT", old, "LEFT", -4, 0)
+    auction.icon = auction:CreateTexture(nil, "ARTWORK")
+    auction.icon:SetAllPoints()
+    -- the auctioneer's minimap tracking icon; a coin already marks junk
+    auction.icon:SetTexture("Interface\\Minimap\\Tracking\\Auctioneer")
+    auction.icon:SetDesaturated(true)
+    auction:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    auction:SetScript("OnClick", function() ns.SetAuctionOnly(not ns.auctionOnly) end)
+    auction:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(ns.auctionOnly and "Showing what the auction house takes" or "Show what the auction house takes")
+        GameTooltip:AddLine("Dims everything that cannot be put up for auction.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    auction:SetScript("OnLeave", GameTooltip_Hide)
+    w.auction = auction
+
     -- BagSearchBoxTemplate feeds C_Container.SetItemSearch, and the game
     -- answers with isFiltered on every item plus INVENTORY_SEARCH_UPDATE.
     -- The search is global, so the other windows' boxes follow the text.
     local search = CreateFrame("EditBox", name .. "Search", w, "BagSearchBoxTemplate")
     search:SetHeight(20)
     search:SetPoint("TOPLEFT", PAD + 6, -34)
-    search:SetPoint("RIGHT", old, "LEFT", -6, 0)
+    search:SetPoint("RIGHT", auction, "LEFT", -6, 0)
     search:HookScript("OnTextChanged", function(self)
         local text = self:GetText()
         for _, other in ipairs(windows) do
@@ -449,6 +489,13 @@ end
 function ns.SetOldOnly(state)
     ns.oldOnly = state
     for _, w in ipairs(windows) do w.old.icon:SetDesaturated(not state) end
+    ns.RequestRefresh()
+    ns.FlushAll()
+end
+
+function ns.SetAuctionOnly(state)
+    ns.auctionOnly = state
+    for _, w in ipairs(windows) do w.auction.icon:SetDesaturated(not state) end
     ns.RequestRefresh()
     ns.FlushAll()
 end

@@ -264,6 +264,10 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
   `expansionID` (15th return of `C_Item.GetItemInfo`) is below `GetServerExpansionLevel()`,
   through the search's own overlay so it combines with a search. Uncached items count as
   current until `ITEM_DATA_LOAD_RESULT`. "Old" is the item's own expansion - a hearthstone is 0.
+- **Auction filter** (auctioneer button, both windows, session only, combinable with the
+  others): dims what `C_AuctionHouse.IsSellItemValid(location, false)` refuses - Blizzard's
+  own test from ContainerFrame.lua. Not yet tested in game, including whether it answers the
+  same away from the auction house.
 - `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked;
   `/bags bank` prints the bank types, their lock state, tabs and slots.
 
