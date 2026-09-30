@@ -8,6 +8,56 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.3.0
+
+- **New module: DeckUI Tooltip.** The mouse-over window in DeckUI's look:
+  dark, with a thin edge that takes the item's quality colour or a
+  player's class colour, and a slim health bar. Switched off until you
+  tick "Tooltip" in `/deck` -> General.
+  - It appears at a place of its own that `/deck unlock` moves, separately
+    for the Steam Deck and the PC. Tooltips of buttons and frames stay
+    beside them. Its size is set per device too.
+  - **Players:** name in class colour, their spec and item level - other
+    players' a moment later, since the game has to look at their gear.
+  - **Whom a unit is targeting**, and a red ">> You <<" when it is you.
+  - Hold **Shift** for item, spell and NPC IDs.
+- **Steam Deck and PC, each with its own setup.** A new **Devices** tab
+  holds everything that differs between the two, and three new switches
+  keep what the game otherwise shares between every computer you log in
+  from:
+  - **Key bindings** stay on the device you set them on.
+  - **Action bar layouts:** lay your bars out differently on the Deck and
+    on the PC - each device puts its own layout back when you log in or
+    change spec. Per character and spec.
+  - **Edit Mode layout:** make one layout per device in Edit Mode, and
+    each device switches to its own; it asks for a quick reload when it
+    does.
+  - Tick them on each device. Whatever is set up when you tick a box
+    becomes that device's, later changes are remembered.
+- **Cross:** zoom the camera on the Deck with **LB + D-pad up/down** -
+  hold for a smooth zoom, tap for a step. A new option in the Cross tab;
+  LB then works as a modifier and no longer as a button of its own.
+- **Quests:**
+  - Fixed an error about a "secret number value" that could appear when
+    hovering points on the world map while the Quests module was on.
+    The tracker no longer borrows Blizzard's widget frames; zone bars,
+    scenario widgets and the delve header are drawn by DeckUI itself.
+  - The **find a group** button (the eye) is back beside quests, world
+    quests and scenarios.
+  - The delve header shows whether the **treasure** is earned.
+  - World quest time left now counts down on its own; scrolling keeps the
+    quest item buttons beside their quests.
+  - Much less work in the background, especially in Mythic+: only the
+    parts that changed are rebuilt.
+- **Map:** the world map's buttons match DeckUI's look, and the world map
+  can grow up to 140% for the Deck's screen.
+- **Bags:** lighter while casting with the bags open; the Bags tab points
+  out the column slider when the window is too tall for the screen.
+- **Orbs:** size, focus and boss settings can be changed in combat - they
+  apply when combat ends instead of causing an error.
+- Plugging in or removing a gamepad mid-session no longer switches the
+  device; `/deck device` says when a reload would change it.
+
 ## 1.2.0
 
 - **New module: DeckUI Quests.** A compact tracker of its own that takes
