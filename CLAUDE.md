@@ -282,6 +282,13 @@ source (read 2026-09-29).
   login. **The 67-pixel title band stays**: Blizzard's fixed `TITLE_CANVAS_SPACER_FRAME_HEIGHT`,
   and shrinking it means changing the size `Minimize()` hands to the panel manager - tainted,
   that blocks panels in combat.
+- **The dark band behind the breadcrumbs hangs off `WorldMapFrame`, not the BorderFrame.**
+  The BorderFrame is HIGH strata; as its child the band drew over the breadcrumbs and all but
+  hid them (owner's screenshot, 2026-09-30). The one-pixel edge (no fill) may stay up there.
+- The map's buttons (breadcrumbs, close, filter, map pin) wear the quest-log-tab look: their
+  art at alpha 0, a dark square with a thin edge, gold for the current crumb / active pin.
+  Only textures change, never scripts. New crumbs are styled from a post-hook on
+  `NavBar_CheckLength`; `/deckmap debug` lists the crumbs.
 - **The world map is movable** because it left the panel manager: `UIPanelLayout-defined` =
   true and no `UIPanelLayout-area`, so Show/HideUIPanel just show and hide it (the BankFrame
   trick from Bags), Escape via UISpecialFrames, dragged by a 24-px strip above the breadcrumbs

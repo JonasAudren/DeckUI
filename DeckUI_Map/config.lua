@@ -28,7 +28,7 @@ D.RegisterModule("Map", {
         D.Checkbox(c, "Buttons only while the mouse is over the map", -176, db, "buttonsOnHover", ns.ApplyHover)
 
         D.Label(c, "World map", -220, 15)
-        D.Slider(c, "Size (per device)", -242, 0.5, 1.0, 0.05, pct, device, "worldMapScale",
+        D.Slider(c, "Size (per device)", -242, 0.5, 1.4, 0.05, pct, device, "worldMapScale",
             Store("worldMapScale", ns.ApplyWorldMapScale))
         D.Checkbox(c, "Open without the quest log", -306, db, "questLogClosed", function() end)
         D.Checkbox(c, "Controls only while the mouse is over the map", -334, db, "mapControlsOnHover", ns.ApplyMapHover)
