@@ -386,8 +386,14 @@ just the same, so:
   padding arithmetic on widths that can be secret. The only rebuild we trigger is Blizzard's
   own `GameTooltip:SetUnit("mouseover")` when an inspect answer arrives.
 - Look: a post-hook on `SharedTooltip_SetBackdropStyle` (re-run on every hide) sets the
-  NineSlice to alpha 0 - Blizzard only Shows/Hides it - and colours our BackdropTemplate
-  frame one level below the tooltip. The edge takes quality/class colour for one showing.
+  NineSlice to alpha 0 - Blizzard only Shows/Hides it - and colours our own frame one level
+  below the tooltip. The edge takes quality/class colour for one showing.
+- **No `BackdropTemplate` on anything sized by a tooltip** (our fill, the health bar edge):
+  a tooltip showing a secret value has a secret width, and BackdropTemplate's OnSizeChanged
+  does arithmetic on it in Lua - *"attempt to perform arithmetic on local 'width' (a secret
+  number value, while execution tainted by 'DeckUI_Tooltip')"* in Backdrop.lua (2026-09-30,
+  shipped in 1.3.0, fixed in 1.3.1). `FlatBox` is a fill plus four one-pixel textures that
+  are only anchored; the engine lays them out, where secrets are fine.
 - Place: a post-hook on `GameTooltip_SetDefaultAnchor` re-anchors only those tooltips to
   `DeckTooltipAnchor` (movable, per device); owned tooltips keep their place.
 - Lines: `TooltipDataProcessor.AddTooltipPostCall` for Unit/Item/Spell - Blizzard runs them

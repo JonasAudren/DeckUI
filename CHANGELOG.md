@@ -8,6 +8,12 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.3.1
+
+- **Tooltip:** fixed an error about a "secret number value" in
+  Backdrop.lua that could appear when hovering NPCs or enemies with the
+  Tooltip module switched on. The tooltip looks the same as before.
+
 ## 1.3.0
 
 - **New module: DeckUI Tooltip.** The mouse-over window in DeckUI's look:

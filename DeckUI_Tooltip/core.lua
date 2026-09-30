@@ -68,25 +68,56 @@ local styled = {}        -- tooltip -> true
 local backdrops = {}     -- tooltip -> our frame
 local borderColor = {}   -- tooltip -> { r, g, b } for the current showing
 
-local function Backdrop(tooltip)
-    local f = backdrops[tooltip]
-    if not f then
-        f = CreateFrame("Frame", nil, tooltip, "BackdropTemplate")
-        f:SetAllPoints(tooltip)
-        f:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 })
-        backdrops[tooltip] = f
+-- A dark fill and four one-pixel lines, each only ANCHORED to the frame's
+-- edges - never BackdropTemplate. A tooltip showing a secret value (an
+-- NPC's name) has a secret width, and BackdropTemplate's OnSizeChanged
+-- does arithmetic on the width in Lua, in our tainted code: "attempt to
+-- perform arithmetic on local 'width' (a secret number value, while
+-- execution tainted by 'DeckUI_Tooltip')" in Backdrop.lua (owner's report,
+-- 2026-09-30). Anchors are laid out by the engine, where secrets are fine.
+local function FlatBox(frame, fill)
+    local box = { lines = {} }
+    if fill then
+        box.fill = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+        box.fill:SetAllPoints()
+        box.fill:SetColorTexture(0.05, 0.05, 0.05, 0.95)
     end
-    f:SetFrameLevel(math.max(0, tooltip:GetFrameLevel() - 1))
-    return f
+    local function Line(p1, p2, horizontal)
+        local t = frame:CreateTexture(nil, "BORDER")
+        t:SetTexture(WHITE)
+        t:SetPoint(p1)
+        t:SetPoint(p2)
+        if horizontal then t:SetHeight(1) else t:SetWidth(1) end
+        box.lines[#box.lines + 1] = t
+    end
+    Line("TOPLEFT", "TOPRIGHT", true)
+    Line("BOTTOMLEFT", "BOTTOMRIGHT", true)
+    Line("TOPLEFT", "BOTTOMLEFT", false)
+    Line("TOPRIGHT", "BOTTOMRIGHT", false)
+    function box.SetBorderColor(r, g, b)
+        for _, t in ipairs(box.lines) do t:SetVertexColor(r, g, b, 1) end
+    end
+    return box
+end
+
+local function Backdrop(tooltip)
+    local b = backdrops[tooltip]
+    if not b then
+        local f = CreateFrame("Frame", nil, tooltip)
+        f:SetAllPoints(tooltip)
+        b = FlatBox(f, true)
+        b.frame = f
+        backdrops[tooltip] = b
+    end
+    b.frame:SetFrameLevel(math.max(0, tooltip:GetFrameLevel() - 1))
+    return b
 end
 
 local function ApplyStyle(tooltip)
     if not styled[tooltip] then return end
     if tooltip.NineSlice then tooltip.NineSlice:SetAlpha(0) end
-    local f = Backdrop(tooltip)
     local c = borderColor[tooltip] or GRAY
-    f:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
-    f:SetBackdropBorderColor(c[1], c[2], c[3], 1)
+    Backdrop(tooltip).SetBorderColor(c[1], c[2], c[3])
 end
 
 -- for lines.lua: this showing's border colour
@@ -114,11 +145,11 @@ local function StyleHealthBar()
     local bg = bar:CreateTexture(nil, "BACKGROUND", nil, -8)
     bg:SetAllPoints()
     bg:SetColorTexture(0.05, 0.05, 0.05, 0.95)
-    local edge = CreateFrame("Frame", nil, bar, "BackdropTemplate")
+    -- the bar is as wide as the tooltip, so its width can be secret too
+    local edge = CreateFrame("Frame", nil, bar)
     edge:SetPoint("TOPLEFT", -1, 1)
     edge:SetPoint("BOTTOMRIGHT", 1, -1)
-    edge:SetBackdrop({ edgeFile = WHITE, edgeSize = 1 })
-    edge:SetBackdropBorderColor(GRAY[1], GRAY[2], GRAY[3], 1)
+    FlatBox(edge, false).SetBorderColor(GRAY[1], GRAY[2], GRAY[3])
 end
 
 -------------------------------------------------------------------
