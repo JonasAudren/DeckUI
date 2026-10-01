@@ -2,7 +2,7 @@
 ## Title: DeckUI Quests
 ## Notes: DeckUI module: a compact objective tracker for quests, world quests and dungeons
 ## Author: Gottlieb
-## Version: 1.3.1
+## Version: 1.4.0
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
 ## X-Website: https://github.com/JonasAudren/DeckUI
 ## X-Curse-Project-ID: 1699742

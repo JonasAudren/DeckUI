@@ -8,6 +8,58 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.4.0 (2026-10-01)
+
+- **New module: DeckUI Week** - your week at a glance, for every
+  character: Great Vault progress, locked raids and dungeons, keystone and
+  runs, weekly quests, renown and every currency with a weekly or seasonal
+  cap, in one window with tabs. Characters you are not playing show what
+  they had when last seen, marked once the weekly reset has passed. Weekly
+  quests are learned as they appear in a quest log. Open it with `/week`,
+  the new round button on screen (its number counts your unlocked vault
+  slots), a key binding or Shift-click on the minimap button. Switched off
+  until you tick "Week" in `/deck` -> General.
+- **New module: DeckUI Nav** - finding your way: a compass bar at the top
+  (cardinal points, your target, party members, rares and treasures), the
+  target's name with an arrow, distance and arrival time, and DeckUI's own
+  beacon in the world in place of Blizzard's diamond. Key bindings step
+  through your tracked quests, nearest first; `/way 45.2 67.8` sets a
+  waypoint. Switched off until you tick "Nav".
+- **Final Fantasy style, now for the whole group:**
+  - Player and target as FFXIV's parameter bar and wide target bar - pick
+    "Style: Final Fantasy" in the Orbs tab.
+  - Bosses as FFXIV's enemy list: health, whom the boss is after, a red
+    edge while it is you, its cast (grey when it cannot be interrupted)
+    and your debuffs. `/orbs boss` shows them on your target to place them.
+  - A party list in FFXIV's look, stacked or side by side.
+  - **Raid frames:** a compact grid in class colours, one column per
+    group, with debuffs, your heals over time and mana for healers.
+  - Party and raid have their own **Group** tab, each with a test mode.
+- **Loot:** fast auto loot, and an optional loot window in DeckUI's look
+  with "Take all" (also a key binding). With auto loot a short list shows
+  what you picked up.
+- **At the merchant:** sell junk and repair automatically (guild funds
+  first), both optional in the General tab.
+- **Quests tracker:**
+  - Clicking a quest now makes it your navigation target instead of
+    opening the map.
+  - Delves: a single power on offer is taken for you (optional), the
+    Nemesis count shows in the delve header, and a bar shows your
+    Delver's Journey gains.
+  - The active hunt is listed at the top; on the hunt table a star marks
+    targets an achievement still needs.
+- **Bags:** track any item's count like a currency - drop it on the row
+  above the gold. The auction-house filter dims what cannot be sold there,
+  and the free-slot counts now say which kind of bag they count.
+- **Tooltip:** items that start a quest show the quest, profession spells
+  your unspent knowledge, and a delve's rare chest your keys.
+- **Blizzard's damage meter** can wear DeckUI's look (General tab).
+- **Fixes:** several "secret value" errors on the world map and in
+  tooltips are gone. Opening the map, the bank and Blizzard's dialogs no
+  longer happens from DeckUI's code, which left them broken for the rest
+  of the session. A new `/deck errors` window (also in the General tab)
+  collects any Lua error to copy into a report.
+
 ## 1.3.1
 
 - **Tooltip:** fixed an error about a "secret number value" in

@@ -2,7 +2,7 @@
 ## Title: DeckUI Week
 ## Notes: DeckUI module: your week at a glance - Great Vault, lockouts, keystone, weekly quests, renown, currencies, for every character
 ## Author: Gottlieb
-## Version: 1.3.1
+## Version: 1.4.0
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
 ## X-Website: https://github.com/JonasAudren/DeckUI
 ## X-Curse-Project-ID: 1699742

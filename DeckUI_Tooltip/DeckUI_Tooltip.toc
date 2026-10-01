@@ -2,7 +2,7 @@
 ## Title: DeckUI Tooltip
 ## Notes: DeckUI module: the mouse-over tooltip in DeckUI's style, at a fixed place per device
 ## Author: Gottlieb
-## Version: 1.3.1
+## Version: 1.4.0
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
 ## X-Website: https://github.com/JonasAudren/DeckUI
 ## X-Curse-Project-ID: 1699742
