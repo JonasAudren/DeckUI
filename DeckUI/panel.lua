@@ -140,6 +140,12 @@ panel:AddTab("General", {
             function(v) D.SetMinimapShown(v) end)
         D.Checkbox(c, "Damage meter in DeckUI's look", y - 82, db, "styleDamageMeter",
             D.SetDamageMeterStyled)
+
+        -- the error collector (errors.lua), with how many it holds
+        local errBtn = D.Button(c, "Lua errors", y - 120, function() D.ShowErrors() end)
+        function errBtn:Refresh() self:SetText(("Lua errors (%d)"):format(D.ErrorCount())) end
+        c.widgets = c.widgets or {}
+        table.insert(c.widgets, errBtn)
     end,
 })
 
@@ -225,6 +231,8 @@ SlashCmdList.DECKUI = function(msg)
         D.PrintBars()
     elseif msg == "layout" then
         D.PrintLayout()
+    elseif msg == "errors" then
+        D.ShowErrors()
     elseif msg == "deck" or msg == "pc" or msg == "auto" then
         D.SetDevice(msg)
     else

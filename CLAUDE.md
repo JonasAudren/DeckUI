@@ -110,7 +110,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   "background opacity" setting keeps working: it sets the alpha of the textures we recolour.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
   (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`, `/deck bars`, `/deck layout`,
-  `/deck build`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
+  `/deck build`, `/deck errors`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 

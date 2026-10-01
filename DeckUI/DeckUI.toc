@@ -10,6 +10,7 @@
 ## SavedVariables: DeckUIDB
 
 core.lua
+errors.lua
 widgets.lua
 panel.lua
 actionbars.lua
