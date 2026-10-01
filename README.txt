@@ -297,7 +297,9 @@ A compass bar at the top of the screen turns with you: cardinal points, the
 navigation target (at the edge, faded, when it lies behind you), your party in
 class colour, and the rares and treasures the minimap shows. Below it, the
 target's name with an arrow pointing at it, the distance and the arrival time
-at your current pace. The target is always the one Blizzard's navigation
+at your current pace. In the world, DeckUI's own beacon replaces Blizzard's
+diamond: the target's name above it, distance and arrival time below; off
+screen it moves to the edge with an arrow. The target is always the one Blizzard's navigation
 follows, so the diamond in the world, the map and the compass agree.
 
 Two key bindings (Options > Keybindings > AddOns > DeckUI) step through your

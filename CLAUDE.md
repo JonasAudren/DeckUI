@@ -543,6 +543,12 @@ source (read 2026-10-01).
 - **Key bindings sit in the hub** (`DeckUI/Bindings.xml`, names in DeckUI/core.lua): the game
   reads Bindings.xml at startup, before a LoadOnDemand module exists. They call
   `D.NavStep`, which forwards to `D.navStep` once DeckUI_Nav is loaded.
+- **Our beacon in the world** (`beacon.lua`, `DeckNavDB.beacon`, on; not yet tested in game):
+  name, distance and arrival time around the target icon, anchored to the engine's projected
+  point `C_Navigation.GetFrame()`; off screen it sits on Blizzard's ellipse (500/200) with an
+  arrow. Blizzard's `SuperTrackedFrame` is parked under a hidden frame (`SetParent` only) -
+  no OnUpdate, but its events still run, so it still clears waypoints on arrival. Distance and
+  arrival time are computed once in compass.lua's driver (`ns.navState`) for panel and beacon.
 - `/way` is ours unless TomTom (or another addon) has it; `/dway` always works.
 - `/decknav debug` prints map, position, facing, map size, the target and its angle.
 

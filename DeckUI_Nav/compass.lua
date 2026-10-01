@@ -239,6 +239,10 @@ local function ArrivalTime(d)
     return ("%d:%02d"):format(math.floor(secs / 60), secs % 60)
 end
 
+-- shared with the beacon (beacon.lua)
+ns.navState = state
+ns.DistanceString = DistanceString
+
 local function UpdatePanel()
     if not (DeckNavDB.panel and C_SuperTrack.IsSuperTrackingAnything()) then
         panel:Hide()
@@ -246,12 +250,10 @@ local function UpdatePanel()
     end
     panel:Show()
     nameText:SetText(ns.TargetName() or "")
-    local d = Distance()
     local parts = {}
-    if d then
-        parts[#parts + 1] = DistanceString(d)
-        local eta = ArrivalTime(d)
-        if eta then parts[#parts + 1] = eta end
+    if state.distance then
+        parts[#parts + 1] = DistanceString(state.distance)
+        if state.eta then parts[#parts + 1] = state.eta end
     end
     if state.desc and state.desc ~= "" then parts[#parts + 1] = state.desc end
     infoText:SetText(table.concat(parts, "  \194\183  "))
@@ -325,6 +327,9 @@ local function OnUpdate(_, elapsed)
     if acc >= 0.1 then
         acc = 0
         Collect()
+        -- distance and arrival time once, for the panel and the beacon
+        state.distance = C_SuperTrack.IsSuperTrackingAnything() and Distance() or nil
+        state.eta = state.distance and ArrivalTime(state.distance) or nil
         UpdatePanel()
     end
 

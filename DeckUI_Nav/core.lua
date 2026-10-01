@@ -29,6 +29,7 @@ local DEFAULTS = {
     party     = true,   -- party members on the bar
     vignettes = true,   -- rares and treasures from the minimap on the bar
     panel     = true,   -- target name, arrow, distance, arrival time
+    beacon    = true,   -- our beacon in the world instead of Blizzard's diamond (beacon.lua)
 }
 
 function ns.DeviceDB()
@@ -271,6 +272,7 @@ local function Init()
         if DeckNavDB[k] == nil then DeckNavDB[k] = v end
     end
     if ns.InitCompass then ns.InitCompass() end
+    if ns.ApplyBeacon then ns.ApplyBeacon() end
 end
 
 if IsLoggedIn() then

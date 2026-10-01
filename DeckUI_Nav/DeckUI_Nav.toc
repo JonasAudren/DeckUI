@@ -13,4 +13,5 @@
 
 core.lua
 compass.lua
+beacon.lua
 config.lua
