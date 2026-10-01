@@ -16,4 +16,5 @@ panel.lua
 actionbars.lua
 editmode.lua
 damagemeter.lua
+merchant.lua
 minimap.lua

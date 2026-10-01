@@ -107,6 +107,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   (own prompt window, not a StaticPopup), and nothing is learned until that reload - should
   the manager not have caught up, learning the old name would undo the switch.
   `/deck layout` prints active and saved layout.
+- **At the merchant** (`DeckUI/merchant.lua`, `DeckUIDB.autoSellJunk` / `autoRepair` /
+  `repairGuild`, General tab, the first two off by default; not yet tested in game): on
+  MERCHANT_SHOW repair first (guild funds when allowed), then `C_MerchantFrame.SellAllJunkItems`,
+  and repair once more a second later if the gold was short. C APIs only - Blizzard's "sell all
+  junk" button asks through a StaticPopup, which we skip rather than show (see `D.Dialog`).
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
   General tab, off by default; not yet tested in game). Its numbers are secret in combat, so
   only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.

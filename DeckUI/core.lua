@@ -469,6 +469,9 @@ local DEFAULTS = {
     keepBars      = false,   -- action bar layout per device (actionbars.lua)
     keepLayouts   = false,   -- Edit Mode layout per device (editmode.lua)
     styleDamageMeter = false, -- Blizzard's damage meter in DeckUI's look (damagemeter.lua)
+    autoSellJunk  = false,   -- sell junk at every merchant (merchant.lua)
+    autoRepair    = false,   -- repair at every merchant that can
+    repairGuild   = true,    -- with guild funds first, when allowed
 }
 
 -- Blizzard's whole-UI scale, set per device at login when enabled

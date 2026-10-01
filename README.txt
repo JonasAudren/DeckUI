@@ -128,6 +128,17 @@ Damage meter in DeckUI's look
                   Blizzard's own damage meter with flat bars, a dark
                   background and a thin edge. Off by default; switching it
                   off again needs a /reload.
+Sell junk at the merchant
+                  sells what the game counts as junk whenever you talk to a
+                  merchant; the buyback tab still has the last twelve items.
+Repair at the merchant
+                  repairs everything at a merchant who can; first, so the
+                  gold is there, and again after the junk sale if it was not.
+Repair with guild funds first
+                  uses the guild bank when your rank allows it.
+                  All three are off by default, apart from guild funds.
+Lua errors        collects every Lua error with its stack, to copy into a
+                  report (also /deck errors).
 
 
 Devices tab
