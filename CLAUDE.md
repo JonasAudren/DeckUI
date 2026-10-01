@@ -119,7 +119,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   modifier (Plumber's fix for auto loot reported as manual). The window: Blizzard's LootFrame
   only gets `UnregisterEvent("LOOT_OPENED"/"LOOT_CLOSED")` - re-registered when switched off -
   and ours shows instead (manual loot, or what auto loot left behind). Bind-on-pickup stays
-  Blizzard's LOOT_BIND dialog (UIParent's handler), group rolls are untouched. Take all is
+  Blizzard's LOOT_BIND dialog (UIParent's handler), group rolls are untouched. With auto loot
+  a feed lists what was taken for five seconds (owner saw only the chat): the slots are read on
+  LOOT_READY before they are taken - not the chat lines, which can be secret. The list has its
+  own place ("Loot list"); a `D.OnUnlock` callback shows window and list with a sample
+  while unlocked, since both are hidden otherwise and could not be grabbed. Take all is
   also the binding DECKUI_LOOT_ALL. The one Blizzard call that writes elsewhere is
   `HandleModifiedItemClick` on a modified click (chat link, dressing room).
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,

@@ -438,7 +438,14 @@ function D.SetUnlocked(state)
     for _, entry in ipairs(D.movables) do
         entry.overlay:SetShown(state)
     end
+    -- frames that are hidden most of the time show a sample while unlocked
+    for _, fn in ipairs(D.unlockCallbacks) do xpcall(fn, geterrorhandler(), state) end
     print("DeckUI: frames " .. (state and "unlocked" or "locked"))
+end
+
+D.unlockCallbacks = {}
+function D.OnUnlock(fn)
+    table.insert(D.unlockCallbacks, fn)
 end
 
 -- One frame back to its default place (current device only), for a frame

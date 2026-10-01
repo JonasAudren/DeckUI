@@ -220,9 +220,116 @@ function D.LootAll()
 end
 
 -------------------------------------------------------------------
+-- The feed: what auto loot just took
+-------------------------------------------------------------------
+-- With auto loot the window has nothing to offer - everything is taken at
+-- once - and the owner saw only the chat (2026-10-01). So what the slots
+-- held is read the moment the loot is ready, before it is taken, and
+-- listed at the window's place for a few seconds, newest on top: loot
+-- from several corpses in a row adds up. Read from the slots, not from
+-- the chat lines, which can be secret in Midnight's instances.
+local FEED_MAX, FEED_TIME, FEED_FADE = 8, 5, 1
+local feed = CreateFrame("Frame", "DeckUILootFeed", UIParent)
+feed:SetSize(W, 40)
+feed:SetFrameStrata("MEDIUM")
+-- a place of its own, moved like the window: by its frame, or with
+-- /deck unlock, which shows both with a sample to grab
+feed:EnableMouse(true)
+feed:SetClampedToScreen(true)
+feed.defaultPoint = { "LEFT", UIParent, "LEFT", 320, 260 }
+feed:SetPoint(unpack(feed.defaultPoint))
+local preview = false
+feed:Hide()
+do
+    local bg = feed:CreateTexture(nil, "BACKGROUND", nil, -8)
+    bg:SetAllPoints()
+    bg:SetColorTexture(0.05, 0.05, 0.05, 0.8)
+end
+
+local entries = {}     -- { texture, name, count, color, time }
+local feedRows = {}
+
+local function FeedRow(i)
+    local r = feedRows[i]
+    if r then return r end
+    r = CreateFrame("Frame", nil, feed)
+    r:SetSize(W - 2 * PAD, 22)
+    r:SetPoint("TOPLEFT", PAD, -PAD - (i - 1) * 24)
+    r.icon = r:CreateTexture(nil, "ARTWORK")
+    r.icon:SetSize(20, 20)
+    r.icon:SetPoint("LEFT")
+    r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    r.name = r:CreateFontString(nil, "OVERLAY")
+    r.name:SetFont(D.FONT, 12, "OUTLINE")
+    r.name:SetPoint("LEFT", r.icon, "RIGHT", 6, 0)
+    r.name:SetPoint("RIGHT", -4, 0)
+    r.name:SetJustifyH("LEFT")
+    r.name:SetWordWrap(false)
+    feedRows[i] = r
+    return r
+end
+
+local function DrawFeed()
+    for i, e in ipairs(entries) do
+        local r = FeedRow(i)
+        r.icon:SetTexture(e.texture)
+        r.name:SetText(e.count and e.count > 1 and ("%s |cffffffffx%d|r"):format(e.name, e.count) or e.name)
+        r.name:SetTextColor(e.color[1], e.color[2], e.color[3])
+        r:Show()
+    end
+    for i = #entries + 1, #feedRows do feedRows[i]:Hide() end
+    feed:SetHeight(2 * PAD + #entries * 24)
+    feed:SetShown(#entries > 0)
+end
+
+feed:SetScript("OnUpdate", function(self)
+    if preview then self:SetAlpha(1) return end
+    local now, changed = GetTime(), false
+    for i = #entries, 1, -1 do
+        if now - entries[i].time > FEED_TIME + FEED_FADE then
+            table.remove(entries, i)
+            changed = true
+        end
+    end
+    if changed then DrawFeed() end
+    -- the whole list fades with its newest entry
+    local newest = entries[1]
+    if newest then
+        local left = FEED_TIME + FEED_FADE - (now - newest.time)
+        self:SetAlpha(math.min(1, left / FEED_FADE))
+    end
+end)
+
+-- what the slots hold right now, before anything is taken
+local function CaptureSlots()
+    local now = GetTime()
+    for slot = 1, GetNumLootItems() do
+        local texture, name, quantity, currencyID, quality, _, _, _, _, isCoin = GetLootSlotInfo(slot)
+        if currencyID and CurrencyContainerUtil then
+            name, texture, quantity, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyID, quantity, name, texture, quality)
+        end
+        if texture and name and Plain(name) then
+            local color = { 1, 1, 1 }
+            local q = quality and Plain(quality) and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+            if isCoin then
+                color = { 1, 0.82, 0 }
+            elseif q then
+                color = { q.r, q.g, q.b }
+            end
+            local count = not isCoin and quantity and Plain(quantity) and quantity or nil
+            table.insert(entries, 1, { texture = texture, name = name, count = count, color = color, time = now })
+        end
+    end
+    while #entries > FEED_MAX do table.remove(entries) end
+    feed:SetAlpha(1)
+    DrawFeed()
+end
+
+-------------------------------------------------------------------
 -- Events
 -------------------------------------------------------------------
 local lootOpen = false
+local captured = false   -- this loot already went into the feed
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
 ev:RegisterEvent("LOOT_READY")
@@ -235,18 +342,44 @@ ev:SetScript("OnEvent", function(_, event)
         D.MakeMovable(win, "Loot", DeckUIDB)
         -- a window like the bags: dragged by its frame, the place kept per device
         D.MakeDraggable(win)
+        D.MakeMovable(feed, "Loot list", DeckUIDB)
+        D.MakeDraggable(feed)
+        -- unlocked, both show with a sample so there is something to drag
+        D.OnUnlock(function(state)
+            preview = state and true or false
+            if state then
+                wipe(entries)
+                entries[1] = { texture = 133784, name = "Loot list", count = 3, color = { 1, 0.82, 0 }, time = GetTime() }
+                entries[2] = { texture = 134400, name = "Drag me", color = { 0.6, 0.6, 0.6 }, time = GetTime() }
+                DrawFeed()
+                if not lootOpen then Fill() win:Show() end
+            else
+                wipe(entries)
+                DrawFeed()
+                if not lootOpen then win:Hide() end
+            end
+        end)
         ApplyWindow()
         return
     end
     if not DeckUIDB then return end
 
     if event == "LOOT_READY" then
-        if DeckUIDB.fastLoot and AutoLoot() then TakeAll() end
+        local auto = AutoLoot()
+        if auto and DeckUIDB.lootWindow and not captured then
+            captured = true
+            CaptureSlots()
+        end
+        if DeckUIDB.fastLoot and auto then TakeAll() end
     elseif event == "LOOT_OPENED" then
         lootOpen = true
         if not DeckUIDB.lootWindow then return end
         if AutoLoot() then
-            -- the slots are being taken; show only what stays behind
+            if not captured then
+                captured = true
+                CaptureSlots()
+            end
+            -- the slots are being taken; the window only for what stays behind
             TakeAll()
             C_Timer.After(0.3, function()
                 if lootOpen and Fill() > 0 then win:Show() end
@@ -257,7 +390,7 @@ ev:SetScript("OnEvent", function(_, event)
             CloseLoot()
         end
     elseif event == "LOOT_CLOSED" then
-        lootOpen = false
+        lootOpen, captured = false, false
         win:Hide()
     elseif win:IsShown() then
         -- LOOT_SLOT_CLEARED / LOOT_SLOT_CHANGED
