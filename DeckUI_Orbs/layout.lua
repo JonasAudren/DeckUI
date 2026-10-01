@@ -400,6 +400,31 @@ function ns.CycleHpText()
     ns.SetHpText("percent")
 end
 
+-- Test mode for the boss frames (/orbs boss): five frames showing your
+-- target, in the boss frames' style and place - there is no boss around
+-- when you want to see size and position. Session only; secure frames,
+-- so it switches out of combat.
+local bossTest = {}
+function ns.SetBossTest(on)
+    if not ns.bossHolder then return end
+    if InCombatLockdown() then print("DeckUI Orbs: boss test mode switches after combat.") end
+    OutOfCombat("bossTest", function()
+        ns.bossTestOn = on
+        if on and #bossTest == 0 then
+            oUF:SetActiveStyle(ns.bossStyle)
+            for i = 1, 5 do
+                local f = oUF:Spawn("target", "DeckOrbsBossTest" .. i)
+                f:SetPoint(ns.bossAnchor, ns.bossHolder, ns.bossAnchor, 0, -(i - 1) * ns.bossStep)
+                bossTest[i] = f
+            end
+        end
+        for _, f in ipairs(bossTest) do
+            if on then RegisterUnitWatch(f) else UnregisterUnitWatch(f); f:Hide() end
+        end
+        print("DeckUI Orbs: boss test mode " .. (on and "on - five frames of your target." or "off."))
+    end)
+end
+
 function ns.SetBossShown(state)
     DeckOrbsDB.showBoss = state
     OutOfCombat("boss", function()
@@ -589,21 +614,28 @@ oUF:Factory(function(self)
         pet:SetPoint("CENTER", player, "CENTER", -55, -45)
     end
 
-    -- boss orbs: a column on the right side, anchored to one movable holder
-    self:SetActiveStyle("DeckOrbsBoss")
-    local bossHolder = CreateFrame("Frame", "DeckOrbsBossHolder", UIParent)
-    local bs = SIZES.boss.frame
-    bossHolder:SetSize(bs, 5 * bs + 4 * BOSS_SPACING)
-    bossHolder.defaultPoint = { "RIGHT", UIParent, "RIGHT", -120, 60 }
-    bossHolder:SetPoint(unpack(bossHolder.defaultPoint))
-    D.MakeMovable(bossHolder, "Boss frames", DeckOrbsDB)
-    ns.bossHolder = bossHolder
+    if ff then
+        -- FFXIV's enemy list (ffstyle.lua)
+        ns.bossHolder, ns.bossFrames = ns.SpawnFFBosses(self)
+        ns.bossStyle, ns.bossStep, ns.bossAnchor = "DeckFFBoss", ns.FF_BOSS_STEP, "TOPLEFT"
+    else
+        -- boss orbs: a column on the right side, anchored to one movable holder
+        self:SetActiveStyle("DeckOrbsBoss")
+        local bossHolder = CreateFrame("Frame", "DeckOrbsBossHolder", UIParent)
+        local bs = SIZES.boss.frame
+        bossHolder:SetSize(bs, 5 * bs + 4 * BOSS_SPACING)
+        bossHolder.defaultPoint = { "RIGHT", UIParent, "RIGHT", -120, 60 }
+        bossHolder:SetPoint(unpack(bossHolder.defaultPoint))
+        D.MakeMovable(bossHolder, "Boss frames", DeckOrbsDB)
+        ns.bossHolder = bossHolder
 
-    ns.bossFrames = {}
-    for i = 1, 5 do
-        local boss = self:Spawn("boss" .. i, "DeckOrbsBoss" .. i)
-        boss:SetPoint("TOP", bossHolder, "TOP", 0, -(i - 1) * (bs + BOSS_SPACING))
-        ns.bossFrames[i] = boss
+        ns.bossFrames = {}
+        for i = 1, 5 do
+            local boss = self:Spawn("boss" .. i, "DeckOrbsBoss" .. i)
+            boss:SetPoint("TOP", bossHolder, "TOP", 0, -(i - 1) * (bs + BOSS_SPACING))
+            ns.bossFrames[i] = boss
+        end
+        ns.bossStyle, ns.bossStep, ns.bossAnchor = "DeckOrbsBoss", bs + BOSS_SPACING, "TOP"
     end
 
     announce:SetPoint("BOTTOM", target, "TOP", 0, 26)
@@ -624,6 +656,23 @@ SlashCmdList.DECKORBS = function(msg)
     elseif msg == "raid" then
         -- raid frames test mode (raid.lua)
         ns.SetRaidTest(not ns.raidTest)
+    elseif msg == "boss" then
+        ns.SetBossTest(not ns.bossTestOn)
+    elseif msg == "bosses" then
+        -- what the boss frames see: the units, our frames, Blizzard's
+        print(("DeckUI Orbs bosses: style %s, show %s, frames %d, holder %s"):format(
+            tostring(DeckOrbsDB.style), tostring(DeckOrbsDB.showBoss), #(ns.bossFrames or {}),
+            ns.bossHolder and (ns.bossHolder:GetName() or "?") or "none"))
+        for i, f in ipairs(ns.bossFrames or {}) do
+            local unit = "boss" .. i
+            print(("  %s: exists=%s, frame shown=%s visible=%s alpha=%.2f, unit attr=%s"):format(unit,
+                tostring(UnitExists(unit)), tostring(f:IsShown()), tostring(f:IsVisible()),
+                f:GetEffectiveAlpha(), tostring(f:GetAttribute("unit"))))
+        end
+        local blizzard = _G.Boss1TargetFrame
+        print(("  Blizzard Boss1TargetFrame parent=%s, encounter units: %s"):format(
+            blizzard and blizzard:GetParent() and (blizzard:GetParent():GetName() or "?") or "none",
+            tostring(UnitExists("boss1"))))
     else
         D.ToggleConfig("Orbs")
     end

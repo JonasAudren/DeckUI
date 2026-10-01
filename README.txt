@@ -206,8 +206,13 @@ Options in the Orbs tab:
   Announce target          shows the target's name large on every change
   Style                    Orbs, or Final Fantasy: the player as long HP/MP bars
                            with their numbers, the target as a wide bar at the
-                           top with its cast, status icons and its own target.
-                           Needs a /reload; focus, pet and boss stay orbs.
+                           top with its cast, status icons and its own target,
+                           the bosses as FFXIV's enemy list: name, health, a
+                           red edge while one targets you, whom it targets,
+                           its cast (grey if it cannot be interrupted) and your
+                           debuffs. Needs a /reload; focus and pet stay orbs.
+                           /orbs boss shows five boss rows of your target, to
+                           place them with /deck unlock.
 Party and raid settings sit in the Group tab:
 
   Party list               Final Fantasy style rows for your party: class icon,

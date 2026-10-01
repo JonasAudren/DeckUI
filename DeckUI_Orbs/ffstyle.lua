@@ -298,9 +298,153 @@ local function BuildToT(self, unit)
     self.Health = health
 end
 
+-------------------------------------------------------------------
+-- Bosses: FFXIV's enemy list
+-------------------------------------------------------------------
+-- The owner's choice (2026-10-01): compact rows one under the other, like
+-- FFXIV's enemy list - raid marker and name, health percent, a thin
+-- health bar, whom the boss is targeting; a red strip on the left while
+-- that is you (FFXIV's aggro mark), the cast underneath (grey when it
+-- cannot be interrupted), your debuffs to the right. Comes with the
+-- "Final Fantasy" style, like player and target.
+--
+-- Secret values: "is it targeting me" is a boolean for the engine
+-- (SetAlphaFromBoolean), the target's name goes straight into SetText,
+-- the cast's interruptible flag drives oUF's Shield the same way.
+local BOSS_W, BOSS_H = 240, 40
+local BOSS_STEP = BOSS_H + 22   -- the cast bar hangs below each row
+ns.FF_BOSS_STEP = BOSS_STEP
+
+local function UpdateBossTarget(self)
+    local unit = self.__unit or self.unit
+    if not unit then return end
+    local target = unit .. "target"
+    self.DeckBossAggro:SetAlphaFromBoolean(UnitIsUnit(target, "player"), 1, 0)
+    if UnitExists(target) then
+        self.DeckBossTargetName:SetText(UnitName(target))
+        self.DeckBossTargetArrow:Show()
+    else
+        self.DeckBossTargetName:SetText("")
+        self.DeckBossTargetArrow:Hide()
+    end
+end
+
+oUF:AddElement("DeckBossTarget", UpdateBossTarget, function(self)
+    if not self.DeckBossAggro then return end
+    self:RegisterEvent("UNIT_TARGET", UpdateBossTarget)
+    return true
+end, function(self)
+    if not self.DeckBossAggro then return end
+    self:UnregisterEvent("UNIT_TARGET", UpdateBossTarget)
+    self.DeckBossAggro:SetAlpha(0)
+end)
+
+local function BuildBoss(self, unit)
+    self:SetSize(BOSS_W, BOSS_H)
+    Clicks(self)
+    Panel(self)
+
+    local marker = self:CreateTexture(nil, "OVERLAY")
+    marker:SetSize(14, 14)
+    marker:SetPoint("TOPLEFT", 8, -4)
+    self.RaidTargetIndicator = marker
+
+    local name = Text(self, 13)
+    name:SetPoint("TOPLEFT", 26, -4)
+    name:SetWidth(BOSS_W - 26 - 60)
+    self:Tag(name, "[name]")
+
+    local hp = Text(self, 13, "RIGHT")
+    hp:SetPoint("TOPRIGHT", -8, -4)
+    self:Tag(hp, ns.HP_TAGS[DeckOrbsDB.hpText] or ns.HP_TAGS.percent)
+    self.hpText = hp
+
+    local health = Bar(self, BOSS_W - 16, 6)
+    health:SetPoint("TOPLEFT", 8, -21)
+    health.colorReaction = true
+    health.colorTapped = true
+    self.Health = health
+
+    -- whom it is after: "» name" under the bar
+    local arrow = Text(self, 10)
+    arrow:SetPoint("TOPLEFT", 8, -29)
+    arrow:SetText("|cffaaaaaa»|r")
+    local targetName = Text(self, 10)
+    targetName:SetPoint("LEFT", arrow, "RIGHT", 3, 0)
+    targetName:SetWidth(BOSS_W - 30)
+    targetName:SetTextColor(0.85, 0.85, 0.85)
+    self.DeckBossTargetArrow = arrow
+    self.DeckBossTargetName = targetName
+
+    -- FFXIV's aggro mark: a red strip on the left edge while it targets you
+    local aggro = self:CreateTexture(nil, "OVERLAY")
+    aggro:SetColorTexture(0.9, 0.15, 0.15, 1)
+    aggro:SetPoint("TOPLEFT", 1, -1)
+    aggro:SetPoint("BOTTOMLEFT", 1, 1)
+    aggro:SetWidth(3)
+    aggro:SetAlpha(0)
+    self.DeckBossAggro = aggro
+
+    local cast = Bar(self, BOSS_W, 12)
+    cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -3)
+    cast:SetStatusBarColor(1, 0.55, 0.2)
+    -- cannot be interrupted: a grey veil over the bar (oUF's Shield)
+    local shield = cast:CreateTexture(nil, "OVERLAY")
+    shield:SetAllPoints()
+    shield:SetColorTexture(0.45, 0.45, 0.45, 0.85)
+    shield:SetAlpha(0)
+    cast.Shield = shield
+    local castText = Text(cast, 10)
+    castText:SetPoint("LEFT", 4, 0)
+    castText:SetWidth(BOSS_W - 8)
+    castText:SetDrawLayer("OVERLAY", 7)
+    cast.Text = castText
+    self.Castbar = cast
+
+    if self.CreateAuras then
+        -- your debuffs on it, to the right of the row
+        local size = 18
+        local auras = self:CreateAuras({
+            layout        = AnchorUtil.FlowLayoutAxis.Horizontal,
+            layoutLimit   = 4 * (size + 2),
+            initialAnchor = "LEFT",
+            growthX       = "RIGHT",
+            growthY       = "DOWN",
+        })
+        auras:SetSize(4 * (size + 2), size)
+        auras:SetPoint("LEFT", self, "RIGHT", 4, 0)
+        auras.size = size
+        auras.elementSpacing = 2
+        auras.showCount = true
+        auras.PostCreateButton = StyleAura
+        auras:AddGroup("HARMFUL|PLAYER", { maxFrameCount = 4, showDebuffBorder = true })
+        table.insert(ns.auraContainers, auras)
+    end
+end
+
 oUF:RegisterStyle("DeckFFPlayer", BuildPlayer)
 oUF:RegisterStyle("DeckFFTarget", BuildTarget)
 oUF:RegisterStyle("DeckFFToT", BuildToT)
+oUF:RegisterStyle("DeckFFBoss", BuildBoss)
+
+-- layout.lua's Factory, in the "ff" style: the five boss rows under one
+-- movable holder, saved apart from the boss orbs' place.
+function ns.SpawnFFBosses(factory)
+    factory:SetActiveStyle("DeckFFBoss")
+    local holder = CreateFrame("Frame", "DeckFFBossHolder", UIParent)
+    holder:SetSize(BOSS_W, 5 * BOSS_STEP)
+    holder.defaultPoint = { "RIGHT", UIParent, "RIGHT", -160, 80 }
+    holder:SetPoint(unpack(holder.defaultPoint))
+    D.MakeMovable(holder, "Boss frames (FF)", DeckOrbsDB)
+
+    local frames = {}
+    for i = 1, 5 do
+        local boss = factory:Spawn("boss" .. i, "DeckFFBoss" .. i)
+        boss:SetPoint("TOPLEFT", holder, "TOPLEFT", 0, -(i - 1) * BOSS_STEP)
+        frames[i] = boss
+    end
+    return holder, frames
+end
 
 -- layout.lua's Factory asks this when the style is "ff": spawn, place,
 -- and hand back the frames it keeps for the settings.

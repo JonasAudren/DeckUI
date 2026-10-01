@@ -253,8 +253,14 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   game): FFXIV's parameter bar for the player (HP/MP bars with numbers, class resources as
   squares, cast below, buffs and debuffs above) and its wide target bar at the top (name,
   percent, cast, status icons, the target's target beside it). Spawned instead of the big
-  orbs in the same Factory; focus, pet and boss stay orbs. Positions are saved under their
+  orbs in the same Factory; focus and pet stay orbs. Positions are saved under their
   own keys ("Player (FF)", "Target (FF)"), so switching back keeps the orbs' places.
+  **Bosses** in this style are FFXIV's enemy list (2026-10-01, `BuildBoss`): marker, name,
+  percent, thin bar, "» target" line, a red left edge while the boss targets you
+  (`SetAlphaFromBoolean(UnitIsUnit(bossNtarget, "player"))` - a secret boolean for the
+  engine), the cast below with oUF's `Shield` as a grey veil when not interruptible, your
+  debuffs to the right. Holder "Boss frames (FF)". `/orbs boss` = test mode (five frames of
+  your target, in whichever boss style is active).
 - **Party list** (`DeckUI_Orbs/party.lua`, `DeckOrbsDB.showParty`, off by default, needs a
   /reload; not yet tested in game): FFXIV-style rows on oUF's group header - Blizzard's
   SecureGroupHeaderTemplate, which sorts members in combat by itself, sets the click
