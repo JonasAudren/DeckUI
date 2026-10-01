@@ -154,18 +154,9 @@ end
 
 -- SetBinding writes straight into the player's key bindings and there is
 -- no undo, so ask first and say exactly which of their bindings would be
--- replaced. preferredIndex = 3 is the usual guard against Blizzard's
--- taint bug in StaticPopup.
-StaticPopupDialogs["DECKUI_CROSS_DEFAULT_BINDINGS"] = {
-    text         = "%s",
-    button1      = YES,
-    button2      = NO,
-    OnAccept     = function() ns.ApplyDefaultBindingsNow() end,
-    timeout      = 0,
-    whileDead    = true,
-    hideOnEscape = true,
-    preferredIndex = 3,
-}
+-- replaced. The question goes through DeckUI's own dialog (widgets.lua):
+-- a StaticPopup shown from addon code leaves the shared dialog frame
+-- tainted for whatever Blizzard shows on it next.
 
 local function KeyLabel(key)
     return GetBindingText(key, true) or key
@@ -220,7 +211,13 @@ function ns.ApplyDefaultBindings()
     end
     msg = msg .. "\n\nThere is no undo."
 
-    StaticPopup_Show("DECKUI_CROSS_DEFAULT_BINDINGS", msg)
+    D.Dialog({
+        text = msg,
+        width = 380,
+        accept = YES,
+        cancel = NO,
+        onAccept = ns.ApplyDefaultBindingsNow,
+    })
 end
 
 -------------------------------------------------------------------

@@ -136,3 +136,91 @@ function D.Checkbox(parent, text, y, db, key, apply)
     Register(parent, cb)
     return cb
 end
+
+-------------------------------------------------------------------
+-- Dialog: a question with two buttons, optionally a money input
+-------------------------------------------------------------------
+-- Never StaticPopup_Show from addon code: StaticPopup1..4 are shared by the
+-- whole game, a dialog shown from our code keeps fields written while
+-- tainted, and the next Blizzard dialog on the same frame - some of which
+-- call protected functions on accept - runs tainted too. One window of our
+-- own instead, one question at a time; a new question replaces the old.
+--
+-- opts: text, onAccept(copper), accept / cancel (button texts), width,
+--       money = true for a gold/silver/copper input (Blizzard's
+--       MoneyInputFrameTemplate - an instance of our own, so it is ours),
+--       key = anything, so a caller can tell whether its question is up.
+local dialog
+
+local function BuildDialog()
+    local f = CreateFrame("Frame", "DeckUIDialog", UIParent, "BackdropTemplate")
+    f:SetPoint("TOP", 0, -160)
+    f:SetFrameStrata("DIALOG")
+    f:SetToplevel(true)
+    f:EnableMouse(true)
+    f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    f:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
+    f:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+    f:Hide()
+    tinsert(UISpecialFrames, "DeckUIDialog")
+
+    f.text = D.Hint(f, "", -14)
+    f.text:SetTextColor(1, 1, 1)
+
+    f.money = CreateFrame("Frame", "DeckUIDialogMoney", f, "MoneyInputFrameTemplate")
+    f.money:Hide()
+
+    f.accept = D.Button(f, ACCEPT or "Accept", 0, function()
+        local opts = f.opts
+        local copper = opts.money and MoneyInputFrame_GetCopper(f.money) or nil
+        f:Hide()
+        if opts.onAccept then opts.onAccept(copper) end
+    end)
+    f.cancel = D.Button(f, CANCEL or "Cancel", 0, function() f:Hide() end)
+    for _, b in ipairs({ f.accept, f.cancel }) do
+        b:SetSize(130, 26)
+        b:GetFontString():SetFont(D.FONT, 13, "OUTLINE")
+        b:ClearAllPoints()
+    end
+    f.accept:SetPoint("BOTTOMLEFT", 16, 14)
+    f.cancel:SetPoint("BOTTOMRIGHT", -16, 14)
+
+    f:SetScript("OnHide", function(self)
+        MoneyInputFrame_ResetMoney(self.money)
+        MoneyInputFrame_ClearFocus(self.money)
+        self.opts = nil
+    end)
+    return f
+end
+
+function D.Dialog(opts)
+    dialog = dialog or BuildDialog()
+    dialog:Hide()
+    dialog.opts = opts
+    local width = opts.width or 320
+    dialog:SetWidth(width)
+    dialog.text:SetWidth(width - 30)
+    dialog.text:SetText(opts.text or "")
+    dialog.accept:SetText(opts.accept or ACCEPT or "Accept")
+    dialog.cancel:SetText(opts.cancel or CANCEL or "Cancel")
+
+    local height = 14 + dialog.text:GetStringHeight() + 12
+    dialog.money:SetShown(opts.money and true or false)
+    if opts.money then
+        dialog.money:ClearAllPoints()
+        dialog.money:SetPoint("TOP", dialog.text, "BOTTOM", 10, -12)
+        height = height + 34
+    end
+    dialog:SetHeight(height + 54)
+    dialog:Show()
+    if opts.money then dialog.money.gold:SetFocus() end
+end
+
+-- the question with this key, if it is the one on screen
+function D.DialogShown(key)
+    return dialog and dialog:IsShown() and dialog.opts and dialog.opts.key == key
+end
+
+function D.HideDialog(key)
+    if dialog and (key == nil or D.DialogShown(key)) then dialog:Hide() end
+end

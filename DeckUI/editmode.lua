@@ -70,33 +70,16 @@ local function Remember()
 end
 
 -------------------------------------------------------------------
--- The reload prompt: a small window of our own rather than a StaticPopup,
--- whose shared dialogs other code relies on staying untainted
+-- The reload prompt: DeckUI's own dialog (widgets.lua) rather than a
+-- StaticPopup, whose shared dialogs other code relies on staying untainted
 -------------------------------------------------------------------
-local prompt
 local function ShowReloadPrompt(name)
-    if not prompt then
-        prompt = CreateFrame("Frame", "DeckUIReloadPrompt", UIParent, "BackdropTemplate")
-        prompt:SetSize(320, 120)
-        prompt:SetPoint("TOP", 0, -160)
-        prompt:SetFrameStrata("DIALOG")
-        prompt:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-        prompt:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
-        prompt:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
-        prompt.text = D.Hint(prompt, "", -14)
-        prompt.text:SetTextColor(1, 1, 1)
-        local reload = D.Button(prompt, "Reload now", -74, ReloadUI)
-        reload:SetWidth(130)
-        reload:ClearAllPoints()
-        reload:SetPoint("BOTTOMLEFT", 16, 14)
-        local later = D.Button(prompt, "Later", -74, function() prompt:Hide() end)
-        later:SetWidth(130)
-        later:ClearAllPoints()
-        later:SetPoint("BOTTOMRIGHT", -16, 14)
-        tinsert(UISpecialFrames, "DeckUIReloadPrompt")
-    end
-    prompt.text:SetText(("Edit Mode layout switched to \"%s\" for this device. Reload now so Blizzard's frames pick it up cleanly."):format(name))
-    prompt:Show()
+    D.Dialog({
+        text = ("Edit Mode layout switched to \"%s\" for this device. Reload now so Blizzard's frames pick it up cleanly."):format(name),
+        accept = "Reload now",
+        cancel = "Later",
+        onAccept = ReloadUI,
+    })
 end
 
 -------------------------------------------------------------------

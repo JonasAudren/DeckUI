@@ -64,6 +64,43 @@ end
 -- secure code; we cannot. Super-tracking is a plain API call: the diamond,
 -- the map pin and DeckUI Nav follow it, and the map opened with M is clean.
 -------------------------------------------------------------------
+-- Abandoning asks first, like Blizzard's QuestMapQuestOptions_AbandonQuest,
+-- but in DeckUI's own dialog: Blizzard's version shows the shared
+-- StaticPopup ABANDON_QUEST, and shown from our code that dialog frame stays
+-- tainted for whatever Blizzard shows on it next. Same texts, same calls.
+local function ItemNames(items)
+    local names = {}
+    for _, itemID in ipairs(items or {}) do
+        local name = C_Item.GetItemNameByID(itemID)
+        if name then names[#names + 1] = name end
+    end
+    return #names > 0 and table.concat(names, ", ") or nil
+end
+
+local function Abandon(questID)
+    local old = C_QuestLog.GetSelectedQuest()
+    C_QuestLog.SetSelectedQuest(questID)
+    C_QuestLog.SetAbandonQuest()
+    local items = ItemNames(C_QuestLog.GetAbandonQuestItems())
+    C_QuestLog.SetSelectedQuest(old or 0)
+    local title = C_QuestLog.GetTitleForQuestID(questID) or ""
+    local text
+    if items then
+        text = (ABANDON_QUEST_CONFIRM_WITH_ITEMS or "Abandon \"%s\"? These items will be destroyed: %s"):format(title, items)
+    else
+        text = (ABANDON_QUEST_CONFIRM or "Abandon \"%s\"?"):format(title)
+    end
+    D.Dialog({
+        text = text,
+        onAccept = function()
+            C_QuestLog.SetSelectedQuest(questID)
+            C_QuestLog.SetAbandonQuest()
+            C_QuestLog.AbandonQuest()
+            PlaySound(SOUNDKIT.IG_QUEST_LOG_ABANDON_QUEST)
+        end,
+    })
+end
+
 local function QuestMenu(row, questID)
     MenuUtil.CreateContextMenu(row, function(_, root)
         root:CreateTitle(C_QuestLog.GetTitleForQuestID(questID) or "")
@@ -78,7 +115,7 @@ local function QuestMenu(row, questID)
         if C_QuestLog.IsPushableQuest(questID) and IsInGroup() then
             root:CreateButton(SHARE_QUEST, function() QuestUtil.ShareQuest(questID) end)
         end
-        root:CreateButton(ABANDON_QUEST_ABBREV, function() QuestMapQuestOptions_AbandonQuest(questID) end)
+        root:CreateButton(ABANDON_QUEST_ABBREV, function() Abandon(questID) end)
     end)
 end
 

@@ -63,6 +63,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   is where the heading is, and the two printed on top of each other.
   Slider/checkbox take `db` as a **function** returning the table, plus a key and an apply function.
   Widgets with a `Refresh()` method and a place in `content.widgets` are refreshed on tab show.
+- **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
+  optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
+  shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole
+  game; one shown from addon code keeps tainted fields for the next Blizzard dialog on the
+  same frame. The bank's money, deposit and sort questions, the Cross default-bindings
+  question, abandoning a quest and the Edit Mode reload prompt all use it (2026-10-01).
 - Movable frames: `D.MakeMovable(frame, key, db)`; set `frame.defaultPoint` first.
   `key` is the saved-position key and the overlay label – renaming it resets the position.
 - **Per-device settings** (`D.DeviceDB(db)` → `db.perDevice[deck|pc]`): frame positions and the

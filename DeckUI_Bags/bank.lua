@@ -152,7 +152,11 @@ end
 deposit:SetScript("OnClick", function()
     PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
     if activeType == ACCOUNT and HasRefundable() then
-        StaticPopup_Show("ACCOUNT_BANK_DEPOSIT_ALL_NO_REFUND_CONFIRM")
+        -- Blizzard's own question, in DeckUI's dialog (see MoneyDialog)
+        D.Dialog({
+            text = ACCOUNT_BANK_DEPOSIT_ALL_NO_REFUND_CONFIRM or "Some items are still refundable. Deposit anyway?",
+            onAccept = function() C_Bank.AutoDepositItemsIntoBank(ACCOUNT) end,
+        })
     else
         C_Bank.AutoDepositItemsIntoBank(activeType)
     end
@@ -190,21 +194,39 @@ depositMoney:SetSize(90, 22)
 depositMoney:SetPoint("RIGHT", withdraw, "LEFT", -4, 0)
 depositMoney:SetText(BANK_DEPOSIT_MONEY_BUTTON_LABEL or "Deposit")
 
--- The dialogs are Blizzard's own (BANK_MONEY_DEPOSIT / _WITHDRAW); they
--- only need to be told which bank.
-local function MoneyDialog(show, hide)
+-- Blizzard's texts and C_Bank calls, in DeckUI's own dialog (widgets.lua):
+-- BANK_MONEY_DEPOSIT / _WITHDRAW are StaticPopups, and showing one from
+-- our code would leave the shared dialog frame tainted for whatever
+-- Blizzard shows on it next. A second click on the same button closes it.
+local function MoneyDialog(key, text, move)
     return function()
         PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
-        StaticPopup_Hide(hide)
-        if StaticPopup_Visible(show) then
-            StaticPopup_Hide(show)
-        else
-            StaticPopup_Show(show, nil, nil, { bankType = activeType })
+        if D.DialogShown(key) then
+            D.HideDialog(key)
+            return
         end
+        local bankType = activeType
+        D.Dialog({
+            key = key,
+            text = text,
+            money = true,
+            onAccept = function(copper)
+                if copper and copper > 0 then move(bankType, copper) end
+            end,
+        })
     end
 end
-withdraw:SetScript("OnClick", MoneyDialog("BANK_MONEY_WITHDRAW", "BANK_MONEY_DEPOSIT"))
-depositMoney:SetScript("OnClick", MoneyDialog("BANK_MONEY_DEPOSIT", "BANK_MONEY_WITHDRAW"))
+
+-- a question about one bank type goes when the type or the window does
+function ns.HideBankDialogs()
+    for _, key in ipairs({ "BANK_MONEY_DEPOSIT", "BANK_MONEY_WITHDRAW", "BANK_SORT" }) do
+        D.HideDialog(key)
+    end
+end
+withdraw:SetScript("OnClick", MoneyDialog("BANK_MONEY_WITHDRAW",
+    BANK_MONEY_WITHDRAW_PROMPT or "Amount to withdraw", C_Bank.WithdrawMoney))
+depositMoney:SetScript("OnClick", MoneyDialog("BANK_MONEY_DEPOSIT",
+    BANK_MONEY_DEPOSIT_PROMPT or "Amount to deposit", C_Bank.DepositMoney))
 
 -- shown instead of the grid while a bank type is locked
 local lockedText = window:CreateFontString(nil, "OVERLAY")
@@ -274,8 +296,7 @@ SetType = function(bankType)
     if not InCombatLockdown() then
         purchase:SetAttribute("overrideBankType", bankType)
     end
-    StaticPopup_Hide("BANK_MONEY_DEPOSIT")
-    StaticPopup_Hide("BANK_MONEY_WITHDRAW")
+    ns.HideBankDialogs()
     window.needLayout = true
     ns.RefreshBankChrome()
 end
@@ -283,20 +304,16 @@ end
 -------------------------------------------------------------------
 -- Sorting, with Blizzard's confirmation when the player keeps it on
 -------------------------------------------------------------------
-StaticPopupDialogs["DECKBAGS_SORT_BANK"] = {
-    text = BANK_CONFIRM_CLEANUP_PROMPT or "Sort the bank?",
-    button1 = ACCEPT,
-    button2 = CANCEL,
-    OnAccept = function(_, data) C_Container.SortBank(data.bankType) end,
-    timeout = 0,
-    hideOnEscape = 1,
-}
-
 window.sort:SetScript("OnClick", function()
     PlaySound(SOUNDKIT.UI_BAG_SORTING_01)
     if C_Bank.FetchNumPurchasedBankTabs(activeType) == 0 then return end
     if GetCVarBool("bankConfirmTabCleanUp") then
-        StaticPopup_Show("DECKBAGS_SORT_BANK", nil, nil, { bankType = activeType })
+        local bankType = activeType
+        D.Dialog({
+            key = "BANK_SORT",
+            text = BANK_CONFIRM_CLEANUP_PROMPT or "Sort the bank?",
+            onAccept = function() C_Container.SortBank(bankType) end,
+        })
     else
         C_Container.SortBank(activeType)
     end
@@ -369,8 +386,7 @@ end
 -- the game answers with the interaction's HIDE event, which cleans up.
 window:SetScript("OnHide", function(self)
     self.search:ClearFocus()
-    StaticPopup_Hide("BANK_MONEY_DEPOSIT")
-    StaticPopup_Hide("BANK_MONEY_WITHDRAW")
+    ns.HideBankDialogs()
     if atBank then C_Bank.CloseBankFrame() end
 end)
 
