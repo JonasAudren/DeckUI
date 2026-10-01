@@ -42,7 +42,7 @@ panel.tabOrder = {}
 -- the window grows by one row's height, content moving down with it.
 -- Seven in one row would leave 42 pixels each - too narrow for "General"
 -- in any readable size.
-local BASE_HEIGHT = 730   -- the tallest tab, Orbs, ends with the party list slider at -584
+local BASE_HEIGHT = 730   -- the tallest tab, Cross, ends with a hint at -574
 local ROW = 30
 
 local function LayoutTabs()

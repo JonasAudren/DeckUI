@@ -30,6 +30,7 @@ ns.DEFAULTS = {
     buffMaxDuration = 300,
     hpText          = "percent",   -- "percent" | "absolute" | "both"
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
+    showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
     style           = "orbs",      -- player/target: "orbs" or "ff" (ffstyle.lua), needs /reload
 }
 
@@ -324,10 +325,11 @@ function ns.SetAlpha(value)
 end
 
 -- scale is a per-device setting (Deck screen vs PC monitor)
--- (the party list's size is per device too, and starts at 100%)
+-- (the party list's and the raid grid's sizes are per device too; eight
+-- groups side by side are 700 pixels wide, so the Deck starts smaller)
 local DEVICE_DEFAULTS = {
-    deck = { partyScale = 1, partyAcross = false },
-    pc   = { partyScale = 1, partyAcross = false },
+    deck = { partyScale = 1, partyAcross = false, raidScale = 0.85 },
+    pc   = { partyScale = 1, partyAcross = false, raidScale = 1 },
 }
 function ns.DeviceDB() return D.DeviceDB(DeckOrbsDB, DEVICE_DEFAULTS) end
 
@@ -619,6 +621,9 @@ SlashCmdList.DECKORBS = function(msg)
     if msg == "party" or msg == "test" then
         -- party list test mode (party.lua)
         ns.SetPartyTest(not ns.partyTest)
+    elseif msg == "raid" then
+        -- raid frames test mode (raid.lua)
+        ns.SetRaidTest(not ns.raidTest)
     else
         D.ToggleConfig("Orbs")
     end

@@ -52,24 +52,48 @@ D.RegisterModule("Orbs", {
         D.Checkbox(c, "Show boss frames (hides Blizzard's)", -418, db, "showBoss", ns.SetBossShown)
         D.Checkbox(c, "Class resource dots on player orb", -446, db, "showClassPower", ns.SetClassPowerShown)
         D.Checkbox(c, "Announce target (big name)",   -474, db, "announceTarget", ns.SetAnnounceTarget)
+    end,
+})
 
-        D.Label(c, "Party list (Final Fantasy style)", -506, 15)
+-- Party and raid share a tab of their own: the Orbs tab is full, and the
+-- window cannot grow on the Deck's 800-pixel screen.
+D.RegisterModule("Group", {
+    title = "Group",
+    build = function(c)
+        D.Label(c, "Party list (Final Fantasy style)", -6, 15)
         -- test mode beside the heading: five rows of yourself, session only
-        local testBtn = D.Button(c, "Test", -502, function()
+        local partyTest = D.Button(c, "Test", -2, function()
             ns.SetPartyTest(not ns.partyTest)
         end)
-        testBtn:SetWidth(70)
-        testBtn:ClearAllPoints()
-        testBtn:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -502)
-        D.Checkbox(c, "Show the party list (hides Blizzard's; /reload)", -528, db, "showParty", function(v)
+        partyTest:SetWidth(70)
+        partyTest:ClearAllPoints()
+        partyTest:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -2)
+        D.Checkbox(c, "Show the party list (hides Blizzard's; /reload)", -28, db, "showParty", function(v)
             print("DeckUI Orbs: the party list " .. (v and "appears" or "goes") .. " after /reload.")
         end)
-        D.Checkbox(c, "Side by side instead of stacked (this device)", -556, ns.DeviceDB, "partyAcross", function()
+        D.Checkbox(c, "Side by side instead of stacked (this device)", -56, ns.DeviceDB, "partyAcross", function()
             ns.ApplyPartyLayout()
         end)
-        D.Slider(c, "Party list size (this device)", -584, 0.6, 1.6, 0.05, pct, ns.DeviceDB, "partyScale", function(v)
+        D.Slider(c, "Party list size (this device)", -84, 0.6, 1.6, 0.05, pct, ns.DeviceDB, "partyScale", function(v)
             ns.DeviceDB().partyScale = v
             ns.ApplyPartyScale()
+        end)
+
+        D.Label(c, "Raid frames", -166, 15)
+        -- a full raid of yourself, session only
+        local raidTest = D.Button(c, "Test", -162, function()
+            ns.SetRaidTest(not ns.raidTest)
+        end)
+        raidTest:SetWidth(70)
+        raidTest:ClearAllPoints()
+        raidTest:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -162)
+        D.Checkbox(c, "Show the raid frames (hides Blizzard's; /reload)", -188, db, "showRaid", function(v)
+            print("DeckUI Orbs: the raid frames " .. (v and "appear" or "go") .. " after /reload.")
+        end)
+        D.Hint(c, "Groups 1 to 8 side by side in class colours: up to three debuffs (dispellable ones with a coloured border), the buffs you cast, and mana for healers. Blizzard's raid tools on the left stay.", -218)
+        D.Slider(c, "Raid frame size (this device)", -284, 0.5, 1.4, 0.05, pct, ns.DeviceDB, "raidScale", function(v)
+            ns.DeviceDB().raidScale = v
+            ns.ApplyRaidScale()
         end)
     end,
 })

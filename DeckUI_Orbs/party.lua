@@ -48,6 +48,7 @@ local function Edges(frame, r, g, b, a)
     Line("TOPRIGHT", "BOTTOMRIGHT", false)
     return lines
 end
+ns.Edges = Edges   -- the raid tiles (raid.lua) wear the same edges
 
 -------------------------------------------------------------------
 -- Health text: the number, or Dead / Offline
@@ -134,6 +135,7 @@ local function StyleAura(element, button)
         button.Count:SetPoint("BOTTOMRIGHT", 2, -2)
     end
 end
+ns.StyleGroupAura = StyleAura
 
 -------------------------------------------------------------------
 -- One row
@@ -145,6 +147,7 @@ local function OnEnter(self)
     GameTooltip:SetUnit(unit)
     GameTooltip:Show()
 end
+ns.GroupOnEnter = OnEnter
 
 local function BuildRow(self, unit)
     self:SetSize(W, H)

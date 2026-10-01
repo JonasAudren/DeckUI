@@ -16,4 +16,5 @@ core.lua
 layout.lua
 ffstyle.lua
 party.lua
+raid.lua
 config.lua

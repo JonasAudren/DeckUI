@@ -252,6 +252,17 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   elements read `__unit`; with `self.unit` the class icon and the target edge never ran and
   the icon showed the whole sheet of class circles (2026-09-30). The same oUF as the orbs -
   a separate module would need its own copy.
+- **Raid frames** (`DeckUI_Orbs/raid.lua`, `DeckOrbsDB.showRaid`, off by default, needs a
+  /reload; not yet tested in game): a compact grid in class colours, one column per raid
+  group - **eight headers with `groupFilter` "1".."8"**, because one header sorted by group
+  fills its columns five at a time and a short group would pull the next one in. Tiles show
+  name, role icon for tanks and healers only, `[deck:raidstatus]` (Dead/Ghost/Offline, no
+  health number), three debuffs with dispel border, three own buffs, mana for healers (the
+  role element's PostUpdate shows the bar). Blizzard's `CompactRaidFrameManager.container`
+  is silenced (`UnregisterAllEvents` down the tree) and parked under a hidden frame out of
+  combat - the manager itself (markers, ready check) stays. Size per device (`raidScale`),
+  test mode ("Test", `/orbs raid`): forty "player" frames. Party and raid settings live in
+  their own **Group** tab, registered from DeckUI_Orbs/config.lua - the Orbs tab was full.
 
 ## Bags module (bag window tested in game 2026-09-29; bank not yet)
 
@@ -448,7 +459,7 @@ just the same, so:
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all nine tabs works without error.
+5. Every checkbox / slider / button in all ten tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked
