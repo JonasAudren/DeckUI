@@ -16,4 +16,6 @@ quests.lua
 world.lua
 scenario.lua
 tracking.lua
+delves.lua
+hunt.lua
 config.lua

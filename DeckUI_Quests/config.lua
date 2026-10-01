@@ -2,6 +2,8 @@ local ADDON, ns = ...
 local D = DeckUI
 
 local device = function() return ns.DeviceDB() end
+local db = function() return DeckQuestsDB end
+local nothing = function() end
 
 -- D.Slider leaves storing the value to its apply function
 local function Store(key)
@@ -24,5 +26,11 @@ D.RegisterModule("Quests", {
         D.Slider(c, "Height limit", -220, 150, 900, 10, px, device, "maxHeight", Store("maxHeight"))
 
         D.Hint(c, "Drag the tracker by its frame to move it. Click a section heading to fold it, the - in the corner folds everything. Taller than the limit, it scrolls with the mouse wheel.", -290)
+
+        D.Label(c, "Delves", -348, 15)
+        D.Checkbox(c, "Take a single power automatically", -370, db, "autoDelvePower", nothing)
+        D.Checkbox(c, "Show Delver's Journey progress", -398, db, "journeyBar", nothing)
+        D.Checkbox(c, "Star hunt targets an achievement still needs", -426, db, "huntMarks", nothing)
+        D.Hint(c, "A treasure or rare offering just one power needs no choice; it is taken and named in the chat. The journey bar appears when the season renown grows - /quests journey shows it to place it with /deck unlock. On the hunt table a star marks targets still open, with the lists that miss them (N, H, NM). The Nemesis count and the active hunt show in the tracker.", -460)
     end,
 })

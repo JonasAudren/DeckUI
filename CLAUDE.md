@@ -395,6 +395,23 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   world quests and collections instead (owner's choice); the map opened with M stays clean.
   The same went for achievements, professions (`ProfessionsFrame_LoadUI`, `OpenRecipe`), the
   Traveler's Log and endeavors: those rows only stop tracking (shift) and have a menu.
+- **Delves and the hunt** (2026-10-01, replacing Plumber's; not yet tested in game):
+  `delves.lua` takes a single delve power by itself (`DeckQuestsDB.autoDelvePower`, off by
+  default; `C_PlayerChoice.SendPlayerChoiceResponse` + `OnUIClosed`, Blizzard's window never
+  touched, only when `C_PartyInfo.IsPartyWalkIn()`, exactly one option with one button) and
+  shows a Delver's Journey bar of its own on renown gains (`journeyBar`, on; season faction from
+  `C_DelvesUI.GetDelvesFactionForSeason`, movable, `/quests journey` previews it). The Nemesis
+  count is a line in `DelveEntry` from currencies 3103/3104 (left/total) - no spell ID needed.
+  The active hunt (`C_QuestLog.GetActivePreyQuest`) heads the Quests section as "Hunt: ...";
+  its left click super-tracks the target.
+- **Hunt table stars** (`hunt.lua`, `huntMarks`, on; not yet tested in game): offers whose
+  target an achievement still misses get a star of ours, a child frame of the pin kept in our
+  own table - nothing written onto Blizzard's pins (Plumber writes its icons there). No quest
+  table either: the open criteria of achievements 42701/42702/42703 (+ 63451/63452 for 12.1's
+  new targets) are matched against the offer title, apostrophes stripped, both in the client's
+  language. An offer does not say its difficulty, so the star names the lists still missing
+  the target (N/H/NM). Hook: `hooksecurefunc` on the quest-offer provider's `RefreshAllData`
+  in `CovenantMissionFrame.MapTab.dataProviders`. `/quests hunts` prints what it matched.
 - Blizzard shows no +2/+3 chest times; ours use the keystone rule (80% / 60% of the limit).
 - The tracker grows from its top edge (`D.PinTopLeft`); `/quests reset` brings it back.
 - `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have

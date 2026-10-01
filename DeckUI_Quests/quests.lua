@@ -170,15 +170,33 @@ local function QuestEntry(questID, logIndex, info)
     }
 end
 
+-- The active hunt (Prey) always shows at the top of the quests, watched or
+-- not, marked as such: a left click on it navigates to the target, which
+-- is what Plumber's "Prey: Target Waypoint" did through Blizzard's hunt
+-- widget - here with no Blizzard frame involved.
+local function HuntEntry()
+    local questID = C_QuestLog.GetActivePreyQuest and C_QuestLog.GetActivePreyQuest()
+    if not questID or (issecretvalue and issecretvalue(questID)) or questID == 0 then return nil end
+    local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+    local info = logIndex and C_QuestLog.GetInfo(logIndex)
+    if not info then return nil end
+    local e = QuestEntry(questID, logIndex, info)
+    e.title = "Hunt: " .. (info.title or "")
+    return e, questID
+end
+
 -- Both sections read the same watch list and keep their half of it.
 local function Collect(wantCampaign)
     local entries = {}
+    -- known to both halves, so neither lists it a second time
+    local hunt, huntID = HuntEntry()
+    if hunt and not wantCampaign then entries[1] = hunt end
     for i = 1, C_QuestLog.GetNumQuestWatches() do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         local logIndex = questID and C_QuestLog.GetLogIndexForQuestID(questID)
         local info = logIndex and C_QuestLog.GetInfo(logIndex)
         -- tasks belong to the world/bonus section, bounties only once done
-        if info and not info.isTask and not (info.isBounty and not C_QuestLog.IsComplete(questID))
+        if info and questID ~= huntID and not info.isTask and not (info.isBounty and not C_QuestLog.IsComplete(questID))
             and IsCampaign(questID) == wantCampaign then
             entries[#entries + 1] = QuestEntry(questID, logIndex, info)
         end

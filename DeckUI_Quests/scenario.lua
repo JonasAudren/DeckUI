@@ -81,6 +81,23 @@ end
 -- the treasure in the header's corner
 local REWARD = Enum.UIWidgetRewardShownState or {}
 
+-- The Nemesis affix: enemy groups still standing, as Blizzard keeps them in
+-- two currencies (left / total; read from Plumber's DelvesScenario.lua).
+-- Shown only while the total is above zero, so no spell ID has to be
+-- known - Blizzard changes it between patches.
+local NEMESIS_LEFT, NEMESIS_TOTAL = 3103, 3104
+
+local function NemesisLine()
+    local left = C_CurrencyInfo.GetCurrencyInfo(NEMESIS_LEFT)
+    local total = C_CurrencyInfo.GetCurrencyInfo(NEMESIS_TOTAL)
+    left, total = left and left.quantity, total and total.quantity
+    if not (left and total) then return nil end
+    if issecretvalue and (issecretvalue(left) or issecretvalue(total)) then return nil end
+    if total <= 0 then return nil end
+    if left <= 0 then return { text = "Nemesis: all groups defeated", done = true } end
+    return { text = ("Nemesis: %d of %d groups left"):format(left, total) }
+end
+
 local function DelveEntry(widgetSetID)
     if not widgetSetID or widgetSetID == 0 then return nil end
     ns.WatchWidgetSet("scenario", widgetSetID)
@@ -113,6 +130,7 @@ local function DelveEntry(widgetSetID)
             end
         end
     end
+    lines[#lines + 1] = NemesisLine()
     return {
         key = "delve",
         title = title,
@@ -346,9 +364,14 @@ for _, e in ipairs({
     "SCENARIO_BONUS_VISIBILITY_UPDATE", "SCENARIO_CRITERIA_SHOW_STATE_UPDATE", "CRITERIA_COMPLETE",
     "CHALLENGE_MODE_START", "CHALLENGE_MODE_COMPLETED", "CHALLENGE_MODE_RESET",
     "CHALLENGE_MODE_DEATH_COUNT_UPDATED", "WORLD_STATE_TIMER_START", "WORLD_STATE_TIMER_STOP",
-    "ACTIVE_DELVE_DATA_UPDATE",
+    "ACTIVE_DELVE_DATA_UPDATE", "CURRENCY_DISPLAY_UPDATE",
 }) do pcall(ev.RegisterEvent, ev, e) end
 ev:SetScript("OnEvent", function(_, event, arg)
+    if event == "CURRENCY_DISPLAY_UPDATE" then
+        -- only the Nemesis count, and only this section
+        if arg == NEMESIS_LEFT or arg == NEMESIS_TOTAL then ns.RequestUpdate("scenario") end
+        return
+    end
     if event == "SCENARIO_CRITERIA_SHOW_STATE_UPDATE" then showCriteria = arg and true or false end
     ns.RequestUpdate()
 end)

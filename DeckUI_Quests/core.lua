@@ -777,6 +777,7 @@ local function Init()
     for _, section in ipairs(ordered) do
         if section.Init then section.Init() end
     end
+    if ns.InitDelves then ns.InitDelves() end
     ns.RequestUpdate()
 end
 
@@ -807,6 +808,10 @@ SlashCmdList.DECKQUESTS = function(msg)
         D.ResetPosition(tracker)
         ns.RequestRedraw()
         print("DeckUI Quests: tracker back at its default place (top right).")
+    elseif msg == "journey" then
+        ns.ShowJourney()
+    elseif msg == "hunts" then
+        ns.PrintHunts()
     elseif msg == "debug" then
         local point, rel, relPoint, x, y = tracker:GetPoint()
         print(("DeckUI Quests: tracker shown=%s visible=%s collapsed=%s alpha=%.2f scale=%.2f size=%.0fx%.0f"):format(
