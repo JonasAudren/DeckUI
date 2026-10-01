@@ -283,8 +283,9 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
   are ordinary bags: `CharacterBankTab_1..6` (6-11), `AccountBankTab_1..5` (12-16), so the
   same item template serves them. A right click on a bag item at the bank deposits into
   `BankFrame:GetActiveBankType()`, which is nil unless Blizzard's `BankFrame` and its panel
-  are shown - so `bank.lua` parks `BankFrame` under a hidden parent (and strips its
-  `UIPanelLayout-area`, so the invisible frame does not take the left panel slot) and writes
+  are shown - so `bank.lua` parks `BankFrame` under a hidden parent (it stays a UI panel:
+  stripping its `UIPanelLayout-*` attributes tainted every bank visit, like the world map;
+  so the invisible frame holds the left panel slot while at the bank) and writes
   the type we display into `BankFrame.BankPanel.bankType` - what Inventorian does too.
   The parked frame **must keep a position**: with the panel manager out of the way nothing
   places it, and Blizzard's `GetContainerScale` does arithmetic on `BankFrame:GetRight()`
@@ -417,7 +418,7 @@ source (read 2026-09-29).
   is tainted, so the opening ran tainted, the map pins were set up tainted, and a widget
   tooltip from such a pin created GameTooltip's shared `widgetContainer` tainted - after that
   every widget tooltip failed on a secret width in `Blizzard_UIWidgetTemplateTextWithState`
-  (2026-10-01, hovering a rare on the map). The Bags module still does this to `BankFrame`.
+  (2026-10-01, hovering a rare on the map).
 - **The quest log beside it** (QuestMapFrame) is restyled the same way: parchment backgrounds,
   `questlog-frame` borders and the side tabs' `common-sidetab` art at alpha 0 or replaced by
   flat colour, one dark panel behind the content. Quest lines, headers and rewards stay.

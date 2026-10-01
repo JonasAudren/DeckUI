@@ -314,21 +314,26 @@ local hider = CreateFrame("Frame", "DeckBankBlizzardHider", UIParent)
 hider:SetAllPoints()
 hider:Hide()
 
--- Parked: shown when the game says so, never drawn, and no longer a UI
--- panel, so it does not take the left panel slot from the character
--- window while invisible. With "area" gone ShowUIPanel just calls Show.
+-- Parked: shown when the game says so, never drawn. It stays a UI panel:
+-- the first version took it out of the panel manager by writing
+-- "UIPanelLayout-defined" and clearing "UIPanelLayout-area", and an
+-- attribute written by addon code is tainted - ShowUIPanel reads it at
+-- every visit to the banker, so the whole opening ran tainted. The same
+-- trick on the world map tainted GameTooltip's widget container for the
+-- session (2026-10-01, see DeckUI_Map/worldmap.lua). The price: while at
+-- the bank the invisible frame holds the left panel slot, so the character
+-- window and friends open one slot further right.
 --
--- It still needs a place, though: whenever a bag opens while the bank
--- counts as shown, Blizzard's GetContainerScale reads BankFrame:GetRight()
--- to keep the bags clear of it, and a frame the panel manager never placed
--- has no right edge - "attempt to perform arithmetic on a nil value" in
--- ContainerFrame.lua (reported 2026-09-29). Parked with its right edge on
--- the screen's left edge, it answers 0 and the bags have the whole width.
+-- It needs a place before the panel manager gives it one: whenever a bag
+-- opens while the bank counts as shown, Blizzard's GetContainerScale reads
+-- BankFrame:GetRight() to keep the bags clear of it, and a frame never
+-- placed has no right edge - "attempt to perform arithmetic on a nil
+-- value" in ContainerFrame.lua (reported 2026-09-29). Our OpenBank may run
+-- before Blizzard's own handler for the same event, so it is parked with
+-- its right edge on the screen's left edge until then.
 local function ParkBankFrame()
     if BankFrame:GetParent() == hider then return end
     BankFrame:SetParent(hider)
-    BankFrame:SetAttribute("UIPanelLayout-defined", true)
-    BankFrame:SetAttribute("UIPanelLayout-area", nil)
     BankFrame:ClearAllPoints()
     BankFrame:SetPoint("TOPRIGHT", UIParent, "TOPLEFT", 0, 0)
 end
