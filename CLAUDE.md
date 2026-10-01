@@ -372,6 +372,11 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   The delve header is `DelveEntry` in scenario.lua (tier, lives, the delve's effects, the
   treasure). `UPDATE_UI_WIDGET` re-collects only the section that shows the widget's set;
   a widget with `hasTimer` ticks its section each second. Other widget kinds are skipped.
+- **No click opens the world map** (2026-10-01): `QuestMapFrame_OpenToQuestDetails`,
+  `OpenWorldMap` and `ContentTrackingUtil.OpenMapToTrackable` from our click handlers ran the
+  map's whole opening tainted, so its pins were set up tainted and hovering a widget pin failed
+  on secret values ("execution tainted by 'DeckUI_Quests'"). Left click super-tracks instead
+  (owner's choice); the map opened with M stays clean.
 - Blizzard shows no +2/+3 chest times; ours use the keystone rule (80% / 60% of the limit).
 - The tracker grows from its top edge (`D.PinTopLeft`); `/quests reset` brings it back.
 - `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have

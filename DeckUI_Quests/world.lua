@@ -56,8 +56,8 @@ local function WorldClick(questID, watched)
         elseif IsModifiedClick("QUESTWATCHTOGGLE") and watched then
             C_QuestLog.RemoveWorldQuestWatch(questID)
         else
-            local mapID = C_TaskQuest.GetQuestZoneID(questID)
-            if mapID then OpenWorldMap(mapID) end
+            -- never OpenWorldMap from here: see the note in quests.lua
+            C_SuperTrack.SetSuperTrackedQuestID(questID)
         end
     end
 end
@@ -68,7 +68,7 @@ local function WorldTooltip(questID)
         GameTooltip:SetText(C_TaskQuest.GetQuestInfoByQuestID(questID) or "")
         local left = TimeLeft(questID)
         if left then GameTooltip:AddLine(left, 1, 1, 1) end
-        GameTooltip:AddLine("Left-click: map, Right-click: menu", 0.7, 0.7, 0.7, true)
+        GameTooltip:AddLine("Left-click: navigate to it, Right-click: menu", 0.7, 0.7, 0.7, true)
         GameTooltip:Show()
     end
 end

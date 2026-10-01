@@ -69,7 +69,8 @@ local function AdventureClick(trackType, id, targetType, targetID, title)
         elseif targetType == TARGET.Profession then
             ProfessionsUtil.OpenProfessionFrameToRecipe(targetID)
         else
-            ContentTrackingUtil.OpenMapToTrackable(trackType, id)
+            -- never open the map from here: see the note in quests.lua
+            C_SuperTrack.SetSuperTrackedContent(trackType, id)
         end
     end
 end
@@ -99,7 +100,7 @@ ns.RegisterSection("adventure", {
                         color = isSuper and { 1, 0.82, 0 } or nil,
                         lines = lines,
                         OnClick = AdventureClick(trackType, id, targetType, targetID, title),
-                        OnEnter = Tooltip(title, "Left-click: show where, Shift-click: stop tracking, Right-click: menu"),
+                        OnEnter = Tooltip(title, "Left-click: navigate to it, Shift-click: stop tracking, Right-click: menu"),
                     }
                 end
             end

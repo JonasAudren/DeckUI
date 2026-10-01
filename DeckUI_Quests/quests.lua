@@ -51,8 +51,18 @@ local function TitleColor(questID, complete, failed)
 end
 
 -------------------------------------------------------------------
--- Clicks: left opens the quest in the log, shift-left stops tracking,
--- right opens Blizzard's menu of the same things its tracker offers
+-- Clicks: left makes the quest the navigation target, shift-left stops
+-- tracking, right opens Blizzard's menu of the same things its tracker
+-- offers.
+--
+-- No click opens the world map (owner's choice, 2026-10-01). Opened from
+-- our code - QuestMapFrame_OpenToQuestDetails, OpenWorldMap - the map runs
+-- its whole opening tainted, every pin is set up tainted, and hovering a
+-- pin with a widget fails on secret values ("attempt to compare a secret
+-- number value (execution tainted by 'DeckUI_Quests')" in LayoutFrame.lua
+-- and the widget templates). Blizzard's own tracker may do it, being
+-- secure code; we cannot. Super-tracking is a plain API call: the diamond,
+-- the map pin and DeckUI Nav follow it, and the map opened with M is clean.
 -------------------------------------------------------------------
 local function QuestMenu(row, questID)
     MenuUtil.CreateContextMenu(row, function(_, root)
@@ -62,7 +72,6 @@ local function QuestMenu(row, questID)
         else
             root:CreateButton(STOP_SUPER_TRACK_QUEST, function() C_SuperTrack.SetSuperTrackedQuestID(0) end)
         end
-        root:CreateButton(OBJECTIVES_SHOW_QUEST_MAP, function() QuestMapFrame_OpenToQuestDetails(questID) end)
         if QuestUtil.CanRemoveQuestWatch() then
             root:CreateButton(OBJECTIVES_STOP_TRACKING, function() C_QuestLog.RemoveQuestWatch(questID) end)
         end
@@ -82,7 +91,7 @@ local function QuestClick(questID, info, complete)
         elseif info.isAutoComplete and complete then
             ShowQuestComplete(questID)
         else
-            QuestMapFrame_OpenToQuestDetails(questID)
+            C_SuperTrack.SetSuperTrackedQuestID(questID)
         end
     end
 end
@@ -91,7 +100,7 @@ local function QuestTooltip(questID)
     return function(row)
         GameTooltip:SetOwner(row, "ANCHOR_LEFT")
         GameTooltip:SetText(C_QuestLog.GetTitleForQuestID(questID) or "")
-        GameTooltip:AddLine("Left-click: quest log, Shift-click: stop tracking, Right-click: menu", 0.7, 0.7, 0.7, true)
+        GameTooltip:AddLine("Left-click: navigate to it, Shift-click: stop tracking, Right-click: menu", 0.7, 0.7, 0.7, true)
         GameTooltip:Show()
     end
 end
