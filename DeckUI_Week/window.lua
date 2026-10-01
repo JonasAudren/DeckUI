@@ -360,6 +360,7 @@ prevBtn:SetScript("OnClick", function() Step(-1) end)
 nextBtn:SetScript("OnClick", function() Step(1) end)
 
 function ns.Refresh()
+    if ns.UpdateButton then ns.UpdateButton() end
     if not win:IsShown() then return end
     selected = selected or ns.CharKey()
     local snap = Snap()
@@ -402,7 +403,88 @@ function ns.Toggle()
     win:SetShown(not win:IsShown())
 end
 
+-------------------------------------------------------------------
+-- The button on screen: a small orb that opens the window
+-------------------------------------------------------------------
+-- DeckUI's round look (gold ring, dark disc, D.RoundMask), a calendar
+-- inside and, in its corner, how many Great Vault slots are unlocked this
+-- week. Moved with /deck unlock (a click is a click, not a drag); its
+-- place is kept per device. Shown unless switched off in the Week tab.
+local BTN = 36
+local button = CreateFrame("Button", "DeckWeekButton", UIParent)
+button:SetSize(BTN, BTN)
+button:SetFrameStrata("MEDIUM")
+button.defaultPoint = { "TOPRIGHT", UIParent, "TOPRIGHT", -230, -30 }
+button:SetPoint(unpack(button.defaultPoint))
+button:RegisterForClicks("LeftButtonUp")
+button:Hide()
+
+local ring = button:CreateTexture(nil, "BACKGROUND")
+ring:SetAllPoints()
+ring:SetColorTexture(GOLD[1], GOLD[2], GOLD[3], 1)
+ring:AddMaskTexture(D.RoundMask(button))
+
+local inner = CreateFrame("Frame", nil, button)
+inner:SetPoint("CENTER")
+inner:SetSize(BTN - 6, BTN - 6)
+local innerMask = D.RoundMask(inner)
+local disc = inner:CreateTexture(nil, "BACKGROUND")
+disc:SetAllPoints()
+disc:SetColorTexture(0.05, 0.05, 0.05, 0.95)
+disc:AddMaskTexture(innerMask)
+local icon = inner:CreateTexture(nil, "ARTWORK")
+icon:SetPoint("CENTER")
+icon:SetSize(BTN - 14, BTN - 14)
+icon:SetTexture("Interface\\Icons\\INV_Misc_Note_02")
+icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+icon:AddMaskTexture(innerMask)
+
+local hl = button:CreateTexture(nil, "HIGHLIGHT")
+hl:SetAllPoints()
+hl:SetColorTexture(1, 1, 1, 0.15)
+hl:AddMaskTexture(D.RoundMask(button))
+
+local badge = button:CreateFontString(nil, "OVERLAY")
+badge:SetFont(D.FONT, 12, "OUTLINE")
+badge:SetPoint("BOTTOMRIGHT", 2, -2)
+badge:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+
+-- unlocked vault slots of the character on show in the game, this week
+local function UnlockedSlots()
+    local snap = DeckWeekDB and DeckWeekDB.chars[ns.CharKey()]
+    if not snap or not snap.vault or ns.IsStale(snap) then return 0 end
+    local n = 0
+    for _, kind in ipairs({ "raid", "mplus", "world" }) do
+        for i = 1, 3 do
+            local s = snap.vault[kind] and snap.vault[kind][i]
+            if s and s.progress >= s.threshold then n = n + 1 end
+        end
+    end
+    return n
+end
+
+function ns.UpdateButton()
+    if not DeckWeekDB then return end
+    button:SetShown(DeckWeekDB.showButton)
+    local n = UnlockedSlots()
+    badge:SetText(n > 0 and n or "")
+end
+
+button:SetScript("OnClick", function() ns.Toggle() end)
+button:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+    GameTooltip:SetText("This week")
+    GameTooltip:AddLine(("Great Vault: %d of 9 slots unlocked"):format(UnlockedSlots()), 1, 1, 1)
+    GameTooltip:AddLine("Reset in " .. Duration(C_DateAndTime.GetSecondsUntilWeeklyReset()), 0.7, 0.7, 0.7)
+    GameTooltip:AddLine("Click: open the week overview", 0.7, 0.7, 0.7)
+    GameTooltip:Show()
+end)
+button:SetScript("OnLeave", GameTooltip_Hide)
+
 function ns.InitWindow()
+    if DeckWeekDB.showButton == nil then DeckWeekDB.showButton = true end
     D.MakeMovable(win, "Week", DeckWeekDB)
     D.MakeDraggable(win)
+    D.MakeMovable(button, "Week button", DeckWeekDB)
+    ns.UpdateButton()
 end

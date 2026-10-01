@@ -325,8 +325,9 @@ and every currency with a weekly or seasonal cap. Each character saves its
 week while you play it; the others show what they had when last seen, and
 once the weekly reset has passed that is marked. Weekly quests are learned:
 every weekly quest that appears in a quest log is remembered for all your
-characters. Open it with /week, a key binding or Shift-click on the minimap
-button.
+characters. Open it with the round button on screen (its number counts the
+vault slots unlocked this week; /deck unlock moves it, the Week tab hides it),
+/week, a key binding or Shift-click on the minimap button.
 
 
 DeckUI Spec - spec switcher

@@ -572,8 +572,10 @@ collapsed headers opened for the walk and closed again), Traveler's Log points.
   `IsQuestFlaggedCompleted` for all of them. `/week forget <questID>` removes one.
 - Expanding currency headers fires CURRENCY_DISPLAY_UPDATE; events within three seconds of a
   snapshot are ignored, or every snapshot would ask for the next.
-- Opened by `/week`, the hub binding DECKUI_WEEK (`D.ToggleWeek` -> `D.weekToggle`) and
-  Shift-click on the minimap button.
+- Opened by a round button on screen (`DeckWeekButton`, `DeckWeekDB.showButton`, on; badge =
+  unlocked vault slots this week; moved only with /deck unlock - a click stays a click), `/week`,
+  the hub binding DECKUI_WEEK (`D.ToggleWeek` -> `D.weekToggle`) and Shift-click on the
+  minimap button.
 
 ## Testing checklist (owner does this in-game)
 
