@@ -295,16 +295,24 @@ local function ApplyMapCVars()
 end
 
 -------------------------------------------------------------------
--- Movable: the map leaves the panel manager
+-- Movable: our place after every panel update
 -------------------------------------------------------------------
 -- As a UI panel (area "left") the map is re-anchored by the panel
--- manager on every panel update, so a position of ours would not last.
--- With "UIPanelLayout-defined" set and no area, ShowUIPanel/HideUIPanel
--- simply Show/Hide it and leave its points alone - the same thing done to
--- the bank frame in DeckUI Bags, and what the usual map addons do.
--- Escape closes it through UISpecialFrames instead of the panel manager.
--- The price: other left-side panels (character, spellbook) no longer
--- make room for it, they open on top.
+-- manager on every panel update, so a position of ours would not last on
+-- its own. A post-hook on UpdateUIPanelPositions puts it back each time:
+-- SetPoint leaves no Lua state behind, so the panel manager stays clean.
+--
+-- NOT the attribute trick ("UIPanelLayout-defined" written by us, the
+-- first version): ShowUIPanel reads that attribute every time the map
+-- opens, and an attribute set by addon code is tainted - the whole
+-- opening then ran tainted, every map pin was set up tainted, and the
+-- first widget tooltip from a tainted pin created GameTooltip's shared
+-- widget container tainted. From then on any tooltip with a widget failed
+-- on a secret width: "Secret values are only allowed during untainted
+-- execution" in Blizzard_UIWidgetTemplateTextWithState.lua, hovering a
+-- rare's vignette on the map (owner's report, 2026-10-01).
+-- The price of the hook: other left-side panels still make room for the
+-- map's slot, as if it had not moved.
 --
 -- Dragged by the strip above the breadcrumbs, not the map itself: a drag
 -- on the map pans it when zoomed in. The strip sits below Blizzard's
@@ -312,14 +320,13 @@ end
 local DRAG_STRIP = 24
 
 local function MakeWorldMapMovable()
-    WorldMapFrame:SetAttribute("UIPanelLayout-defined", true)
-    WorldMapFrame:SetAttribute("UIPanelLayout-area", nil)
-    tinsert(UISpecialFrames, "WorldMapFrame")
-
     WorldMapFrame.defaultPoint = { "TOPLEFT", UIParent, "TOPLEFT", 16, -116 }
     WorldMapFrame:ClearAllPoints()
     WorldMapFrame:SetPoint(unpack(WorldMapFrame.defaultPoint))
     D.MakeMovable(WorldMapFrame, "World map", DeckMapDB)
+    hooksecurefunc("UpdateUIPanelPositions", function()
+        if WorldMapFrame:IsShown() then D.ApplyPosition(WorldMapFrame) end
+    end)
 
     local handle = CreateFrame("Frame", nil, WorldMapFrame)
     handle:SetPoint("TOPLEFT", 1, -1)

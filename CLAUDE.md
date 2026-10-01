@@ -408,10 +408,15 @@ source (read 2026-09-29).
   art at alpha 0, a dark square with a thin edge, gold for the current crumb / active pin.
   Only textures change, never scripts. New crumbs are styled from a post-hook on
   `NavBar_CheckLength`; `/deckmap debug` lists the crumbs.
-- **The world map is movable** because it left the panel manager: `UIPanelLayout-defined` =
-  true and no `UIPanelLayout-area`, so Show/HideUIPanel just show and hide it (the BankFrame
-  trick from Bags), Escape via UISpecialFrames, dragged by a 24-px strip above the breadcrumbs
-  (a drag on the map pans it). Other left panels no longer make room for it.
+- **The world map is movable** through a post-hook on `UpdateUIPanelPositions` that puts it
+  back at our place (`D.ApplyPosition`) after every panel update; it stays a panel, so other
+  left panels still make room for its slot. Dragged by a 24-px strip above the breadcrumbs
+  (a drag on the map pans it). **Never set `UIPanelLayout-*` attributes on it** (the first
+  version did): `ShowUIPanel` reads them on every opening, an attribute written by addon code
+  is tainted, so the opening ran tainted, the map pins were set up tainted, and a widget
+  tooltip from such a pin created GameTooltip's shared `widgetContainer` tainted - after that
+  every widget tooltip failed on a secret width in `Blizzard_UIWidgetTemplateTextWithState`
+  (2026-10-01, hovering a rare on the map). The Bags module still does this to `BankFrame`.
 - **The quest log beside it** (QuestMapFrame) is restyled the same way: parchment backgrounds,
   `questlog-frame` borders and the side tabs' `common-sidetab` art at alpha 0 or replaced by
   flat colour, one dark panel behind the content. Quest lines, headers and rewards stay.

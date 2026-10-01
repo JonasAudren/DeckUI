@@ -314,6 +314,19 @@ local function ApplyPosition(entry)
     end
 end
 
+-- for frames something else re-anchors (the world map, see DeckUI_Map):
+-- the saved place again, or the default one when there is none yet
+function D.ApplyPosition(frame)
+    local entry = frame.deckMovable
+    if not entry then return end
+    if Positions(entry)[entry.key] then
+        ApplyPosition(entry)
+    elseif frame.defaultPoint then
+        frame:ClearAllPoints()
+        frame:SetPoint(unpack(frame.defaultPoint))
+    end
+end
+
 local function SavePosition(entry)
     local point, _, relPoint, x, y = entry.frame:GetPoint()
     Positions(entry)[entry.key] = { point = point, relPoint = relPoint, x = x, y = y }
