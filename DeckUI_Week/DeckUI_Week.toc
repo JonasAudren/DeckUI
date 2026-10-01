@@ -1,0 +1,16 @@
+## Interface: 120100
+## Title: DeckUI Week
+## Notes: DeckUI module: your week at a glance - Great Vault, lockouts, keystone, weekly quests, renown, currencies, for every character
+## Author: Gottlieb
+## Version: 1.3.1
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/JonasAudren/DeckUI
+## X-Curse-Project-ID: 1699742
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckWeekDB
+
+core.lua
+window.lua
+config.lua

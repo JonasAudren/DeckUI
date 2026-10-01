@@ -2,4 +2,5 @@
     <Binding name="DECKUI_NAV_NEXT" header="DECKUI" category="ADDONS">DeckUI.NavStep(1)</Binding>
     <Binding name="DECKUI_NAV_PREV" category="ADDONS">DeckUI.NavStep(-1)</Binding>
     <Binding name="DECKUI_LOOT_ALL" category="ADDONS">DeckUI.LootAll()</Binding>
+    <Binding name="DECKUI_WEEK" category="ADDONS">DeckUI.ToggleWeek()</Binding>
 </Bindings>

@@ -28,8 +28,9 @@ D.MODULE_ADDONS = {
     Map   = "DeckUI_Map",
     Tooltip = "DeckUI_Tooltip",
     Nav   = "DeckUI_Nav",
+    Week  = "DeckUI_Week",
 }
-D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests", "Map", "Tooltip", "Nav" }
+D.MODULE_ORDER = { "Orbs", "Cross", "Spec", "Bags", "Quests", "Map", "Tooltip", "Nav", "Week" }
 -- the module checkboxes in the General tab
 D.MODULE_TITLES = {
     Orbs   = "Orbs (unit frames)",
@@ -40,12 +41,13 @@ D.MODULE_TITLES = {
     Map    = "Map (minimap and world map)",
     Tooltip = "Tooltip (mouse-over window)",
     Nav    = "Nav (compass and waypoints)",
+    Week   = "Week (vault, lockouts, weeklies)",
 }
 
 -- Modules that start switched off, for new installs and for players who
 -- update into them alike. Replacing the bag window, the quest tracker or
 -- the maps is not something an update should do to anyone unasked.
-D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true, Map = true, Tooltip = true, Nav = true }
+D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true, Map = true, Tooltip = true, Nav = true, Week = true }
 
 -- Key bindings (Bindings.xml) live in the hub: the game reads them at
 -- startup, before a LoadOnDemand module exists. They call into the module
@@ -54,6 +56,14 @@ BINDING_HEADER_DECKUI = "DeckUI"
 BINDING_NAME_DECKUI_NAV_NEXT = "Navigation: next tracked quest"
 BINDING_NAME_DECKUI_NAV_PREV = "Navigation: previous tracked quest"
 BINDING_NAME_DECKUI_LOOT_ALL = "Loot window: take all"
+BINDING_NAME_DECKUI_WEEK = "Week overview: open / close"
+function D.ToggleWeek()
+    if D.weekToggle then
+        D.weekToggle()
+    else
+        print("DeckUI: switch on the Week module (General tab) for the week overview.")
+    end
+end
 function D.NavStep(dir)
     if D.navStep then
         D.navStep(dir)

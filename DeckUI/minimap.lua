@@ -67,6 +67,8 @@ mmb:SetScript("OnDragStop",  function(self) self:SetScript("OnUpdate", nil) end)
 mmb:SetScript("OnClick", function(self, button)
     if button == "RightButton" then
         D.SetUnlocked(not D.unlocked)
+    elseif IsShiftKeyDown() then
+        D.ToggleWeek()
     else
         D.ToggleConfig()
     end
@@ -77,6 +79,7 @@ mmb:SetScript("OnEnter", function(self)
     GameTooltip:SetText("DeckUI")
     GameTooltip:AddLine("Left-click: settings", 1, 1, 1)
     GameTooltip:AddLine("Right-click: unlock/lock frames", 1, 1, 1)
+    GameTooltip:AddLine("Shift-click: this week (Week module)", 1, 1, 1)
     GameTooltip:AddLine("Drag: move button", 1, 1, 1)
     GameTooltip:Show()
 end)

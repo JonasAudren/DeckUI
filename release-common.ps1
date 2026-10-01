@@ -8,7 +8,7 @@ checks the archive against it, and a stray DeckUI_* folder with a .toc
 must not ship just because it exists.
 #>
 
-$addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec", "DeckUI_Bags", "DeckUI_Quests", "DeckUI_Map", "DeckUI_Tooltip", "DeckUI_Nav")
+$addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec", "DeckUI_Bags", "DeckUI_Quests", "DeckUI_Map", "DeckUI_Tooltip", "DeckUI_Nav", "DeckUI_Week")
 
 function Get-TocField($path, $field) {
     foreach ($line in Get-Content $path) {

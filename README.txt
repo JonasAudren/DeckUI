@@ -4,7 +4,7 @@ DeckUI
 A compact, controller-friendly interface for World of Warcraft on the Steam
 Deck - that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with eight load-on-demand modules. Enable or disable each one
+DeckUI is a hub with nine load-on-demand modules. Enable or disable each one
 in /deck; what you do not use is never loaded.
 
   DeckUI          the hub: device detection, settings window, movable frames
@@ -21,6 +21,9 @@ in /deck; what you do not use is never loaded.
                   (off until you switch it on in /deck)
   DeckUI Nav      a compass bar, the navigation target with an arrow, and /way
                   (off until you switch it on in /deck)
+  DeckUI Week     your week at a glance: vault, lockouts, keystone, weeklies,
+                  renown and currencies for every character
+                  (off until you switch it on in /deck)
 
 Requires World of Warcraft Retail, Interface 120100 (Midnight).
 License: MIT, see LICENSE.txt. The bundled libraries and their
@@ -30,18 +33,18 @@ licences are listed in THIRD-PARTY.txt.
 Installation
 ------------
 1. Quit the game completely.
-2. Copy all nine folders into
+2. Copy all ten folders into
 
      World of Warcraft\_retail_\Interface\AddOns\
 
    so that you end up with AddOns\DeckUI, AddOns\DeckUI_Orbs,
    AddOns\DeckUI_Cross, AddOns\DeckUI_Spec, AddOns\DeckUI_Bags,
-   AddOns\DeckUI_Quests, AddOns\DeckUI_Map, AddOns\DeckUI_Tooltip and
-   AddOns\DeckUI_Nav.
+   AddOns\DeckUI_Quests, AddOns\DeckUI_Map, AddOns\DeckUI_Tooltip,
+   AddOns\DeckUI_Nav and AddOns\DeckUI_Week.
 3. Start the game. In the addon list on the character screen, DeckUI,
    DeckUI Orbs, DeckUI Cross, DeckUI Spec, DeckUI Bags, DeckUI Quests,
-   DeckUI Map, DeckUI Tooltip and DeckUI Nav must all be checked. The eight
-   modules are marked "load on demand" and depend on the hub - if the hub is unchecked, nothing loads.
+   DeckUI Map, DeckUI Tooltip, DeckUI Nav and DeckUI Week must all be
+   checked. The nine modules are marked "load on demand" and depend on the hub - if the hub is unchecked, nothing loads.
 4. Log in. The orbs, the cross hotbar and the spec bar are there.
 
 A full restart is needed after installing or updating; /reload is not enough
@@ -109,6 +112,7 @@ Commands
   /decknav                 jump to the Nav tab
   /decknav next, prev      step the navigation target through tracked quests
   /way 45.2 67.8           set a waypoint (/way clear removes it; /dway with TomTom)
+  /week                    open the week overview (also Shift-click on the minimap button)
 
 Diagnostics for the cross hotbar, useful when reporting a problem:
 
@@ -307,6 +311,19 @@ tracked quests, nearest first - put them on a controller button to switch
 targets without opening the map. /way 45.2 67.8 sets Blizzard's own waypoint;
 decimal commas work too. The compass hides in instances, where the game gives
 no position. /deck unlock moves compass and target separately per device.
+
+
+DeckUI Week - your week at a glance
+-----------------------------------
+One window with six tabs: an overview (Great Vault, keystone and runs, locked
+raids and dungeons, open weekly quests, Traveler's Log, time to the reset),
+all characters side by side, the locked instances, the weekly quests, renown
+and every currency with a weekly or seasonal cap. Each character saves its
+week while you play it; the others show what they had when last seen, and
+once the weekly reset has passed that is marked. Weekly quests are learned:
+every weekly quest that appears in a quest log is remembered for all your
+characters. Open it with /week, a key binding or Shift-click on the minimap
+button.
 
 
 DeckUI Spec - spec switcher

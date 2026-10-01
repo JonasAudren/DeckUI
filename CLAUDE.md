@@ -22,20 +22,21 @@ DeckUI_Quests/   module: own objective tracker (/quests)        off by default
 DeckUI_Map/      module: square minimap, smaller world map (/deckmap) off by default
 DeckUI_Tooltip/  module: the mouse-over tooltip (/decktip)       off by default
 DeckUI_Nav/      module: compass, navigation target, /way (/decknav) off by default
+DeckUI_Week/     module: the week overview for all characters (/week) off by default
 ```
 Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
 `D.RegisterModule(key, { title, build = function(content) end })`. The hub loads
 enabled modules from `DeckUIDB.modules` at `ADDON_LOADED`.
 
-`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the nine addon
+`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the ten addon
 folders at the **top level** (a wrapping folder would install everything one level too
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
-other libraries bundle. It aborts if the nine `.toc` files disagree on version or interface.
+other libraries bundle. It aborts if the ten `.toc` files disagree on version or interface.
 The list of addon folders lives once, in `release-common.ps1`, which both scripts dot-source
 (with `Get-TocField`); a new module is added there and to `D.MODULE_*` in `DeckUI/core.lua`.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
-in all nine at once - `package.ps1 -Version` only stamps the staged copies, so without
+in all ten at once - `package.ps1 -Version` only stamps the staged copies, so without
 the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
 changelog the release sends along: the `## <version>` section of `CHANGELOG.md` when there
 is one, otherwise the commit subjects since the previous tag. Write the section - the
@@ -552,13 +553,31 @@ source (read 2026-10-01).
 - `/way` is ours unless TomTom (or another addon) has it; `/dway` always works.
 - `/decknav debug` prints map, position, facing, map size, the target and its angle.
 
+## Week module (not yet tested in game)
+
+The week at a glance for every character (owner's wish, 2026-10-01): Great Vault
+(`C_WeeklyRewards.GetActivities`, grouped by `Enum.WeeklyRewardChestThresholdType`), lockouts
+(`GetSavedInstanceInfo`, world bosses), keystone and runs (`C_MythicPlus`), renown of the current
+expansion (`C_MajorFactions`), currencies with a weekly or seasonal cap (the currency list,
+collapsed headers opened for the walk and closed again), Traveler's Log points.
+- **Snapshots per character** in `DeckWeekDB.chars["Name-Realm"]`, written at most every two
+  seconds after the relevant events and at logout. Each keeps `resetAt`; past it the snapshot
+  counts as stale and its vault, runs and weeklies show as reset.
+- **Weekly quests are learned**: any quest with `Enum.QuestFrequency.Weekly` in a quest log
+  goes into `DeckWeekDB.weeklies` (account-wide); each character asks
+  `IsQuestFlaggedCompleted` for all of them. `/week forget <questID>` removes one.
+- Expanding currency headers fires CURRENCY_DISPLAY_UPDATE; events within three seconds of a
+  snapshot are ignored, or every snapshot would ask for the next.
+- Opened by `/week`, the hub binding DECKUI_WEEK (`D.ToggleWeek` -> `D.weekToggle`) and
+  Shift-click on the minimap button.
+
 ## Testing checklist (owner does this in-game)
 
 1. `/console scriptErrors 1`, `/reload`, no error window.
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all eleven tabs works without error.
+5. Every checkbox / slider / button in all twelve tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked
