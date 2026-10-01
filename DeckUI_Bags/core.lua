@@ -64,6 +64,10 @@ local function NewButton(grid, bag)
     b.DeckFree:SetFont(D.FONT, 15, "OUTLINE")
     b.DeckFree:SetPoint("CENTER")
     b.DeckFree:SetTextColor(0.8, 0.8, 0.8)
+    -- and says which kind of bag it counts: the two look alike otherwise
+    b.DeckFreeKind = b:CreateFontString(nil, "OVERLAY")
+    b.DeckFreeKind:SetFont(D.FONT, 9, "OUTLINE")
+    b.DeckFreeKind:SetPoint("BOTTOM", 0, 3)
     return b
 end
 
@@ -191,6 +195,9 @@ function ns.UpdateButton(b)
     local level = DeckBagsDB.itemLevel and info and ItemLevel(bag, slot, info.itemID, info.hyperlink)
     b.DeckLevel:SetText(level or "")
     b.DeckFree:SetText((not info and b.freeCount) or "")
+    local kind = not info and b.freeCount and b.freeKind
+    b.DeckFreeKind:SetText(kind and kind.label or "")
+    if kind then b.DeckFreeKind:SetTextColor(unpack(kind.color)) end
 end
 
 -------------------------------------------------------------------

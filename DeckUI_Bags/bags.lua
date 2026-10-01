@@ -97,11 +97,18 @@ end
 -- The empty slots collapse into one per kind of bag - the reagent bag only
 -- takes reagents - showing how many there are. Dropping an item on it puts
 -- the item into that very slot, which is as good as any free one.
+-- Each stand-in is labelled, the reagent one in green: side by side the
+-- two are otherwise just two numbers.
+local EMPTY_KINDS = {
+    { bags = HELD,        label = "bags",     color = { 0.7, 0.7, 0.7 } },
+    { bags = { REAGENT }, label = "reagents", color = { 0.4, 0.85, 0.4 } },
+}
+
 local function EmptySection()
     local slots = {}
-    for _, group in ipairs({ HELD, { REAGENT } }) do
+    for _, kind in ipairs(EMPTY_KINDS) do
         local first, free = nil, 0
-        for _, bag in ipairs(group) do
+        for _, bag in ipairs(kind.bags) do
             for slot = 1, C_Container.GetContainerNumSlots(bag) do
                 if not C_Container.GetContainerItemInfo(bag, slot) then
                     free = free + 1
@@ -110,7 +117,7 @@ local function EmptySection()
             end
         end
         if first then
-            first.free = free
+            first.free, first.kind = free, kind
             slots[#slots + 1] = first
         end
     end
@@ -148,11 +155,12 @@ end
 -- the one it may have had from an earlier layout.
 local function MarkFreeCounts(sections)
     for _, bagButtons in pairs(window.grid.buttons) do
-        for _, b in pairs(bagButtons) do b.freeCount = nil end
+        for _, b in pairs(bagButtons) do b.freeCount, b.freeKind = nil, nil end
     end
     local empty = sections[#sections]
     for _, s in ipairs(empty.slots or {}) do
-        ns.Button(window.grid, s[1], s[2]).freeCount = s.free
+        local b = ns.Button(window.grid, s[1], s[2])
+        b.freeCount, b.freeKind = s.free, s.kind
     end
 end
 
@@ -178,7 +186,7 @@ function window.Layout()
     window.relayoutOnMove = IsCategoryView()
     if not IsCategoryView() then
         for _, bagButtons in pairs(window.grid.buttons) do
-            for _, b in pairs(bagButtons) do b.freeCount = nil end
+            for _, b in pairs(bagButtons) do b.freeCount, b.freeKind = nil, nil end
         end
         return GridSections(), d.columns, d.scale
     end
