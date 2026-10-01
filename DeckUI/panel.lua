@@ -144,9 +144,12 @@ panel:AddTab("General", {
         D.Checkbox(c, "Sell junk at the merchant", y - 110, db, "autoSellJunk", function() end)
         D.Checkbox(c, "Repair at the merchant", y - 138, db, "autoRepair", function() end)
         D.Checkbox(c, "Repair with guild funds first", y - 166, db, "repairGuild", function() end)
+        D.Checkbox(c, "Fast auto loot", y - 194, db, "fastLoot", function() end)
+        D.Checkbox(c, "DeckUI's loot window", y - 222, db, "lootWindow",
+            function() D.ApplyLootWindow() end)
 
         -- the error collector (errors.lua), with how many it holds
-        local errBtn = D.Button(c, "Lua errors", y - 204, function() D.ShowErrors() end)
+        local errBtn = D.Button(c, "Lua errors", y - 260, function() D.ShowErrors() end)
         function errBtn:Refresh() self:SetText(("Lua errors (%d)"):format(D.ErrorCount())) end
         c.widgets = c.widgets or {}
         table.insert(c.widgets, errBtn)

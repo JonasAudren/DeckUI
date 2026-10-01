@@ -53,6 +53,7 @@ D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true, Map = true, Tooltip = tr
 BINDING_HEADER_DECKUI = "DeckUI"
 BINDING_NAME_DECKUI_NAV_NEXT = "Navigation: next tracked quest"
 BINDING_NAME_DECKUI_NAV_PREV = "Navigation: previous tracked quest"
+BINDING_NAME_DECKUI_LOOT_ALL = "Loot window: take all"
 function D.NavStep(dir)
     if D.navStep then
         D.navStep(dir)
@@ -472,6 +473,8 @@ local DEFAULTS = {
     autoSellJunk  = false,   -- sell junk at every merchant (merchant.lua)
     autoRepair    = false,   -- repair at every merchant that can
     repairGuild   = true,    -- with guild funds first, when allowed
+    fastLoot      = false,   -- take every slot at once when auto looting (loot.lua)
+    lootWindow    = false,   -- DeckUI's loot window instead of Blizzard's
 }
 
 -- Blizzard's whole-UI scale, set per device at login when enabled

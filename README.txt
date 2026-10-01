@@ -137,6 +137,17 @@ Repair at the merchant
 Repair with guild funds first
                   uses the guild bank when your rank allows it.
                   All three are off by default, apart from guild funds.
+Fast auto loot    takes everything the moment the loot is there, and treats
+                  loot as auto loot whenever your auto-loot setting says so
+                  (with the modifier held it is manual, as usual).
+DeckUI's loot window
+                  a compact loot list in DeckUI's look instead of Blizzard's
+                  window: click to take, "Take all" (also a key binding
+                  under Keybindings > AddOns > DeckUI), quest items and
+                  appearances you have not collected yet are marked. After
+                  auto loot it only appears if something stayed behind.
+                  Drag it by its frame; it opens where you left it.
+                  Both are off by default.
 Lua errors        collects every Lua error with its stack, to copy into a
                   report (also /deck errors).
 

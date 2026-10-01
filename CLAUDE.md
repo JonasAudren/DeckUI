@@ -112,6 +112,15 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   MERCHANT_SHOW repair first (guild funds when allowed), then `C_MerchantFrame.SellAllJunkItems`,
   and repair once more a second later if the gold was short. C APIs only - Blizzard's "sell all
   junk" button asks through a StaticPopup, which we skip rather than show (see `D.Dialog`).
+- **Loot** (`DeckUI/loot.lua`, `DeckUIDB.fastLoot` / `lootWindow`, General tab, both off by
+  default; replacing Plumber's LootUI; not yet tested in game): fast loot takes every slot with
+  `LootSlot` on LOOT_READY, "auto" worked out from `autoLootDefault` and the AUTOLOOTTOGGLE
+  modifier (Plumber's fix for auto loot reported as manual). The window: Blizzard's LootFrame
+  only gets `UnregisterEvent("LOOT_OPENED"/"LOOT_CLOSED")` - re-registered when switched off -
+  and ours shows instead (manual loot, or what auto loot left behind). Bind-on-pickup stays
+  Blizzard's LOOT_BIND dialog (UIParent's handler), group rolls are untouched. Take all is
+  also the binding DECKUI_LOOT_ALL. The one Blizzard call that writes elsewhere is
+  `HandleModifiedItemClick` on a modified click (chat link, dressing room).
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
   General tab, off by default; not yet tested in game). Its numbers are secret in combat, so
   only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.

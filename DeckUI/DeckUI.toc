@@ -17,4 +17,5 @@ actionbars.lua
 editmode.lua
 damagemeter.lua
 merchant.lua
+loot.lua
 minimap.lua
