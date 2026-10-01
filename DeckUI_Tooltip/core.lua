@@ -35,6 +35,9 @@ local DEFAULTS = {
     playerInfo  = true,    -- players: spec and item level
     targetLine  = true,    -- what the unit is targeting
     ids         = true,    -- item, spell and NPC IDs while Shift is held
+    questItems  = true,    -- items that start a quest: the quest (extras.lua)
+    knowledge   = true,    -- profession spells: unspent knowledge
+    chestKeys   = true,    -- the rare chest in a delve: the key it wants
 }
 
 function ns.DeviceDB()
@@ -205,6 +208,7 @@ local function Init()
     StyleHealthBar()
     ns.ApplyScale()
     if ns.InitLines then ns.InitLines() end
+    if ns.InitExtras then ns.InitExtras() end
 end
 
 if IsLoggedIn() then

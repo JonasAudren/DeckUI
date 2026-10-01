@@ -507,6 +507,14 @@ just the same, so:
 - Health bar: Blizzard's (it watches the unit securely), restyled with textures only.
 - Inspect for other players' spec/item level: one at a time, 1.5 s apart, 5 s timeout, not
   in combat nor while Blizzard's inspect window is open; results cached by GUID for 5 min.
+- **Extras** (`extras.lua`, replacing Plumber's tooltip modules; not yet tested in game): the
+  quest an item in the bags starts (bag and slot read from `tooltip.processingInfo`, read
+  only), unspent profession knowledge on the profession spell (trait currency per spec tree,
+  counted once per currency, cached until a skill/trait event), and the Coffer Key count on a
+  delve's rare chest (object named like item 228942, currency 3028 - TWW numbers Plumber still
+  uses; if Midnight changed them the line just never shows). Lines only - Plumber's `Show()`,
+  rebuilds and line rewrites were not copied. Left for later: reputation items and transmog
+  ensembles (hand-kept tables); Plumber's delve cache lines are stale TWW data.
 - `/decktip debug` prints the styled count, anchor, scale, NineSlice alpha and inspect state.
 
 ## Nav module (not yet tested in game)

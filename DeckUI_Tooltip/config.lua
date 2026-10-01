@@ -24,5 +24,10 @@ D.RegisterModule("Tooltip", {
         D.Checkbox(c, "Item, spell and NPC IDs while Shift is held", -240, db, "ids", nothing)
 
         D.Hint(c, "Tooltips that belong to a button or frame stay beside it; the others appear at the Tooltip frame. Item level of other players needs a short look at their gear, so it shows a moment later and never in combat. The edge takes the item quality or the class colour.", -280)
+
+        D.Label(c, "Extras", -350, 15)
+        D.Checkbox(c, "Items that start a quest: the quest", -372, db, "questItems", nothing)
+        D.Checkbox(c, "Profession spells: unspent knowledge", -400, db, "knowledge", nothing)
+        D.Checkbox(c, "Rare chest in a delve: your keys", -428, db, "chestKeys", nothing)
     end,
 })
