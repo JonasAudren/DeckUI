@@ -21,6 +21,8 @@ local HEADER = 58    -- title row + search row; a window can ask for more
 local FOOTER = 26
 
 ns.BUTTON = BUTTON
+ns.PAD = PAD
+ns.FOOTER = FOOTER
 
 -------------------------------------------------------------------
 -- Item buttons, pooled per bag

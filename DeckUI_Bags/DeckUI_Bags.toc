@@ -13,5 +13,6 @@
 
 core.lua
 bags.lua
+items.lua
 bank.lua
 config.lua

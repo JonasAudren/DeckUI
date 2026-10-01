@@ -325,6 +325,11 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
   others): dims what `C_AuctionHouse.IsSellItemValid(location, false)` refuses - Blizzard's
   own test from ContainerFrame.lua. Not yet tested in game, including whether it answers the
   same away from the auction house.
+- **Tracked items** (`items.lua`, `DeckBagsDB.trackedItems`, account-wide list, up to six;
+  not yet tested in game): a row above the bag window's footer, item counts like currencies.
+  Built instead of fitting Plumber's Backpack Item Tracker, which hangs off Blizzard's parked
+  bag frames. Items are added by dropping them on the row (`GetCursorInfo`, then
+  `ClearCursor` puts the item back) - the item buttons keep Blizzard's click handling.
 - `/bags debug` prints Blizzard's open state, slots per bag and how many frames are parked;
   `/bags bank` prints the bank types, their lock state, tabs and slots.
 

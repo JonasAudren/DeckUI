@@ -19,7 +19,8 @@ local BACKPACK = Enum.BagIndex.Backpack
 local REAGENT  = Enum.BagIndex.ReagentBag
 local NUM_BAGS = Constants.InventoryConstants.NumBagSlots   -- 4
 
-local window = ns.NewWindow("DeckBagsWindow", "Bags", { currencies = true })
+-- extraFooter: the tracked items row (items.lua)
+local window = ns.NewWindow("DeckBagsWindow", "Bags", { currencies = true, extraFooter = 24 })
 window.defaultPoint = { "BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -20, 110 }
 window:SetPoint(unpack(window.defaultPoint))
 ns.bags = window

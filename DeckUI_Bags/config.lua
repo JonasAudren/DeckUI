@@ -37,5 +37,6 @@ D.RegisterModule("Bags", {
 
         D.Hint(c, "Categories: new, equipment, consumables, trade goods, quest, other, junk, and one empty slot counting the free ones. The button next to sort switches too. The bank keeps its tabs.", -378)
         D.Hint(c, "B, the bag bar and /bags open the bags, a banker opens the bank, as they would Blizzard's windows. Drag a window by its frame to move it.", -438)
+        D.Hint(c, "Tracked items: drop an item on the row above the gold to see its count there, like a currency. Right-click one to stop.", -498)
     end,
 })
