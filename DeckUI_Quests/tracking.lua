@@ -6,9 +6,15 @@ local D = DeckUI
 -- their data - see core.lua on why no Blizzard widget is hosted here),
 -- collections, achievements, the Traveler's Log, endeavors and recipes.
 -------------------------------------------------------------------
--- Each follows its Blizzard module (12.1.0, read 2026-09-29) - same data,
--- same clicks: left opens where it lives, shift-left stops tracking,
--- right opens a small menu. Section order is Blizzard's order.
+-- Each follows its Blizzard module (12.1.0, read 2026-09-29) - same data;
+-- shift-left stops tracking, right opens a small menu. Section order is
+-- Blizzard's order.
+--
+-- No click opens a Blizzard window (2026-10-01): achievements, professions,
+-- the Traveler's Log and the endeavors opened - often loaded - from our
+-- click handler would run their whole opening tainted, the same trap as
+-- the world map (see quests.lua). Collections still navigate, since that
+-- is a plain C_SuperTrack call; the rest open from Blizzard's own buttons.
 -------------------------------------------------------------------
 local FAILED = { 1, 0.3, 0.3 }
 
@@ -51,10 +57,9 @@ ns.RegisterSection("zone", {
 -- Collections: tracked appearances, mounts and decor
 -------------------------------------------------------------------
 local CT = Enum.ContentTrackingType
-local TARGET = Enum.ContentTrackingTargetType
 local STOP_MANUAL = Enum.ContentTrackingStopType.Manual
 
-local function AdventureClick(trackType, id, targetType, targetID, title)
+local function AdventureClick(trackType, id, title)
     local function Stop() C_ContentTracking.StopTracking(trackType, id, STOP_MANUAL) end
     return function(row, button)
         if button == "RightButton" then
@@ -64,12 +69,8 @@ local function AdventureClick(trackType, id, targetType, targetID, title)
             })
         elseif IsShiftKeyDown() then
             Stop()
-        elseif targetType == TARGET.Achievement then
-            ShowAchievementFrameForAchievement(targetID)
-        elseif targetType == TARGET.Profession then
-            ProfessionsUtil.OpenProfessionFrameToRecipe(targetID)
         else
-            -- never open the map from here: see the note in quests.lua
+            -- never open a window from here: see the note at the top
             C_SuperTrack.SetSuperTrackedContent(trackType, id)
         end
     end
@@ -99,7 +100,7 @@ ns.RegisterSection("adventure", {
                         title = title,
                         color = isSuper and { 1, 0.82, 0 } or nil,
                         lines = lines,
-                        OnClick = AdventureClick(trackType, id, targetType, targetID, title),
+                        OnClick = AdventureClick(trackType, id, title),
                         OnEnter = Tooltip(title, "Left-click: navigate to it, Shift-click: stop tracking, Right-click: menu"),
                     }
                 end
@@ -124,13 +125,10 @@ local function AchievementClick(id, name)
     return function(row, button)
         if button == "RightButton" then
             Menu(row, name, {
-                { OBJECTIVES_VIEW_ACHIEVEMENT or "View achievement", function() ShowAchievementFrameForAchievement(id) end },
                 { OBJECTIVES_STOP_TRACKING or "Stop tracking", function() StopAchievement(id) end },
             })
         elseif IsModifiedClick("QUESTWATCHTOGGLE") then
             StopAchievement(id)
-        else
-            ShowAchievementFrameForAchievement(id)
         end
     end
 end
@@ -184,7 +182,7 @@ ns.RegisterSection("achievements", {
                     title = name,
                     lines = AchievementLines(id, description),
                     OnClick = AchievementClick(id, name),
-                    OnEnter = Tooltip(name, "Left-click: open, Shift-click: stop tracking, Right-click: menu"),
+                    OnEnter = Tooltip(name, "Shift-click: stop tracking, Right-click: menu"),
                 }
             end
         end
@@ -195,11 +193,6 @@ ns.RegisterSection("achievements", {
 -------------------------------------------------------------------
 -- Traveler's Log (monthly activities)
 -------------------------------------------------------------------
-local function OpenActivity(id)
-    if not EncounterJournal then EncounterJournal_LoadUI() end
-    MonthlyActivitiesFrame_OpenFrameToActivity(id)
-end
-
 ns.RegisterSection("monthly", {
     title = "Traveler's Log",
     order = 45,
@@ -221,16 +214,13 @@ ns.RegisterSection("monthly", {
                     OnClick = function(row, button)
                         if button == "RightButton" then
                             Menu(row, info.activityName, {
-                                { "View in Traveler's Log", function() OpenActivity(id) end },
                                 { OBJECTIVES_STOP_TRACKING or "Stop tracking", Stop },
                             })
                         elseif IsModifiedClick("QUESTWATCHTOGGLE") then
                             Stop()
-                        else
-                            OpenActivity(id)
                         end
                     end,
-                    OnEnter = Tooltip(info.activityName, "Left-click: Traveler's Log, Shift-click: stop tracking"),
+                    OnEnter = Tooltip(info.activityName, "Shift-click: stop tracking, Right-click: menu"),
                 }
             end
         end
@@ -269,7 +259,6 @@ ns.RegisterSection("initiatives", {
                     if not req.completed then lines[#lines + 1] = { text = Requirement(req.requirementText) } end
                 end
                 local function Stop() NI.RemoveTrackedInitiativeTask(id) end
-                local function Open() HousingFramesUtil.OpenFrameToTaskID(id) end
                 entries[#entries + 1] = {
                     key = "initiative" .. id,
                     title = info.taskName,
@@ -277,16 +266,13 @@ ns.RegisterSection("initiatives", {
                     OnClick = function(row, button)
                         if button == "RightButton" then
                             Menu(row, info.taskName, {
-                                { "View in Endeavors", Open },
                                 { OBJECTIVES_STOP_TRACKING or "Stop tracking", Stop },
                             })
                         elseif IsModifiedClick("QUESTWATCHTOGGLE") then
                             Stop()
-                        else
-                            Open()
                         end
                     end,
-                    OnEnter = Tooltip(info.taskName, "Left-click: Endeavors, Shift-click: stop tracking"),
+                    OnEnter = Tooltip(info.taskName, "Shift-click: stop tracking, Right-click: menu"),
                 }
             end
         end
@@ -349,15 +335,6 @@ local function RecipeEntry(recipeID, isRecraft)
     end
     local title = isRecraft and ("Recraft: " .. (schematic.name or "")) or schematic.name
     local function Stop() C_TradeSkillUI.SetRecipeTracked(recipeID, false, isRecraft) end
-    local function Open()
-        ProfessionsFrame_LoadUI()
-        if isRecraft then return end
-        if C_TradeSkillUI.IsRecipeProfessionLearned(recipeID) then
-            C_TradeSkillUI.OpenRecipe(recipeID)
-        else
-            Professions.InspectRecipe(recipeID)
-        end
-    end
     return {
         key = (isRecraft and "recraft" or "recipe") .. recipeID,
         title = title,
@@ -365,16 +342,13 @@ local function RecipeEntry(recipeID, isRecraft)
         OnClick = function(row, button)
             if button == "RightButton" then
                 Menu(row, title, {
-                    { "View recipe", Open },
                     { OBJECTIVES_STOP_TRACKING or "Stop tracking", Stop },
                 })
             elseif IsModifiedClick("RECIPEWATCHTOGGLE") or IsShiftKeyDown() then
                 Stop()
-            else
-                Open()
             end
         end,
-        OnEnter = Tooltip(title, "Left-click: open the recipe, Shift-click: stop tracking"),
+        OnEnter = Tooltip(title, "Shift-click: stop tracking, Right-click: menu"),
     }
 end
 
