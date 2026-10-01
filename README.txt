@@ -4,7 +4,7 @@ DeckUI
 A compact, controller-friendly interface for World of Warcraft on the Steam
 Deck - that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with seven load-on-demand modules. Enable or disable each one
+DeckUI is a hub with eight load-on-demand modules. Enable or disable each one
 in /deck; what you do not use is never loaded.
 
   DeckUI          the hub: device detection, settings window, movable frames
@@ -19,6 +19,8 @@ in /deck; what you do not use is never loaded.
                   (off until you switch it on in /deck)
   DeckUI Tooltip  the mouse-over tooltip in DeckUI's style, at a fixed place
                   (off until you switch it on in /deck)
+  DeckUI Nav      a compass bar, the navigation target with an arrow, and /way
+                  (off until you switch it on in /deck)
 
 Requires World of Warcraft Retail, Interface 120100 (Midnight).
 License: MIT, see LICENSE.txt. The bundled libraries and their
@@ -28,17 +30,18 @@ licences are listed in THIRD-PARTY.txt.
 Installation
 ------------
 1. Quit the game completely.
-2. Copy all eight folders into
+2. Copy all nine folders into
 
      World of Warcraft\_retail_\Interface\AddOns\
 
    so that you end up with AddOns\DeckUI, AddOns\DeckUI_Orbs,
    AddOns\DeckUI_Cross, AddOns\DeckUI_Spec, AddOns\DeckUI_Bags,
-   AddOns\DeckUI_Quests, AddOns\DeckUI_Map and AddOns\DeckUI_Tooltip.
+   AddOns\DeckUI_Quests, AddOns\DeckUI_Map, AddOns\DeckUI_Tooltip and
+   AddOns\DeckUI_Nav.
 3. Start the game. In the addon list on the character screen, DeckUI,
-   DeckUI Orbs, DeckUI Cross, DeckUI Spec, DeckUI Bags, DeckUI Quests and
-   DeckUI Map must all be checked. The six modules are marked "load on
-   demand" and depend on the hub - if the hub is unchecked, nothing loads.
+   DeckUI Orbs, DeckUI Cross, DeckUI Spec, DeckUI Bags, DeckUI Quests,
+   DeckUI Map, DeckUI Tooltip and DeckUI Nav must all be checked. The eight
+   modules are marked "load on demand" and depend on the hub - if the hub is unchecked, nothing loads.
 4. Log in. The orbs, the cross hotbar and the spec bar are there.
 
 A full restart is needed after installing or updating; /reload is not enough
@@ -103,6 +106,9 @@ Commands
   /deckmap                 jump to the Map tab
   /deckmap reset           bring the minimap back to its default place
   /decktip                 jump to the Tooltip tab
+  /decknav                 jump to the Nav tab
+  /decknav next, prev      step the navigation target through tracked quests
+  /way 45.2 67.8           set a waypoint (/way clear removes it; /dway with TomTom)
 
 Diagnostics for the cross hotbar, useful when reporting a problem:
 
@@ -180,6 +186,8 @@ Options in the Orbs tab:
                            with their numbers, the target as a wide bar at the
                            top with its cast, status icons and its own target.
                            Needs a /reload; focus, pet and boss stay orbs.
+Party and raid settings sit in the Group tab:
+
   Party list               Final Fantasy style rows for your party: class icon,
                            role, health with its number, a thin resource bar,
                            your buffs and all debuffs, a gold edge on the member
@@ -191,6 +199,14 @@ Options in the Orbs tab:
   Party list size          saved separately for Deck and PC
   Test (or /orbs test)     shows five rows of yourself, to set size, layout and
                            place without a group; off again with a second click
+  Raid frames              a compact grid, one column per raid group: tiles in
+                           class colour with name, a role icon for tanks and
+                           healers, up to three debuffs (dispellable ones with a
+                           coloured border), your own buffs and mana for healers.
+                           Replaces Blizzard's raid frames (the raid tools on the
+                           left stay), needs a /reload, off by default.
+  Raid frame size          saved separately for Deck and PC
+  Test (or /orbs raid)     shows a full raid of yourself
 
 
 DeckUI Cross - cross hotbar
@@ -246,6 +262,22 @@ Options in the Tooltip tab:
                            line appears a moment later, never in combat
   Whom the unit is targeting
   Item, spell and NPC IDs while Shift is held
+
+
+DeckUI Nav - compass and waypoints
+----------------------------------
+A compass bar at the top of the screen turns with you: cardinal points, the
+navigation target (at the edge, faded, when it lies behind you), your party in
+class colour, and the rares and treasures the minimap shows. Below it, the
+target's name with an arrow pointing at it, the distance and the arrival time
+at your current pace. The target is always the one Blizzard's navigation
+follows, so the diamond in the world, the map and the compass agree.
+
+Two key bindings (Options > Keybindings > AddOns > DeckUI) step through your
+tracked quests, nearest first - put them on a controller button to switch
+targets without opening the map. /way 45.2 67.8 sets Blizzard's own waypoint;
+decimal commas work too. The compass hides in instances, where the game gives
+no position. /deck unlock moves compass and target separately per device.
 
 
 DeckUI Spec - spec switcher

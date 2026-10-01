@@ -21,20 +21,21 @@ DeckUI_Bags/     module: bags, bank, warband bank (/bags)        off by default
 DeckUI_Quests/   module: own objective tracker (/quests)        off by default
 DeckUI_Map/      module: square minimap, smaller world map (/deckmap) off by default
 DeckUI_Tooltip/  module: the mouse-over tooltip (/decktip)       off by default
+DeckUI_Nav/      module: compass, navigation target, /way (/decknav) off by default
 ```
 Modules are `LoadOnDemand`, depend on `DeckUI`, and register a settings tab with
 `D.RegisterModule(key, { title, build = function(content) end })`. The hub loads
 enabled modules from `DeckUIDB.modules` at `ADDON_LOADED`.
 
-`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the eight addon
+`package.ps1` builds the upload zip: `dist\DeckUI-<version>.zip` with the nine addon
 folders at the **top level** (a wrapping folder would install everything one level too
 deep), README, LICENSE and THIRD-PARTY inside `DeckUI\`, without the `.github`/`utils`
 clutter from `libs\oUF` and without the unused LibStub/CallbackHandler copies that the
-other libraries bundle. It aborts if the eight `.toc` files disagree on version or interface.
+other libraries bundle. It aborts if the nine `.toc` files disagree on version or interface.
 The list of addon folders lives once, in `release-common.ps1`, which both scripts dot-source
 (with `Get-TocField`); a new module is added there and to `D.MODULE_*` in `DeckUI/core.lua`.
 `bump-version.ps1 <version>` raises `## Version` (and with `-Interface` the interface)
-in all eight at once - `package.ps1 -Version` only stamps the staged copies, so without
+in all nine at once - `package.ps1 -Version` only stamps the staged copies, so without
 the bump the repository and CurseForge drift apart. `changelog.ps1 <version>` produces the
 changelog the release sends along: the `## <version>` section of `CHANGELOG.md` when there
 is one, otherwise the commit subjects since the previous tag. Write the section - the
@@ -458,13 +459,36 @@ just the same, so:
   in combat nor while Blizzard's inspect window is open; results cached by GUID for 5 min.
 - `/decktip debug` prints the styled count, anchor, scale, NineSlice alpha and inspect state.
 
+## Nav module (not yet tested in game)
+
+Compass bar, navigation target panel, quest stepping and /way. Built from Blizzard's 12.1.0
+source (read 2026-10-01).
+- **The target is always Blizzard's super-tracked one** (`C_SuperTrack`): we only read it and
+  set it with `SetSuperTrackedQuestID` / `SetUserWaypoint` + `SetSuperTrackedUserWaypoint`,
+  so the in-world diamond, the map and the compass agree. Its map position comes from
+  `C_Navigation.GetNextWaypointForMap` first (the next route step - a portal when the target
+  is in another zone), then per type (user waypoint, quest, world quest, vignette, corpse).
+- Geometry is map space: positions on `C_Map.GetBestMapForUnit("player")`, yards from
+  `C_Map.GetMapWorldSize`. Angles follow `GetPlayerFacing` (0 = north, counterclockwise);
+  map x grows east, map y south, so the bearing is `atan2(-east, north)`. In instances
+  facing and position are nil and the compass hides.
+- Data is read ten times a second, turning moves the marks every frame; a separate driver
+  frame runs both, since the hidden bar runs no OnUpdate.
+- Distance is `C_Navigation.GetDistance()` (follows the route) with the map's straight line
+  as fallback; arrival time comes from how fast the distance shrinks over three seconds.
+- **Key bindings sit in the hub** (`DeckUI/Bindings.xml`, names in DeckUI/core.lua): the game
+  reads Bindings.xml at startup, before a LoadOnDemand module exists. They call
+  `D.NavStep`, which forwards to `D.navStep` once DeckUI_Nav is loaded.
+- `/way` is ours unless TomTom (or another addon) has it; `/dway` always works.
+- `/decknav debug` prints map, position, facing, map size, the target and its angle.
+
 ## Testing checklist (owner does this in-game)
 
 1. `/console scriptErrors 1`, `/reload`, no error window.
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all ten tabs works without error.
+5. Every checkbox / slider / button in all eleven tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked

@@ -1,0 +1,4 @@
+<Bindings>
+    <Binding name="DECKUI_NAV_NEXT" header="DECKUI" category="ADDONS">DeckUI.NavStep(1)</Binding>
+    <Binding name="DECKUI_NAV_PREV" category="ADDONS">DeckUI.NavStep(-1)</Binding>
+</Bindings>
