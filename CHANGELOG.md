@@ -16,7 +16,7 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   as a circle. On the Steam Deck LB + X/Y/B/A picks a stance and
   LB + D-pad left/right steps to the next or previous one, in combat too;
   on the PC your own stance keys keep working. Tick "Stance bar at the
-  crosses" in the Cross tab.
+  crosses" on the Cross page.
 - **Week overview rebuilt** - all characters in one table: Great Vault,
   keystone, prey hunts, delves, profession knowledge and weekly quests at
   a glance. Click a character for the details: vault item levels,
