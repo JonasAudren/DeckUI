@@ -172,13 +172,10 @@ DeckUI's loot window
                   Both are off by default.
 
 
-Devices tab
------------
+Devices
+-------
 Device            cycles Auto / Steam Deck / PC. Auto means: Steam Deck if
                   the screen is 1280x800 or a gamepad is active, else PC.
-Cross hotbar only on Steam Deck
-                  keeps the cross hotbar off on the PC. Off by default - on
-                  the PC the crosses run on your keyboard bindings instead.
 Set Blizzard UI scale per device at login
                   with one scale value per device, for the Deck's small
                   screen. Off by default; when you turn it off again, the
@@ -290,6 +287,15 @@ Options in the Cross tab:
   Show button labels
   Hide the Blizzard bars the crosses mirror
                            on by default, so nothing shows twice
+  Stance bar at the crosses
+                           forms, stances and auras as round buttons between
+                           the middle crosses. On the Steam Deck LB + X/Y/B/A
+                           picks one, LB + D-pad left/right steps through
+                           them (LB becomes Alt). Off by default.
+  Cross hotbar only on Steam Deck
+                           keeps the cross hotbar off on the PC. Off by
+                           default - on the PC the crosses run on your
+                           keyboard bindings instead.
 
 
 DeckUI Tooltip - the mouse-over window
@@ -398,7 +404,7 @@ Cross buttons light up but cast the wrong thing
 
 No cross hotbar on the PC
     Either the Cross module is off (its page, top right), or "Cross hotbar
-    only on Steam Deck" is checked in the Devices page.
+    only on Steam Deck" is checked on the Cross page.
 
 Cross buttons are empty
     The crosses only display Action Bar 1 and 2. Put your spells on those two

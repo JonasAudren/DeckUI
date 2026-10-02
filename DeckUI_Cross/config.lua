@@ -50,5 +50,11 @@ D.RegisterModule("Cross", {
         D.Checkbox(c, "Show what the assistant will cast next", -562, db, "showAssist",
             function(v) ns.SetAssistShown(v) end)
         D.Hint(c, "Green: castable now. Grey with a swirl: waiting is right. Needs the assistant on one of your action bars; move it with /deck unlock.", -594)
+
+        -- moved here from the Devices page (2026-10-02); a hub setting, so
+        -- the module's stand-in page has it too while the module is off
+        D.Label(c, "Devices", -650, 15)
+        D.Checkbox(c, "Cross hotbar only on Steam Deck", -672, function() return DeckUIDB end, "crossDeckOnly",
+            function(v) D.SetCrossDeckOnly(v) end)
     end,
 })

@@ -76,8 +76,9 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   right, `D.UpdateModuleSwitch`); a module that is off has no page yet, so a stand-in
   (`def.stub`, `D.MODULE_DESCRIPTIONS`) is listed greyed and replaced when the module registers.
   "General" is shown as "Overview" (modules with their state, minimap button, damage meter, Lua
-  errors); merchant and loot live on "Loot and merchant" (key "Loot"). Moved to `D.Flow` so far:
-  Overview, Loot and merchant. Still to move: Devices and every module page.
+  errors); merchant and loot live on "Loot and merchant" (key "Loot"). "Cross hotbar only on
+  Steam Deck" sits on the Cross page and its stand-in (`D.SetCrossDeckOnly`). Moved to `D.Flow`
+  so far: Overview, Loot and merchant, Devices. Still to move: every module page.
 - **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
   optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
   shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole
@@ -95,7 +96,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   call it was slow on hot paths and flipped when a gamepad came or went mid-session, sending
   positions into the other device's table. `/deck device` says when it would differ now.
 - Key bindings per device: WoW's CVar `synchronizeBindings` = 0 keeps them in the local WTF
-  folder instead of on the server (Devices tab, "Keep on this device: Key bindings"). The CVar
+  folder instead of on the server (Devices page, "Keep on this device: Key bindings"). The CVar
   lives in Config.wtf, so it is per machine by itself - no DeckUIDB entry. Switching it on
   saves the loaded bindings locally first; switching it off does *not* save, which would
   upload this machine's set over the server's. `/deck device` prints the state.

@@ -352,7 +352,7 @@ local function StubPage(key)
             if key == "Cross" then
                 f:Gap(6)
                 f:Checkbox("Cross hotbar only on Steam Deck", function() return DeckUIDB end, "crossDeckOnly",
-                    function() D.NeedReload("crossDeckOnly") end)
+                    function(v) D.SetCrossDeckOnly(v) end)
             end
             f:Gap(6)
             c.stateText = f:Hint("")   -- last: its text changes length
@@ -455,65 +455,69 @@ panel:AddTab("Loot", {
 })
 
 -------------------------------------------------------------------
--- "Devices" tab: everything that differs between the Deck and the PC
+-- "Devices": everything that differs between the Deck and the PC
 -------------------------------------------------------------------
--- Its own tab since the "keep on this device" options joined: the General
--- tab had grown to 832 pixels, too tall for the Deck's screen at 100% UI
--- scale.
+-- Moved to D.Flow 2026-10-02. "Cross hotbar only on Steam Deck" went to
+-- the Cross page (and its stand-in) - D.SetCrossDeckOnly below.
+function D.SetCrossDeckOnly(v)
+    if not v and DeckUIDB.modules.Cross then
+        D.SetModuleEnabled("Cross", true)
+    else
+        D.NeedReload("crossDeckOnly")
+    end
+end
+
 panel:AddTab("Devices", {
     title = "Devices",
     build = function(c)
         local db = function() return DeckUIDB end
+        local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
+        local f = D.Flow(c)
+        c.widgets = c.widgets or {}
 
-        D.Label(c, "Device", -6, 15)
-        local devBtn = D.Button(c, "Device", -28, function() end)
-        devBtn:SetWidth(300)
-        devBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
-        devBtn:SetScript("OnClick", function(b)
+        f:Label("This device")
+        local devBtn = f:Button("Device", function(b)
             D.CycleDevice()
             b:SetText(D.DeviceText())
-        end)
+        end, "Auto: Steam Deck when the screen is 1280x800 or a gamepad is active, otherwise PC. Decided once at login. Per-device settings - positions, sizes, the options below - follow this.")
+        devBtn:SetWidth(300)
+        devBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
         function devBtn:Refresh() self:SetText(D.DeviceText()) end
-        c.widgets = c.widgets or {}
         table.insert(c.widgets, devBtn)
 
-        D.Checkbox(c, "Cross hotbar only on Steam Deck", -66, db, "crossDeckOnly",
-            function(v)
-                if not v and DeckUIDB.modules.Cross then
-                    D.SetModuleEnabled("Cross", true)
-                else
-                    print("DeckUI: takes effect after /reload.")
-                    D.NeedReload("crossDeckOnly")
-                end
-            end)
+        f:Gap(4)
+        f:Label("UI scale")
+        f:Checkbox("Set Blizzard's UI scale per device at login", db, "applyUiScale", function(v)
+            if v then D.ApplyUiScale() end
+        end, "One scale for the Deck's small screen, one for the PC. Switched off, the current scale simply stays.")
+        f:Slider("On the Steam Deck", 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
+            function() if D.IsDeck() then D.ApplyUiScale() end end)
+        f:Slider("On the PC", 0.5, 1.0, 0.01, pct, db, "uiScalePC",
+            function() if not D.IsDeck() then D.ApplyUiScale() end end)
 
-        local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
-        D.Checkbox(c, "Set Blizzard UI scale per device at login", -94, db, "applyUiScale",
-            function(v) if v then D.ApplyUiScale() else print("DeckUI: UI scale is no longer touched (current value stays until you change it in Options).") end end)
-        D.Slider(c, "UI scale on Steam Deck", -128, 0.5, 1.0, 0.01, pct, db, "uiScaleDeck",
-            function(v) if D.IsDeck() then D.ApplyUiScale() end end)
-        D.Slider(c, "UI scale on PC", -192, 0.5, 1.0, 0.01, pct, db, "uiScalePC",
-            function(v) if not D.IsDeck() then D.ApplyUiScale() end end)
-
-        D.Label(c, "Positions (per device)", -256, 15)
-        local unlockBtn = D.Button(c, "Unlock frames", -278, function() end)
-        unlockBtn:SetScript("OnClick", function(b)
+        f:Label("Positions")
+        local unlockBtn = f:Button("Unlock frames", function(b)
             D.SetUnlocked(not D.unlocked)
             b:SetText(D.unlocked and "Lock frames" or "Unlock frames")
-        end)
+        end, "Shows a labelled overlay on every DeckUI frame; drag them where you want them. Each device keeps its own places. Also /deck unlock.")
         function unlockBtn:Refresh()
             self:SetText(D.unlocked and "Lock frames" or "Unlock frames")
         end
         table.insert(c.widgets, unlockBtn)
+        f:Button("Reset all positions", function()
+            D.Dialog({
+                text = "Put every DeckUI frame back to its default place on this device?",
+                accept = "Reset",
+                onAccept = D.ResetPositions,
+            })
+        end, "Only this device's places; the other device keeps its own.")
 
-        D.Button(c, "Reset all positions", -318, D.ResetPositions)
-
-        D.Label(c, "Keep on this device", -370, 15)
-        D.Checkbox(c, "Key bindings", -392,
-            function() return D.bindingsCVar end, "localOnly", D.SetLocalBindings)
-        D.Checkbox(c, "Action bar layouts", -420, db, "keepBars", D.SetKeepBars)
-        D.Checkbox(c, "Edit Mode layout", -448, db, "keepLayouts", D.SetKeepLayouts)
-        D.Hint(c, "Blizzard keeps all three on its server, so every device loads the same. Tick them on each device: what is set up there when you tick a box becomes that device's, and later changes are remembered.", -484)
+        f:Gap(4)
+        f:Label("Keep on this device")
+        local keepTip = "Blizzard keeps this on its server, so every device loads the same. Tick it on each device: what is set up there when you tick the box becomes that device's, and later changes are remembered."
+        f:Checkbox("Key bindings", function() return D.bindingsCVar end, "localOnly", D.SetLocalBindings, keepTip)
+        f:Checkbox("Action bar layouts", db, "keepBars", D.SetKeepBars, keepTip)
+        f:Checkbox("Edit Mode layout", db, "keepLayouts", D.SetKeepLayouts, keepTip)
     end,
 })
 
