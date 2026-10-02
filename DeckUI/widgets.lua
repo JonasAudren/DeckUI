@@ -43,6 +43,53 @@ function D.Hint(parent, text, y, width)
 end
 
 -------------------------------------------------------------------
+-- DeckUI's flat look: a dark fill and four one-pixel lines, anchored only
+-------------------------------------------------------------------
+-- The same box the week window, the raid tiles and the bags wear. Never
+-- BackdropTemplate on anything a tooltip could size (see the Tooltip
+-- notes); plain textures are safe everywhere.
+function D.FlatBox(frame, alpha, edge)
+    local bg = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+    bg:SetAllPoints()
+    bg:SetColorTexture(0.05, 0.05, 0.05, alpha or 0.95)
+    local c = edge or 0.3
+    local lines = {}
+    for _, p in ipairs({ { "TOPLEFT", "TOPRIGHT", true }, { "BOTTOMLEFT", "BOTTOMRIGHT", true },
+                         { "TOPLEFT", "BOTTOMLEFT" }, { "TOPRIGHT", "BOTTOMRIGHT" } }) do
+        local t = frame:CreateTexture(nil, "BORDER")
+        t:SetColorTexture(c, c, c, 1)
+        t:SetPoint(p[1])
+        t:SetPoint(p[2])
+        if p[3] then t:SetHeight(1) else t:SetWidth(1) end
+        lines[#lines + 1] = t
+    end
+    return bg, lines
+end
+
+-- A Blizzard panel button in the flat look: its three-piece red art at
+-- alpha 0 (textures only, the template's scripts stay), our box instead,
+-- a lighter fill under the mouse.
+function D.FlattenButton(b)
+    for _, key in ipairs({ "Left", "Middle", "Right" }) do
+        if b[key] then b[key]:SetAlpha(0) end
+    end
+    for _, tex in ipairs({ b:GetNormalTexture(), b:GetPushedTexture(), b:GetDisabledTexture() }) do
+        tex:SetAlpha(0)
+    end
+    local hl = b:GetHighlightTexture()
+    if hl then
+        hl:SetTexture("Interface\\Buttons\\WHITE8x8")
+        hl:SetVertexColor(1, 1, 1, 0.08)
+        hl:ClearAllPoints()
+        hl:SetPoint("TOPLEFT", 1, -1)
+        hl:SetPoint("BOTTOMRIGHT", -1, 1)
+    end
+    local bg = D.FlatBox(b, 1, 0.35)
+    bg:SetColorTexture(0.12, 0.12, 0.12, 1)
+    return b
+end
+
+-------------------------------------------------------------------
 -- Button
 -------------------------------------------------------------------
 function D.Button(parent, text, y, onClick)
@@ -52,6 +99,7 @@ function D.Button(parent, text, y, onClick)
     b:SetText(text)
     b:GetFontString():SetFont(D.FONT, 15, "OUTLINE")
     b:SetScript("OnClick", onClick)
+    D.FlattenButton(b)
     return b
 end
 
@@ -223,4 +271,53 @@ end
 
 function D.HideDialog(key)
     if dialog and (key == nil or D.DialogShown(key)) then dialog:Hide() end
+end
+
+-------------------------------------------------------------------
+-- Flow: the widgets above, stacked without pixel numbers
+-------------------------------------------------------------------
+-- A settings page used to place every widget at a hand-counted y, and every
+-- new option moved everything below it. D.Flow keeps the cursor instead:
+--   local f = D.Flow(content)
+--   f:Label("Raid frames"); f:Checkbox("Show", db, "showRaid", apply)
+--   f:Slider("Size", 0.5, 1.4, 0.05, pct, db, "scale", apply); f:Hint("...")
+-- Each call returns the widget, like the plain functions. The page scrolls
+-- (panel.lua), so a long page is no longer a problem.
+local Flow = {}
+Flow.__index = Flow
+
+function D.Flow(parent, y)
+    return setmetatable({ parent = parent, y = y or -6 }, Flow)
+end
+
+function Flow:Gap(n) self.y = self.y - (n or 10) end
+
+function Flow:Label(text, size)
+    local fs = D.Label(self.parent, text, self.y, size or 15)
+    self.y = self.y - 24
+    return fs
+end
+
+function Flow:Checkbox(text, db, key, apply)
+    local cb = D.Checkbox(self.parent, text, self.y, db, key, apply or function() end)
+    self.y = self.y - 28
+    return cb
+end
+
+function Flow:Slider(text, minV, maxV, step, fmt, db, key, apply)
+    local s = D.Slider(self.parent, text, self.y, minV, maxV, step, fmt, db, key, apply)
+    self.y = self.y - 64
+    return s
+end
+
+function Flow:Button(text, onClick)
+    local b = D.Button(self.parent, text, self.y, onClick)
+    self.y = self.y - 40
+    return b
+end
+
+function Flow:Hint(text)
+    local fs = D.Hint(self.parent, text, self.y)
+    self.y = self.y - fs:GetStringHeight() - 10
+    return fs
 end

@@ -64,6 +64,15 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   is where the heading is, and the two printed on top of each other.
   Slider/checkbox take `db` as a **function** returning the table, plus a key and an apply function.
   Widgets with a `Refresh()` method and a place in `content.widgets` are refreshed on tab show.
+- **The settings window** (`DeckUI/panel.lua`, rebuilt 2026-10-02 after the menu review; not yet
+  tested in game): 600x540, a sidebar of pages grouped by theme (`D.PAGE_GROUPS`, names in
+  `D.PAGE_NAMES`; a page no group names lands under "More"), the page scrolls, and a bar at the
+  bottom collects changes waiting for a reload (`D.NeedReload(key[, false])`) with a Reload
+  button. Pages are still registered with `D.RegisterModule` and still build themselves; old
+  pages keep their hand-placed y values and are measured for the scroll height. New and moved
+  pages use **`D.Flow(content)`** (widgets.lua), which stacks the same widgets without pixel
+  numbers. Buttons wear the flat look (`D.FlattenButton`, `D.FlatBox`). Next steps planned: move
+  the pages to `D.Flow` one by one, hints into tooltips, an on/off switch and "Defaults" per page.
 - **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
   optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
   shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole

@@ -1,84 +1,225 @@
 local D = DeckUI
 
 -------------------------------------------------------------------
--- Window
+-- The settings window: a sidebar of pages, the page scrolls
 -------------------------------------------------------------------
-local panel = CreateFrame("Frame", "DeckUIPanel", UIParent, "BackdropTemplate")
-panel:SetSize(340, 730)   -- height follows the tab rows, see LayoutTabs
+-- Rebuilt 2026-10-02 (owner's choice from the menu review): thirteen tabs
+-- in two rows of 42-pixel buttons had become unreadable, and every page
+-- was hand-placed to the pixel inside a window that could neither grow
+-- (the Deck's 800-pixel screen) nor scroll - each new option meant moving
+-- everything below it. Now:
+--  - a sidebar on the left, pages grouped by theme (D.PAGE_GROUPS); a page
+--    a module registers lands in its group, an unknown one under "More";
+--  - the page on the right scrolls, so its length no longer matters;
+--  - a bar at the bottom collects changes that need a /reload
+--    (D.NeedReload), with a button that does it.
+-- Pages keep their old build(content) functions for now - they are moved
+-- to D.Flow (widgets.lua) one by one.
+-------------------------------------------------------------------
+local W, H = 600, 540
+local SIDE_W = 160
+local GOLD = { 1, 0.82, 0 }
+
+local panel = CreateFrame("Frame", "DeckUIPanel", UIParent)
+panel:SetSize(W, H)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
+panel:SetToplevel(true)
 panel:SetMovable(true)
+panel:SetClampedToScreen(true)
 panel:EnableMouse(true)
 panel:RegisterForDrag("LeftButton")
 panel:SetScript("OnDragStart", panel.StartMoving)
 panel:SetScript("OnDragStop", panel.StopMovingOrSizing)
-panel:SetBackdrop({
-    bgFile   = "Interface\\Buttons\\WHITE8x8",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    edgeSize = 16,
-    insets   = { left = 4, right = 4, top = 4, bottom = 4 },
-})
-panel:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
+D.FlatBox(panel, 0.95)
 panel:Hide()
 tinsert(UISpecialFrames, "DeckUIPanel")
 D.panel = panel
 
 local title = panel:CreateFontString(nil, "OVERLAY")
 title:SetFont(D.FONT, 18, "OUTLINE")
-title:SetPoint("TOP", 0, -12)
+title:SetPoint("TOPLEFT", 14, -12)
+title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
 title:SetText("DeckUI")
 
+local pageTitle = panel:CreateFontString(nil, "OVERLAY")
+pageTitle:SetFont(D.FONT, 16, "OUTLINE")
+pageTitle:SetPoint("TOPLEFT", SIDE_W + 22, -14)
+
 local close = CreateFrame("Button", nil, panel, "UIPanelCloseButton")
-close:SetPoint("TOPRIGHT", -2, -2)
+close:SetPoint("TOPRIGHT", 2, 2)
 
 -------------------------------------------------------------------
--- Tabs
+-- Groups and names of the pages
 -------------------------------------------------------------------
-panel.tabs     = {}
+D.PAGE_GROUPS = {
+    { title = "General",   pages = { "General", "Devices" } },
+    { title = "Units",     pages = { "Orbs", "Group", "Raid" } },
+    { title = "Actions",   pages = { "Cross", "Spec" } },
+    { title = "World",     pages = { "Quests", "Map", "Nav" } },
+    { title = "Inventory", pages = { "Bags" } },
+    { title = "Info",      pages = { "Tooltip", "Week" } },
+}
+-- the sidebar's name where the module's title is too short to say it
+D.PAGE_NAMES = {
+    Orbs = "Player and target", Cross = "Cross hotbar", Spec = "Specialization",
+    Nav = "Navigation", Map = "Maps", Week = "Week overview",
+}
+
+-------------------------------------------------------------------
+-- Sidebar
+-------------------------------------------------------------------
+local side = CreateFrame("Frame", nil, panel)
+side:SetPoint("TOPLEFT", 8, -40)
+side:SetPoint("BOTTOMLEFT", 8, 8)
+side:SetWidth(SIDE_W)
+D.FlatBox(side, 0.6, 0.2)
+
+panel.tabs     = {}   -- key -> sidebar entry (the old name, kept for callers)
 panel.contents = {}
 panel.tabOrder = {}
 
--- Up to six tabs share one row; beyond that they go into two rows and
--- the window grows by one row's height, content moving down with it.
--- Seven in one row would leave 42 pixels each - too narrow for "General"
--- in any readable size.
-local BASE_HEIGHT = 730   -- the tallest tab, Cross, ends with a hint at -594
-local ROW = 30
+local headings, usedHeadings = {}, 0
 
-local function LayoutTabs()
-    local n = #panel.tabOrder
-    local rows = n > 6 and 2 or 1
-    local perRow = math.ceil(n / rows)
-    local w = math.min(100, (320 - (perRow - 1) * 4) / perRow)
-    -- six tabs leave 50 pixels each, where "General" in 13 would be cut off
-    local size = w < 60 and 11 or 13
-    for i, key in ipairs(panel.tabOrder) do
-        local tab = panel.tabs[key]
-        local row, col = math.floor((i - 1) / perRow), (i - 1) % perRow
-        tab:SetSize(w, 26)
-        tab:GetFontString():SetFont(D.FONT, size, "OUTLINE")
-        tab:ClearAllPoints()
-        tab:SetPoint("TOPLEFT", 10 + col * (w + 4), -40 - row * ROW)
+local function Heading(text, y)
+    usedHeadings = usedHeadings + 1
+    local fs = headings[usedHeadings]
+    if not fs then
+        fs = side:CreateFontString(nil, "OVERLAY")
+        fs:SetFont(D.FONT, 11, "OUTLINE")
+        fs:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+        headings[usedHeadings] = fs
     end
-    local top = -76 - (rows - 1) * ROW
-    for _, content in pairs(panel.contents) do
-        content:SetPoint("TOPLEFT", 10, top)
-    end
-    panel:SetHeight(BASE_HEIGHT + (rows - 1) * ROW)
+    fs:ClearAllPoints()
+    fs:SetPoint("TOPLEFT", 10, y)
+    fs:SetText(text:upper())
+    fs:Show()
 end
 
+local function NewEntry(key)
+    local b = CreateFrame("Button", nil, side)
+    b:SetSize(SIDE_W - 8, 20)
+    b.text = b:CreateFontString(nil, "OVERLAY")
+    b.text:SetFont(D.FONT, 13, "OUTLINE")
+    b.text:SetPoint("LEFT", 14, 0)
+    b.text:SetJustifyH("LEFT")
+    b.bar = b:CreateTexture(nil, "ARTWORK")
+    b.bar:SetColorTexture(GOLD[1], GOLD[2], GOLD[3], 1)
+    b.bar:SetPoint("TOPLEFT", 4, -3)
+    b.bar:SetPoint("BOTTOMLEFT", 4, 3)
+    b.bar:SetWidth(2)
+    b.fill = b:CreateTexture(nil, "BACKGROUND")
+    b.fill:SetAllPoints()
+    b.fill:SetColorTexture(1, 1, 1, 0.07)
+    b:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+    b:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.05)
+    b:SetScript("OnClick", function() panel:ShowTab(key) end)
+    return b
+end
+
+local function PageName(key)
+    local content = panel.contents[key]
+    return D.PAGE_NAMES[key] or (content and content.def.title) or key
+end
+
+local function LayoutSidebar()
+    for i = 1, usedHeadings do headings[i]:Hide() end
+    usedHeadings = 0
+    for _, b in pairs(panel.tabs) do b:Hide() end
+
+    local y, placed = -8, {}
+    local function Group(name, keys)
+        local any = false
+        for _, key in ipairs(keys) do
+            if panel.tabs[key] and not placed[key] then
+                if not any then
+                    Heading(name, y)
+                    y = y - 16
+                    any = true
+                end
+                local b = panel.tabs[key]
+                b:ClearAllPoints()
+                b:SetPoint("TOPLEFT", 4, y)
+                b.text:SetText(PageName(key))
+                b:Show()
+                placed[key] = true
+                y = y - 21
+            end
+        end
+        if any then y = y - 8 end
+    end
+    for _, group in ipairs(D.PAGE_GROUPS) do Group(group.title, group.pages) end
+    Group("More", panel.tabOrder)   -- whatever no group names
+end
+
+-------------------------------------------------------------------
+-- The page: a scroll frame on the right, plus the reload bar below it
+-------------------------------------------------------------------
+local scroll = CreateFrame("ScrollFrame", "DeckUIPanelScroll", panel, "UIPanelScrollFrameTemplate")
+scroll:SetPoint("TOPLEFT", SIDE_W + 16, -42)
+scroll:SetPoint("BOTTOMRIGHT", -30, 40)
+local PAGE_W = W - SIDE_W - 16 - 30
+
+-- Old pages place their widgets at fixed points and say nothing about
+-- their height, so it is measured: the lowest widget's bottom edge.
+local function Measure(content)
+    local top = content:GetTop()
+    if not top then return end
+    local low = top - 20
+    local function Visit(...)
+        for i = 1, select("#", ...) do
+            local r = select(i, ...)
+            if r:IsShown() then
+                local bottom = r:GetBottom()
+                if bottom and bottom < low then low = bottom end
+            end
+        end
+    end
+    Visit(content:GetChildren())
+    Visit(content:GetRegions())
+    content:SetHeight(math.max(10, top - low + 16))
+end
+
+-- changes that wait for a /reload, by key, with a button that does it
+local reloadBar = CreateFrame("Frame", nil, panel)
+reloadBar:SetPoint("BOTTOMLEFT", SIDE_W + 16, 8)
+reloadBar:SetPoint("BOTTOMRIGHT", -8, 8)
+reloadBar:SetHeight(26)
+reloadBar:Hide()
+local reloadText = reloadBar:CreateFontString(nil, "OVERLAY")
+reloadText:SetFont(D.FONT, 12, "OUTLINE")
+reloadText:SetPoint("LEFT", 4, 0)
+reloadText:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+local reloadBtn = CreateFrame("Button", nil, reloadBar, "UIPanelButtonTemplate")
+reloadBtn:SetSize(90, 22)
+reloadBtn:SetPoint("RIGHT")
+reloadBtn:SetText("Reload")
+reloadBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
+reloadBtn:SetScript("OnClick", function() C_UI.Reload() end)
+D.FlattenButton(reloadBtn)
+
+local pendingReload = {}
+
+-- key: anything that names the change, so switching back and forth
+-- counts once; pass false as `on` when the change was undone
+function D.NeedReload(key, on)
+    pendingReload[key] = (on ~= false) or nil
+    local n = 0
+    for _ in pairs(pendingReload) do n = n + 1 end
+    reloadText:SetText(n == 1 and "1 change takes effect after a reload."
+        or ("%d changes take effect after a reload."):format(n))
+    reloadBar:SetShown(n > 0)
+end
+
+-------------------------------------------------------------------
+-- Pages
+-------------------------------------------------------------------
 function panel:AddTab(key, def)
     if self.tabs[key] then return end
+    self.tabs[key] = NewEntry(key)
 
-    local tab = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
-    tab:SetText(def.title or key)
-    tab:GetFontString():SetFont(D.FONT, 13, "OUTLINE")
-    tab:SetScript("OnClick", function() self:ShowTab(key) end)
-    self.tabs[key] = tab
-
-    local content = CreateFrame("Frame", nil, self)
-    content:SetPoint("TOPLEFT", 10, -76)
-    content:SetPoint("BOTTOMRIGHT", -10, 10)
+    local content = CreateFrame("Frame", nil, scroll)
+    content:SetSize(PAGE_W, 10)
     content:Hide()
     content.def = def
     content:SetScript("OnShow", function(c)
@@ -87,18 +228,28 @@ function panel:AddTab(key, def)
             if c.def.build then c.def.build(c) end
         end
         D.RefreshWidgets(c)
+        -- the widgets have their places only after this frame is drawn
+        C_Timer.After(0, function() Measure(c) end)
     end)
     self.contents[key] = content
 
     table.insert(self.tabOrder, key)
-    LayoutTabs()
+    LayoutSidebar()
 end
 
 function panel:ShowTab(key)
+    if not self.contents[key] then key = "General" end
     for k, content in pairs(self.contents) do
-        content:SetShown(k == key)
-        self.tabs[k]:SetEnabled(k ~= key)
+        local on = k == key
+        if on then scroll:SetScrollChild(content) end
+        content:SetShown(on)
+        local b = self.tabs[k]
+        b.bar:SetShown(on)
+        b.fill:SetShown(on)
+        b.text:SetTextColor(on and GOLD[1] or 1, on and GOLD[2] or 1, on and GOLD[3] or 1)
     end
+    scroll:SetVerticalScroll(0)
+    pageTitle:SetText(PageName(key))
     self.current = key
 end
 
@@ -128,7 +279,11 @@ panel:AddTab("General", {
         local modules = function() return DeckUIDB.modules end
         for i, key in ipairs(D.MODULE_ORDER) do
             D.Checkbox(c, D.MODULE_TITLES[key], -28 * i, modules, key,
-                function(v) D.SetModuleEnabled(key, v) end)
+                function(v)
+                    D.SetModuleEnabled(key, v)
+                    -- a module once loaded stays until the reload
+                    D.NeedReload("module:" .. key, not v and C_AddOns.IsAddOnLoaded("DeckUI_" .. key))
+                end)
         end
 
         -- below the last module, however many there are
@@ -185,6 +340,7 @@ panel:AddTab("Devices", {
                     D.SetModuleEnabled("Cross", true)
                 else
                     print("DeckUI: takes effect after /reload.")
+                    D.NeedReload("crossDeckOnly")
                 end
             end)
 
