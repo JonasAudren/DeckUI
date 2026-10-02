@@ -6,14 +6,14 @@ local D = DeckUI
 -------------------------------------------------------------------
 -- Asked for by the owner (2026-10-01): one window with the Great Vault,
 -- locked instances, the keystone, weekly quests, renown and the capped
--- currencies - for all characters. Everything comes from the game's own
--- APIs (12.1.0 docs), no hand-kept lists:
---  - weekly quests have no list in the game, so they are LEARNED: every
---    quest with the weekly frequency that shows up in a quest log is
---    remembered account-wide, and each character asks the game whether
---    it is done this week (IsQuestFlaggedCompleted);
---  - capped currencies are found by walking the currency list for a
---    weekly or seasonal cap.
+-- currencies - for all characters. Reworked 2026-10-02 into one table of
+-- all characters, with delves, prey hunts and profession knowledge added.
+--  - what counts this week (crests, delve and prey quests, profession
+--    knowledge, the important weekly quests) is kept by ID in data.lua;
+--  - other weekly quests are LEARNED on top: every quest with the weekly
+--    frequency that shows up in a quest log is remembered account-wide,
+--    and each character asks the game whether it is done this week
+--    (IsQuestFlaggedCompleted). A right click in the window hides one.
 --
 -- Each character writes a snapshot of its week (DeckWeekDB.chars) while
 -- logged in; the others show what they had when last seen. A snapshot
@@ -53,7 +53,14 @@ local function Vault()
     for _, a in ipairs(C_WeeklyRewards.GetActivities() or {}) do
         local kind = VaultTypes()[a.type]
         if kind and Plain(a.progress, a.threshold, a.level) then
-            vault[kind][a.index] = { progress = a.progress, threshold = a.threshold, level = a.level }
+            local slot = { progress = a.progress, threshold = a.threshold, level = a.level }
+            -- the item level an unlocked slot offers, as AlterEgo reads it
+            if a.progress >= a.threshold and a.id and C_WeeklyRewards.GetExampleRewardItemHyperlinks then
+                local link = C_WeeklyRewards.GetExampleRewardItemHyperlinks(a.id)
+                local ilvl = link and C_Item.GetDetailedItemLevelInfo(link)
+                if ilvl and Plain(ilvl) then slot.ilvl = ilvl end
+            end
+            vault[kind][a.index] = slot
         end
     end
     vault.rewardsWaiting = C_WeeklyRewards.HasAvailableRewards and C_WeeklyRewards.HasAvailableRewards() or false
@@ -122,64 +129,117 @@ local function Renown()
     return list
 end
 
--- Every currency with a weekly or a seasonal cap, plus the ones the player
--- shows in the backpack. Collapsed headers hide their children, so they
--- are opened for the walk and closed again afterwards.
+-- One currency as the window needs it. Whether a cap is weekly or for the
+-- season is the currency's own answer, not ours.
+local function Currency(id)
+    local c = id and C_CurrencyInfo.GetCurrencyInfo(id)
+    if not c or not c.name or c.name == "" or not Plain(c.quantity, c.totalEarned) then return nil end
+    local weekly = (c.maxWeeklyQuantity or 0) > 0
+    local seasonal = c.useTotalEarnedForMaxQty and (c.maxQuantity or 0) > 0
+    return {
+        id = id, name = c.name, icon = c.iconFileID, quantity = c.quantity or 0,
+        weekEarned = weekly and c.quantityEarnedThisWeek or nil,
+        weekMax = weekly and c.maxWeeklyQuantity or nil,
+        seasonEarned = seasonal and c.totalEarned or nil,
+        seasonMax = seasonal and c.maxQuantity or nil,
+        max = (not seasonal) and (c.maxQuantity or 0) > 0 and c.maxQuantity or nil,
+    }
+end
+
+local function Season()
+    local id = C_MythicPlus.GetCurrentSeason and C_MythicPlus.GetCurrentSeason()
+    return ns.SEASONS[id] or ns.SEASONS[ns.DEFAULT_SEASON]
+end
+
+local function Crests()
+    local list = {}
+    for _, id in ipairs(Season().crests) do list[#list + 1] = Currency(id) end
+    return list
+end
+
 local function Currencies()
-    local list, reopened = {}, {}
-    local i = 1
-    while i <= C_CurrencyInfo.GetCurrencyListSize() do
-        local info = C_CurrencyInfo.GetCurrencyListInfo(i)
-        if info and info.isHeader and not info.isHeaderExpanded then
-            C_CurrencyInfo.ExpandCurrencyList(i, true)
-            reopened[#reopened + 1] = info.name
-        end
-        i = i + 1
+    local season, C = Season(), ns.CURRENCIES
+    local list = {}
+    for _, id in ipairs({ season.catalyst, season.spark, C.keys, C.shards, C.voidcore, C.manaCrystals, C.marl }) do
+        list[#list + 1] = Currency(id)
     end
-    for index = 1, C_CurrencyInfo.GetCurrencyListSize() do
-        local c = C_CurrencyInfo.GetCurrencyListInfo(index)
-        if c and not c.isHeader and c.currencyID and Plain(c.quantity) then
-            local weekly = (c.maxWeeklyQuantity or 0) > 0
-            local seasonal = c.useTotalEarnedForMaxQty and (c.maxQuantity or 0) > 0
-            if weekly or seasonal or c.isShowInBackpack then
-                list[#list + 1] = {
-                    id = c.currencyID, name = c.name, icon = c.iconFileID, quantity = c.quantity,
-                    weekEarned = weekly and c.quantityEarnedThisWeek or nil,
-                    weekMax = weekly and c.maxWeeklyQuantity or nil,
-                    seasonEarned = seasonal and c.totalEarned or nil,
-                    seasonMax = seasonal and c.maxQuantity or nil,
-                    max = (not seasonal) and (c.maxQuantity or 0) > 0 and c.maxQuantity or nil,
-                }
-            end
-        end
+    return list
+end
+
+local Done = C_QuestLog.IsQuestFlaggedCompleted
+
+local function Delves()
+    local data = ns.DELVES
+    local bounty = 0
+    for _, item in ipairs(data.bountyItems) do bounty = bounty + (C_Item.GetItemCount(item, true) or 0) end
+    local keys = C_CurrencyInfo.GetCurrencyInfo(ns.CURRENCIES.keys)
+    return {
+        weekly = Done(data.weeklyQuest),
+        bounty = bounty, bountyUsed = Done(data.bountyQuest),
+        keys = keys and Plain(keys.quantity) and keys.quantity or 0,
+    }
+end
+
+local function Prey()
+    local done = { normal = 0, hard = 0, nightmare = 0 }
+    for questID, difficulty in pairs(ns.PREY) do
+        if Done(questID) then done[difficulty] = done[difficulty] + 1 end
     end
-    -- close what was closed, from the bottom so the indices stay valid
-    for index = C_CurrencyInfo.GetCurrencyListSize(), 1, -1 do
-        local info = C_CurrencyInfo.GetCurrencyListInfo(index)
-        if info and info.isHeader and info.isHeaderExpanded then
-            for _, name in ipairs(reopened) do
-                if name == info.name then C_CurrencyInfo.ExpandCurrencyList(index, false) break end
+    local active = C_QuestLog.GetActivePreyQuest and C_QuestLog.GetActivePreyQuest()
+    return { done = done, active = active and active > 0 and (C_QuestLog.GetTitleForQuestID(active) or true) or nil }
+end
+
+-- The week's knowledge per profession: points taken out of points on offer,
+-- split by source. A pool is one quest a week, so it offers its points once.
+local KINDS = { "treatise", "quest", "treasure" }
+local function Professions()
+    local list = {}
+    local p1, p2 = GetProfessions()
+    for _, index in ipairs({ p1 or 0, p2 or 0 }) do
+        local name, icon, skillLine
+        if index > 0 then name, icon, _, _, _, _, skillLine = GetProfessionInfo(index) end
+        local sources = skillLine and ns.PROFESSIONS[skillLine]
+        if sources then
+            local prof = { name = name, icon = icon, points = 0, max = 0, parts = {} }
+            for _, kind in ipairs(KINDS) do prof.parts[kind] = { points = 0, max = 0 } end
+            for _, s in ipairs(sources) do
+                local part, done = prof.parts[s.kind], 0
+                for _, id in ipairs(s.ids) do if Done(id) then done = done + 1 end end
+                local offered = s.pool and 1 or #s.ids
+                local taken = math.min(done, offered)
+                part.points, part.max = part.points + taken * s.kp, part.max + offered * s.kp
+                prof.points, prof.max = prof.points + taken * s.kp, prof.max + offered * s.kp
             end
+            list[#list + 1] = prof
         end
     end
     return list
 end
 
--- Weekly quests: learn what is in the log, then ask about all of them
+-- Weekly quests: learn what is in the log, then ask about all of them.
+-- The ones data.lua knows are listed there already and never learned.
 local function LearnWeeklies()
     local known = DeckWeekDB.weeklies
     for i = 1, C_QuestLog.GetNumQuestLogEntries() do
         local info = C_QuestLog.GetInfo(i)
-        if info and not info.isHeader and info.questID and info.frequency == Enum.QuestFrequency.Weekly then
+        if info and not info.isHeader and info.questID and info.frequency == Enum.QuestFrequency.Weekly
+            and not ns.KNOWN_QUESTS[info.questID] then
             known[info.questID] = info.title or known[info.questID] or ("Quest " .. info.questID)
         end
     end
 end
 
+-- done this week, keyed like the window lists them: a fixed entry by its
+-- first ID (any quest of a pool counts), a learned one by its own
 local function Weeklies()
     local done = {}
+    for _, w in ipairs(ns.WEEKLIES) do
+        for _, id in ipairs(w.ids) do
+            if Done(id) then done[w.ids[1]] = true break end
+        end
+    end
     for questID in pairs(DeckWeekDB.weeklies) do
-        if C_QuestLog.IsQuestFlaggedCompleted(questID) then done[questID] = true end
+        if Done(questID) then done[questID] = true end
     end
     return done
 end
@@ -200,11 +260,8 @@ end
 -------------------------------------------------------------------
 -- The snapshot of this character
 -------------------------------------------------------------------
-local lastSnap = 0
-
 local function Snapshot()
     if not DeckWeekDB then return end
-    lastSnap = GetTime()
     LearnWeeklies()
     local _, class = UnitClass("player")
     local _, ilvl = GetAverageItemLevel()
@@ -214,20 +271,15 @@ local function Snapshot()
         updated = time(),
         resetAt = time() + (C_DateAndTime.GetSecondsUntilWeeklyReset() or 0),
     }
-    local ok
-    ok, snap.vault = pcall(Vault)
-    if not ok then snap.vault = nil end
-    ok, snap.locks = pcall(Locks)
-    if not ok then snap.locks = nil end
-    ok, snap.keystone = pcall(Keystone)
-    if not ok then snap.keystone = nil end
-    ok, snap.renown = pcall(Renown)
-    if not ok then snap.renown = nil end
-    ok, snap.currencies = pcall(Currencies)
-    if not ok then snap.currencies = nil end
-    snap.weekliesDone = Weeklies()
-    ok, snap.travelers = pcall(TravelersLog)
-    if not ok then snap.travelers = nil end
+    -- each part on its own: one that fails leaves the others standing
+    for key, collect in pairs({
+        vault = Vault, locks = Locks, keystone = Keystone, renown = Renown, travelers = TravelersLog,
+        crests = Crests, currencies = Currencies, delves = Delves, prey = Prey, profs = Professions,
+        weekliesDone = Weeklies,
+    }) do
+        local ok, result = pcall(collect)
+        snap[key] = ok and result or nil
+    end
     DeckWeekDB.chars[CharKey()] = snap
     if ns.Refresh then ns.Refresh() end
 end
@@ -257,6 +309,11 @@ local function Init()
     DeckWeekDB = DeckWeekDB or {}
     DeckWeekDB.chars = DeckWeekDB.chars or {}
     DeckWeekDB.weeklies = DeckWeekDB.weeklies or {}
+    DeckWeekDB.hidden = DeckWeekDB.hidden or {}
+    -- learned before data.lua knew them
+    for questID in pairs(DeckWeekDB.weeklies) do
+        if ns.KNOWN_QUESTS[questID] then DeckWeekDB.weeklies[questID] = nil end
+    end
     -- the data the game sends on request
     RequestRaidInfo()
     if C_MythicPlus.RequestMapInfo then C_MythicPlus.RequestMapInfo() end
@@ -269,7 +326,7 @@ local ev = CreateFrame("Frame")
 for _, e in ipairs({
     "UPDATE_INSTANCE_INFO", "WEEKLY_REWARDS_UPDATE", "CHALLENGE_MODE_MAPS_UPDATE",
     "CHALLENGE_MODE_COMPLETED", "QUEST_TURNED_IN", "QUEST_ACCEPTED", "MAJOR_FACTION_RENOWN_LEVEL_CHANGED",
-    "CURRENCY_DISPLAY_UPDATE", "PLAYER_ENTERING_WORLD", "BOSS_KILL",
+    "CURRENCY_DISPLAY_UPDATE", "PLAYER_ENTERING_WORLD", "BOSS_KILL", "SKILL_LINES_CHANGED",
 }) do pcall(ev.RegisterEvent, ev, e) end
 ev:RegisterEvent("PLAYER_LOGOUT")
 ev:SetScript("OnEvent", function(_, event)
@@ -277,10 +334,6 @@ ev:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGOUT" then
         -- no timers any more: the last word, now
         pcall(Snapshot)
-    elseif event == "CURRENCY_DISPLAY_UPDATE" and GetTime() - lastSnap < 3 then
-        -- opening and closing currency headers during a snapshot fires
-        -- this too; it must not ask for the next snapshot
-        return
     elseif event == "BOSS_KILL" then
         RequestRaidInfo()
     else

@@ -557,21 +557,34 @@ source (read 2026-10-01).
 - `/way` is ours unless TomTom (or another addon) has it; `/dway` always works.
 - `/decknav debug` prints map, position, facing, map size, the target and its angle.
 
-## Week module (works in game 2026-10-01; due for a complete overhaul)
+## Week module (first version worked in game 2026-10-01; reworked 2026-10-02, not yet tested)
 
-The week at a glance for every character (owner's wish, 2026-10-01): Great Vault
-(`C_WeeklyRewards.GetActivities`, grouped by `Enum.WeeklyRewardChestThresholdType`), lockouts
-(`GetSavedInstanceInfo`, world bosses), keystone and runs (`C_MythicPlus`), renown of the current
-expansion (`C_MajorFactions`), currencies with a weekly or seasonal cap (the currency list,
-collapsed headers opened for the walk and closed again), Traveler's Log points.
+The week at a glance for every character (owner's wish, 2026-10-01). Reworked the next day
+on the owner's verdict (layout, look and missing content): **one table, a row per
+character** (vault rows as squares, keystone, prey hunts N/H/NM, delve weekly + keys,
+profession knowledge, weekly quests); a click unfolds the details in two columns below
+the row, the character being played starts unfolded. Right click a character: forget it
+(`D.Dialog`); right click a weekly quest: hide it for all (`DeckWeekDB.hidden`).
+- Read from the game: Great Vault (`C_WeeklyRewards.GetActivities`, grouped by
+  `Enum.WeeklyRewardChestThresholdType`, item level of unlocked slots from
+  `GetExampleRewardItemHyperlinks`), lockouts (`GetSavedInstanceInfo`, world bosses), keystone
+  and runs (`C_MythicPlus`), renown of the current expansion (`C_MajorFactions`), Traveler's
+  Log, the active hunt (`C_QuestLog.GetActivePreyQuest`).
+- **Kept by ID in `data.lua`** (Midnight; IDs as AlterEgo, Plumber and Myu's Knowledge Points
+  Tracker use them, read 2026-10-02 from the installed copies - follow them at a patch):
+  crests, catalyst and spark per M+ season (`C_MythicPlus.GetCurrentSeason`: 17 = S1, 18 = S2,
+  fallback 18), coffer keys/shards and other currencies, the delve weekly and Trovehunter's
+  Bounty, prey quests per difficulty (4 a week each), weekly profession knowledge per base
+  skill line (7th return of `GetProfessionInfo`; a "pool" is one quest a week), the important
+  weekly quests. Caps come from the currency info itself (weekly or seasonal), never the table.
+  The old walk over the currency list (opening collapsed headers) is gone - it found no crests.
 - **Snapshots per character** in `DeckWeekDB.chars["Name-Realm"]`, written at most every two
-  seconds after the relevant events and at logout. Each keeps `resetAt`; past it the snapshot
-  counts as stale and its vault, runs and weeklies show as reset.
-- **Weekly quests are learned**: any quest with `Enum.QuestFrequency.Weekly` in a quest log
-  goes into `DeckWeekDB.weeklies` (account-wide); each character asks
-  `IsQuestFlaggedCompleted` for all of them. `/week forget <questID>` removes one.
-- Expanding currency headers fires CURRENCY_DISPLAY_UPDATE; events within three seconds of a
-  snapshot are ignored, or every snapshot would ask for the next.
+  seconds after the relevant events and at logout; each part collected in its own pcall.
+  Each keeps `resetAt`; past it the snapshot counts as stale and everything weekly shows as reset.
+- **Other weekly quests are learned**: any quest with `Enum.QuestFrequency.Weekly` in a quest
+  log goes into `DeckWeekDB.weeklies` (account-wide) unless `data.lua` knows it
+  (`ns.KNOWN_QUESTS`); each character asks `IsQuestFlaggedCompleted` for all of them.
+  `/week forget <questID>` removes one.
 - Opened by a round button on screen (`DeckWeekButton`, `DeckWeekDB.showButton`, on; badge =
   unlocked vault slots this week; moved only with /deck unlock - a click stays a click), `/week`,
   the hub binding DECKUI_WEEK (`D.ToggleWeek` -> `D.weekToggle`) and Shift-click on the

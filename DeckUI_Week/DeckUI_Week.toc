@@ -11,6 +11,7 @@
 ## LoadOnDemand: 1
 ## SavedVariables: DeckWeekDB
 
+data.lua
 core.lua
 window.lua
 config.lua
