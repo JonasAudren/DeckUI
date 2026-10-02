@@ -13,24 +13,34 @@ local function Store(key)
     end
 end
 
+-- Moved to D.Flow 2026-10-02: explanations as tooltips, and the journey
+-- bar got a show button here (it was only /quests journey).
 D.RegisterModule("Quests", {
     title = "Quests",
     build = function(c)
         local px  = function(v) return tostring(v) end
         local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
+        local f = D.Flow(c)
 
-        D.Label(c, "Tracker (per device)", -6, 15)
-        D.Slider(c, "Width", -28, 180, 400, 10, px, device, "width", Store("width"))
-        D.Slider(c, "Size", -92, 0.6, 1.4, 0.05, pct, device, "scale", Store("scale"))
-        D.Slider(c, "Text size", -156, 9, 16, 1, px, device, "textSize", Store("textSize"))
-        D.Slider(c, "Height limit", -220, 150, 900, 10, px, device, "maxHeight", Store("maxHeight"))
+        f:Hint("Drag the tracker by its frame to move it. Click a section heading to fold it, the - in the corner folds everything.")
 
-        D.Hint(c, "Drag the tracker by its frame to move it. Click a section heading to fold it, the - in the corner folds everything. Taller than the limit, it scrolls with the mouse wheel.", -290)
+        f:Label("Tracker (this device)")
+        f:Slider("Width", 180, 400, 10, px, device, "width", Store("width"))
+        f:Slider("Size", 0.6, 1.4, 0.05, pct, device, "scale", Store("scale"))
+        f:Slider("Text size", 9, 16, 1, px, device, "textSize", Store("textSize"))
+        f:Slider("Height limit", 150, 900, 10, px, device, "maxHeight", Store("maxHeight"),
+            "Taller than this, the tracker scrolls with the mouse wheel.")
 
-        D.Label(c, "Delves", -348, 15)
-        D.Checkbox(c, "Take a single power automatically", -370, db, "autoDelvePower", nothing)
-        D.Checkbox(c, "Show Delver's Journey progress", -398, db, "journeyBar", nothing)
-        D.Checkbox(c, "Star hunt targets an achievement still needs", -426, db, "huntMarks", nothing)
-        D.Hint(c, "A treasure or rare offering just one power needs no choice; it is taken and named in the chat. The journey bar appears when the season renown grows - /quests journey shows it to place it with /deck unlock. On the hunt table a star marks targets still open, with the lists that miss them (N, H, NM). The Nemesis count and the active hunt show in the tracker.", -460)
+        f:Label("Delves and the hunt")
+        f:Checkbox("Take a single power automatically", db, "autoDelvePower", nothing,
+            "A treasure or rare that offers just one power needs no choice: it is taken and named in the chat.")
+        f:Checkbox("Show Delver's Journey progress", db, "journeyBar", nothing,
+            "A bar appears for a few seconds whenever the season renown grows. Move it with /deck unlock.")
+        f:Button("Show the journey bar now", function() ns.ShowJourney() end,
+            "Shows it with your current progress, to see it and place it. Also /quests journey.")
+        f:Checkbox("Star hunt targets an achievement still needs", db, "huntMarks", nothing,
+            "On the hunt table a star marks targets still open, with the lists that miss them (N, H, NM).")
+        f:Gap(4)
+        f:Hint("The Nemesis count and the active hunt show in the tracker by themselves.")
     end,
 })

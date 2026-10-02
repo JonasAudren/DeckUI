@@ -78,8 +78,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   "General" is shown as "Overview" (modules with their state, minimap button, damage meter, Lua
   errors); merchant and loot live on "Loot and merchant" (key "Loot"). "Cross hotbar only on
   Steam Deck" sits on the Cross page and its stand-in (`D.SetCrossDeckOnly`). Moved to `D.Flow`
-  so far: Overview, Loot and merchant, Devices, Orbs, Group, Raid, Cross, Spec, Bags (`Flow:Pair`, `Flow:Cycles`).
-  Still to move: Quests, Map, Tooltip, Nav, Week.
+  so far: Overview, Loot and merchant, Devices, Orbs, Group, Raid, Cross, Spec, Bags, Quests (`Flow:Pair`, `Flow:Cycles`).
+  Still to move: Map, Tooltip, Nav, Week.
 - **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
   optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
   shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole
