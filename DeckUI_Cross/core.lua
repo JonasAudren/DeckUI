@@ -28,6 +28,7 @@ local HALF_X       = HALF_W / 2 + HALF_GAP / 2
 local MID_OFFSET_Y = (ns.SIZE / 2 + RING)                     -- top of the big side buttons
                    + (ns.SIZE_MID + ns.GAP_MID)                -- small cross: centre to bottom button centre
                    + (ns.SIZE_MID / 2 + RING) + 2              -- bottom button radius + air
+ns.MID_OFFSET_Y = MID_OFFSET_Y   -- the stance row sits at this height (stance.lua)
 
 -------------------------------------------------------------------
 -- Anchor
@@ -85,6 +86,7 @@ local NUM_PAGES = math.max(
 -- Key labels: our own glyphs from DeckUI_Cross\textures (TGA files)
 -------------------------------------------------------------------
 local TEX_PATH = "Interface\\AddOns\\DeckUI_Cross\\textures\\"
+ns.TEX_PATH = TEX_PATH
 
 -- cluster 1 = D-pad (up, right, down, left)
 -- cluster 2 = face buttons in Steam Deck / Xbox layout (Y, B, A, X)
@@ -322,6 +324,8 @@ local function MakeRound(b, size)
         b.Flash:SetAllPoints(b)
     end
 end
+
+ns.MakeRound = MakeRound   -- the stance buttons wear the same look (stance.lua)
 
 -------------------------------------------------------------------
 -- Buttons

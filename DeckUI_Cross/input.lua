@@ -66,14 +66,23 @@ end
 -- one step on a tap, like the mouse wheel.
 local LB = "PADLSHOULDER"
 
+-- LB is Alt while either of its uses is on: zoom, or the stance row's
+-- keys (LB + face buttons / D-pad left-right, stance.lua)
+local function LBIsAlt()
+    return DeckCrossDB.lbZoom or DeckCrossDB.stanceBar
+end
+ns.LBIsAlt = LBIsAlt
+
 local function ApplyZoomModifier()
-    if DeckCrossDB.lbZoom then
+    if LBIsAlt() then
         SetCVar("GamePadEmulateAlt", LB)
     elseif GetCVar("GamePadEmulateAlt") == LB then
         -- ours to undo; an Alt the player set up differently stays
         SetCVar("GamePadEmulateAlt", "none")
     end
 end
+
+ns.ApplyLBModifier = ApplyZoomModifier
 
 local function BindZoom()
     if not DeckCrossDB.lbZoom then return end
@@ -131,7 +140,7 @@ function ns.SetupGamepad()
     SetCVar("GamePadEnable", "1")
     SetCVar("GamePadEmulateShift", "PADLTRIGGER")
     SetCVar("GamePadEmulateCtrl",  "PADRTRIGGER")
-    SetCVar("GamePadEmulateAlt",   DeckCrossDB.lbZoom and LB or "none")
+    SetCVar("GamePadEmulateAlt",   LBIsAlt() and LB or "none")
     print("DeckUI Cross: gamepad enabled, LT = left, RT = right, LT+RT = middle.")
 end
 
@@ -146,9 +155,11 @@ function ns.SetLBZoom(on)
     end
     -- ApplyBindings sets the CVar and the bindings, or waits for combat end;
     -- switched off, it only drops the zoom bindings, so undo Alt here
+    -- (ApplyZoomModifier keeps it while the stance keys still need it)
     if not on then ApplyZoomModifier() end
     ns.ApplyBindings()
     print(on and "DeckUI Cross: LB + D-pad up/down zooms the camera (hold for a smooth zoom). LB now works as Alt."
+        or LBIsAlt() and "DeckUI Cross: LB zoom off. LB stays Alt for the stance keys."
         or "DeckUI Cross: LB zoom off, LB is a button of its own again.")
 end
 
@@ -276,6 +287,22 @@ local function ShowBar(bar)
     bar:Show()
 end
 
+-- the same for any other bar, found through one of its buttons (stance.lua)
+function ns.SetBlizzardBarHidden(buttonName, state)
+    if InCombatLockdown() then return false end
+    local bar, why = ResolveBar(buttonName)
+    if not bar then
+        print("DeckUI Cross: " .. why)
+        return true
+    end
+    -- a bar that is one of the mirrored ones stays with their setting
+    for _, name in ipairs(BARS) do
+        if ResolveBar(name) == bar then return true end
+    end
+    if state then HideBar(bar) else ShowBar(bar) end
+    return true
+end
+
 function ns.SetBlizzardBarsHidden(state)
     DeckCrossDB.hideBlizzardBars = state
     if InCombatLockdown() then
@@ -392,6 +419,7 @@ function ns.PrintBars()
         end
     end
     PrintLeave()
+    if ns.PrintStance then ns.PrintStance() end
 end
 
 -------------------------------------------------------------------
@@ -491,12 +519,15 @@ local function Init()
     DeckCrossDB.testMode = nil
     DeckCrossDB.pcKeys   = nil
     if DeckCrossDB.hideBlizzardBars == nil then DeckCrossDB.hideBlizzardBars = true end
+    -- the stance row (stance.lua): off until ticked; on the Deck its LB keys come with it
+    if DeckCrossDB.stanceBar == nil then DeckCrossDB.stanceBar = false end
     D.MakeMovable(ns.anchor, "Cross Hotbar", DeckCrossDB)
     D.MakeMovable(leave, "Leave vehicle", DeckCrossDB)
     ns.ApplyBindings()
     ns.ApplyLabels()
     ns.SetBlizzardBarsHidden(DeckCrossDB.hideBlizzardBars)
     if ns.InitAssist then ns.InitAssist() end
+    if ns.InitStance then ns.InitStance() end
     UpdateHighlight()
     print("DeckUI Cross: " .. (D.IsDeck() and "controller mode (LT/RT)" or "keyboard mode (mirrors Action Bar 1 + 2, Blizzard bindings)"))
     WarnConsolePortBar()

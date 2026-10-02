@@ -18,4 +18,5 @@ libs\LibActionButton-1.0\LibActionButton-1.0.lua
 core.lua
 input.lua
 assist.lua
+stance.lua
 config.lua

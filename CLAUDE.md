@@ -240,6 +240,19 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `ALT-PADDUP`/`ALT-PADDDOWN` go to `CAMERAZOOMIN`/`CAMERAZOOMOUT` as override bindings
   (smooth while held, one step on a tap - `Bindings_Standard.xml`). Switched off, Alt goes
   back to "none" only if it is still LB.
+- **Stance row at the crosses** (`DeckUI_Cross/stance.lua`, `DeckCrossDB.stanceBar`, off by
+  default; not yet tested in game). Round buttons between the two small middle crosses
+  (child of `DeckCrossAnchor`, so it scales and moves with them), one per form/stance/aura;
+  Blizzard's stance bar is hidden like the mirrored bars (`ns.SetBlizzardBarHidden`, which
+  refuses a bar that resolves to a mirrored one). The buttons are `SecureActionButtonTemplate`
+  CheckButtons with type "spell" and the form's spellID (4th return of
+  `GetShapeshiftFormInfo`), set out of combat; cooldowns go into the Cooldown frame untouched.
+  Keys: the player's own SHAPESHIFTBUTTON1-10 keys are override-clicked onto ours (read at
+  login and on toggle - a key bound later needs a /reload). On the Deck LB becomes Alt
+  (`ns.LBIsAlt`: zoom *or* stance row): LB + X/Y/B/A = stance 1-4, LB + D-pad right/left =
+  next/previous. Next/previous depend on the current form, so a secure state driver on
+  `[form:n]` re-binds them with `SetBindingClick` in its snippet - in combat too.
+  `/dc bars` prints the row and where `StanceButton1` hangs.
 - Gamepad glyph atlases (`Gamepad_Ltr_Face_*`) do not exist on this client; we ship our own
   TGA glyphs in `DeckUI_Cross/textures/`.
 - Health/power values may be *secret values*: display them via tags / Blizzard helpers
