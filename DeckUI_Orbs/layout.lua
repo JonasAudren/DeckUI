@@ -32,6 +32,19 @@ ns.DEFAULTS = {
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
     showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
     style           = "orbs",      -- player/target: "orbs" or "ff" (ffstyle.lua), needs /reload
+    -- raid grid (raid.lua, Raid tab); sizes and arrangement are per device
+    raidColor       = "ff",        -- health bar: "ff" (FF green) | "class"
+    raidHpText      = "none",      -- "none" | "percent" | "short"
+    raidSort        = "group",     -- "group" | "role" | "class"
+    raidDebuffs     = 3,           -- 0-6, needs /reload
+    raidBuffs       = 3,           -- 0-6, needs /reload
+    raidDispelOnly  = false,       -- only debuffs you can dispel, needs /reload
+    raidDispelGlow  = true,        -- the tile framed in the dispel colour
+    raidAggro       = true,        -- red edge while the member has aggro
+    raidMana        = true,        -- mana bar for healers
+    raidRoles       = true,        -- role icons for tanks and healers
+    raidBgAlpha     = 0.8,
+    raidRangeAlpha  = 0.4,
 }
 
 -- Custom tag: abbreviated health (1.2M, 340K). Uses Blizzard's own
@@ -328,8 +341,8 @@ end
 -- (the party list's and the raid grid's sizes are per device too; eight
 -- groups side by side are 700 pixels wide, so the Deck starts smaller)
 local DEVICE_DEFAULTS = {
-    deck = { partyScale = 1, partyAcross = false, raidScale = 0.85 },
-    pc   = { partyScale = 1, partyAcross = false, raidScale = 1 },
+    deck = { partyScale = 1, partyAcross = false, raidScale = 0.85, raidW = 84, raidH = 34, raidRows = false },
+    pc   = { partyScale = 1, partyAcross = false, raidScale = 1,    raidW = 96, raidH = 36, raidRows = false },
 }
 function ns.DeviceDB() return D.DeviceDB(DeckOrbsDB, DEVICE_DEFAULTS) end
 
@@ -568,6 +581,8 @@ oUF:Factory(function(self)
     for k, v in pairs(ns.DEFAULTS) do
         if DeckOrbsDB[k] == nil then DeckOrbsDB[k] = v end
     end
+    -- the raid grid's first rework had a "dark" bar, gone the same day
+    if DeckOrbsDB.raidColor == "dark" then DeckOrbsDB.raidColor = "ff" end
     D.MigrateToDevice(DeckOrbsDB, { "scale" })
     ns.GLOW = DeckOrbsDB.glow
 

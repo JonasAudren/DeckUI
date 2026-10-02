@@ -298,16 +298,29 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   the icon showed the whole sheet of class circles (2026-09-30). The same oUF as the orbs -
   a separate module would need its own copy.
 - **Raid frames** (`DeckUI_Orbs/raid.lua`, `DeckOrbsDB.showRaid`, off by default, needs a
-  /reload; tested in game 2026-10-01 in a real raid): a compact grid in class colours, one column per raid
-  group - **eight headers with `groupFilter` "1".."8"**, because one header sorted by group
-  fills its columns five at a time and a short group would pull the next one in. Tiles show
-  name, role icon for tanks and healers only, `[deck:raidstatus]` (Dead/Ghost/Offline, no
-  health number), three debuffs with dispel border, three own buffs, mana for healers (the
-  role element's PostUpdate shows the bar). Blizzard's `CompactRaidFrameManager.container`
-  is silenced (`UnregisterAllEvents` down the tree) and parked under a hidden frame out of
-  combat - the manager itself (markers, ready check) stays. Size per device (`raidScale`),
-  test mode ("Test", `/orbs raid`): forty "player" frames. Party and raid settings live in
-  their own **Group** tab, registered from DeckUI_Orbs/config.lua - the Orbs tab was full.
+  /reload; first version tested in a real raid 2026-10-01, reworked 2026-10-02 - not yet
+  tested): a compact grid, one column (or row) per raid group - **eight headers with
+  `groupFilter` "1".."8"**, because one header sorted by group fills its columns five at a
+  time and a short group would pull the next one in. Sorted by role or class, header 1 takes
+  the whole raid (`groupBy`, `maxColumns` 8) and the other seven are hidden. Tiles: name,
+  role icon for tanks and healers only, optional health text, `[deck:raidstatus]`
+  (Dead/Ghost/Offline), debuffs bottom left, own buffs bottom right, mana for healers (the
+  role element's PostUpdate shows the bar). **Shaped like the FF player's parameter bar**
+  (owner's wish the same day, after a first "dark" version): dark panel, name in class colour
+  on top, debuffs top right, a thin health bar (FF green = oUF's `colorHealth`, or class
+  colour) with mana under it for healers, health text and own buffs at the bottom.
+  **The dispel frame** is a third aura container over the whole tile: one button the tile's
+  size, filter `HARMFUL|` + `AuraUtil.AuraFilters.RaidPlayerDispellable`, icon at alpha 0,
+  border coloured by the engine (`AddDispelTypeTexture`) - no dispel type passes through our
+  code. **Aggro** is a red edge from `UnitThreatSituation` >= 2, shown only while the value is
+  plain. Blizzard's `CompactRaidFrameManager.container` is silenced (`UnregisterAllEvents`
+  down the tree) and parked under a hidden frame out of combat - the manager itself
+  (markers, ready check) stays. Per device: size, width, height, columns or rows
+  (`raidScale`, `raidW`, `raidH`, `raidRows`); the rest is shared (`raid*` in
+  `ns.DEFAULTS`). Aura counts and the dispel-only filter need a /reload, everything else
+  applies live (`ns.ApplyRaidLayout` out of combat, `ns.ApplyRaidLook` any time). Test mode
+  ("Test", `/orbs raid`): forty "player" frames. Settings in their own **Raid** tab
+  (DeckUI_Orbs/config.lua); the party list keeps the **Group** tab.
 
 ## Bags module (bag window tested in game 2026-09-29; bank not yet)
 
@@ -610,7 +623,7 @@ the row, the character being played starts unfolded. Right click a character: fo
 2. Chat shows `DeckUI Cross: controller mode` (Deck) / `keyboard mode` (PC).
 3. LT/RT + key casts and lights the button; assistant held repeats; icon follows.
 4. `/deck unlock` → drag → positions stick per device.
-5. Every checkbox / slider / button in all twelve tabs works without error.
+5. Every checkbox / slider / button in all thirteen tabs works without error.
 6. Fresh-install test: move SavedVariables away, log in, defaults apply.
 
 ## Roadmap / parked

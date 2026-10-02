@@ -55,8 +55,9 @@ D.RegisterModule("Orbs", {
     end,
 })
 
--- Party and raid share a tab of their own: the Orbs tab is full, and the
--- window cannot grow on the Deck's 800-pixel screen.
+-- The party list has a tab of its own: the Orbs tab is full, and the
+-- window cannot grow on the Deck's 800-pixel screen. The raid frames got
+-- theirs when they gained their settings (2026-10-02).
 D.RegisterModule("Group", {
     title = "Group",
     build = function(c)
@@ -78,22 +79,112 @@ D.RegisterModule("Group", {
             ns.DeviceDB().partyScale = v
             ns.ApplyPartyScale()
         end)
+    end,
+})
 
-        D.Label(c, "Raid frames", -166, 15)
+-- A button that steps through a list of values, half the panel wide;
+-- side "left" or "right". get/set read and write the value.
+local function Cycle(c, y, side, label, order, names, get, set)
+    local b = D.Button(c, label, y, function() end)
+    b:SetWidth(148)
+    b:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
+    b:ClearAllPoints()
+    if side == "left" then
+        b:SetPoint("TOPLEFT", c, "TOPLEFT", 8, y)
+    else
+        b:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, y)
+    end
+    local function Text() return label .. ": " .. (names[get()] or tostring(get())) end
+    b:SetScript("OnClick", function(self)
+        local cur, nextValue = get(), order[1]
+        for i, v in ipairs(order) do
+            if v == cur then nextValue = order[i % #order + 1] end
+        end
+        set(nextValue)
+        self:SetText(Text())
+    end)
+    function b:Refresh() self:SetText(Text()) end
+    c.widgets = c.widgets or {}
+    table.insert(c.widgets, b)
+    return b
+end
+
+-- a shared raid setting through a Cycle button
+local function RaidCycle(c, y, side, label, key, order, names, apply)
+    return Cycle(c, y, side, label, order, names,
+        function() return DeckOrbsDB[key] end,
+        function(v) DeckOrbsDB[key] = v; apply() end)
+end
+
+local function Reload(what)
+    return function() print("DeckUI Orbs: " .. what .. " - takes effect after /reload.") end
+end
+
+local look = function() ns.ApplyRaidLook() end
+local layout = function() if ns.ApplyRaidLayout then ns.ApplyRaidLayout() end end
+local function Counts()
+    local t = {}
+    for i = 0, 6 do t[i] = tostring(i) end
+    return { 0, 1, 2, 3, 4, 5, 6 }, t
+end
+local function Percents(list)
+    local names = {}
+    for _, v in ipairs(list) do names[v] = math.floor(v * 100 + 0.5) .. "%" end
+    return list, names
+end
+
+D.RegisterModule("Raid", {
+    title = "Raid",
+    build = function(c)
+        D.Label(c, "Raid frames", -6, 15)
         -- a full raid of yourself, session only
-        local raidTest = D.Button(c, "Test", -162, function()
+        local raidTest = D.Button(c, "Test", -2, function()
             ns.SetRaidTest(not ns.raidTest)
         end)
         raidTest:SetWidth(70)
         raidTest:ClearAllPoints()
-        raidTest:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -162)
-        D.Checkbox(c, "Show the raid frames (hides Blizzard's; /reload)", -188, db, "showRaid", function(v)
+        raidTest:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -2)
+        D.Checkbox(c, "Show the raid frames (hides Blizzard's; /reload)", -28, db, "showRaid", function(v)
             print("DeckUI Orbs: the raid frames " .. (v and "appear" or "go") .. " after /reload.")
         end)
-        D.Hint(c, "Groups 1 to 8 side by side in class colours: up to three debuffs (dispellable ones with a coloured border), the buffs you cast, and mana for healers. Blizzard's raid tools on the left stay.", -218)
-        D.Slider(c, "Raid frame size (this device)", -284, 0.5, 1.4, 0.05, pct, ns.DeviceDB, "raidScale", function(v)
+
+        D.Slider(c, "Size (this device)", -60, 0.5, 1.4, 0.05, pct, ns.DeviceDB, "raidScale", function(v)
             ns.DeviceDB().raidScale = v
             ns.ApplyRaidScale()
         end)
+        local px = function(v) return math.floor(v + 0.5) .. " px" end
+        D.Slider(c, "Width (this device)", -124, 60, 140, 2, px, ns.DeviceDB, "raidW", function(v)
+            ns.DeviceDB().raidW = v
+            layout()
+        end)
+        D.Slider(c, "Height (this device)", -188, 30, 60, 2, px, ns.DeviceDB, "raidH", function(v)
+            ns.DeviceDB().raidH = v
+            layout()
+        end)
+
+        Cycle(c, -252, "left", "Groups", { false, true }, { [false] = "Columns", [true] = "Rows" },
+            function() return ns.DeviceDB().raidRows and true or false end,
+            function(v) ns.DeviceDB().raidRows = v; layout() end)
+        RaidCycle(c, -252, "right", "Sort", "raidSort", { "group", "role", "class" },
+            { group = "Group", role = "Role", class = "Class" }, layout)
+        RaidCycle(c, -292, "left", "Bar", "raidColor", { "ff", "class" },
+            { ff = "FF green", class = "Class" }, look)
+        RaidCycle(c, -292, "right", "Health", "raidHpText", { "none", "percent", "short" },
+            { none = "None", percent = "Percent", short = "1.2M" }, look)
+        local counts, countNames = Counts()
+        RaidCycle(c, -332, "left", "Debuffs", "raidDebuffs", counts, countNames, Reload("debuff count saved"))
+        RaidCycle(c, -332, "right", "Own buffs", "raidBuffs", counts, countNames, Reload("buff count saved"))
+        local bgs, bgNames = Percents({ 0.5, 0.6, 0.7, 0.8, 0.9, 1 })
+        RaidCycle(c, -372, "left", "Background", "raidBgAlpha", bgs, bgNames, look)
+        local ranges, rangeNames = Percents({ 0.2, 0.3, 0.4, 0.5, 0.6, 0.8 })
+        RaidCycle(c, -372, "right", "Out of range", "raidRangeAlpha", ranges, rangeNames, look)
+
+        D.Checkbox(c, "Frame the tile in the dispel colour", -412, db, "raidDispelGlow", look)
+        D.Checkbox(c, "Red edge while a member has aggro", -440, db, "raidAggro", look)
+        D.Checkbox(c, "Mana bar for healers", -468, db, "raidMana", look)
+        D.Checkbox(c, "Role icons for tanks and healers", -496, db, "raidRoles", look)
+        D.Checkbox(c, "Only debuffs you can dispel (/reload)", -524, db, "raidDispelOnly",
+            Reload("debuff filter saved"))
+        D.Hint(c, "Each tile is a small parameter bar like the Final Fantasy player frame: name in class colour, a thin health bar, debuffs top right, your buffs bottom right. The dispel frame shows only what you can dispel. Blizzard's raid tools on the left stay.", -556)
     end,
 })

@@ -31,6 +31,17 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
     forget it.
   - The round week button on screen can now be dragged anywhere directly,
     without unlocking the frames first.
+- **Raid frames rebuilt** - each member is now a small parameter bar like
+  the Final Fantasy player frame: name in class colour, a thin health bar
+  in FF green (or class colour), debuffs top right, your heals over time
+  and shields bottom right, mana for healers. A tile is framed in the
+  debuff's colour when you can dispel it, and edged red while the member
+  has aggro.
+  - A **Raid** tab of its own: size, width and height per device, groups
+    as columns or rows, sorted by group, role or class, health text,
+    how many debuffs and buffs, background and out-of-range opacity, and
+    switches for the dispel frame, aggro edge, mana bars, role icons and
+    "only debuffs you can dispel".
 - **Navigation:** the arrival time now says its unit ("45 s", "3 min")
   and shows up sooner once you head for the target.
 
