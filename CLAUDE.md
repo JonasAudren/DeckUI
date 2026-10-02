@@ -80,6 +80,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   built with `D.Flow`** since 2026-10-02 (`Flow:Pair`, `Flow:Cycles` for buttons side by side);
   a new option is one more line, never a pixel shift. Explanations go into the widget's tooltip,
   a page keeps at most a line or two of hint; settings that need a reload call `D.NeedReload`.
+  The footer has **Move** (`D.SetUnlocked(true, set)` unlocks only the page's frames,
+  `D.PAGE_FRAMES`; `D.IsUnlocked(key)` is what frames ask, unlock callbacks get the set too)
+  and **Defaults** (`D.PAGE_RESET`: clears the page's keys in its SavedVariables - `match` where
+  pages share a table, `keep` for data like the week's characters - never positions, then
+  reloads so every module refills its defaults). `/deck <page>` opens a page (`D.FindPage`).
+  **A new frame or page needs its entry in `D.PAGE_FRAMES` / `D.PAGE_RESET`.**
 - **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
   optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
   shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole

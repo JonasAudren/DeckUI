@@ -180,23 +180,146 @@ local function Measure(content)
     content:SetHeight(math.max(10, top - low + 16))
 end
 
+-------------------------------------------------------------------
+-- The footer: "Move" and "Defaults" for the page, the reload notice
+-------------------------------------------------------------------
+-- Added 2026-10-02 with the last points of the menu review: a page's own
+-- frames can be unlocked alone (D.SetUnlocked with a set of keys), and a
+-- page can put its settings back to the defaults.
+
+-- the frames each page moves, by the key D.MakeMovable got
+D.PAGE_FRAMES = {
+    Orbs    = { "Player", "Target", "Focus", "Boss frames", "Player (FF)", "Target (FF)", "Boss frames (FF)" },
+    Group   = { "Party" },
+    Raid    = { "Raid" },
+    Cross   = { "Cross Hotbar", "Leave vehicle", "Assist indicator" },
+    Spec    = { "Spec bar" },
+    Bags    = { "Bags", "Bank" },
+    Quests  = { "Quest tracker", "Delver's Journey" },
+    Map     = { "Minimap", "World map" },
+    Tooltip = { "Tooltip" },
+    Nav     = { "Compass", "Navigation target" },
+    Week    = { "Week", "Week button" },
+    Loot    = { "Loot", "Loot list" },
+}
+
+-- What "Defaults" clears on each page: the SavedVariables table by name,
+-- `match` for the keys that belong to this page when several pages share
+-- one table (Orbs, Group and Raid; the hub's Loot settings), and `keep` for
+-- what is data, not settings. Positions are never touched - "Reset all
+-- positions" on the Devices page does that. The game reloads right after,
+-- and each module fills what is missing with its defaults as it loads.
+local LOOT_KEYS = { autoSellJunk = true, autoRepair = true, repairGuild = true, fastLoot = true, lootWindow = true }
+local function GroupKey(k) return k == "showParty" or k:find("^party") ~= nil end
+local function RaidKey(k) return k == "showRaid" or k:find("^raid") ~= nil end
+D.PAGE_RESET = {
+    Orbs    = { db = "DeckOrbsDB", match = function(k) return not GroupKey(k) and not RaidKey(k) end },
+    Group   = { db = "DeckOrbsDB", match = GroupKey },
+    Raid    = { db = "DeckOrbsDB", match = RaidKey },
+    Cross   = { db = "DeckCrossDB" },
+    Spec    = { db = "DeckSpecDB" },
+    Bags    = { db = "DeckBagsDB", keep = { trackedItems = true } },
+    Quests  = { db = "DeckQuestsDB" },
+    Map     = { db = "DeckMapDB" },
+    Tooltip = { db = "DeckTooltipDB" },
+    Nav     = { db = "DeckNavDB" },
+    Week    = { db = "DeckWeekDB", keep = { chars = true, weeklies = true, hidden = true } },
+    Loot    = { db = "DeckUIDB", match = function(k) return LOOT_KEYS[k] end },
+}
+
+local function ResetPage(key)
+    local rule = D.PAGE_RESET[key]
+    local db = rule and _G[rule.db]
+    if not db then return end
+    local function Clears(k)
+        if k == "perDevice" or (rule.keep and rule.keep[k]) then return false end
+        return not rule.match or rule.match(k)
+    end
+    for k in pairs(db) do
+        if type(k) == "string" and Clears(k) then db[k] = nil end
+    end
+    for _, dev in pairs(db.perDevice or {}) do
+        for k in pairs(dev) do
+            if type(k) == "string" and k ~= "positions" and Clears(k) then dev[k] = nil end
+        end
+    end
+end
+
+local footer = CreateFrame("Frame", nil, panel)
+footer:SetPoint("BOTTOMLEFT", SIDE_W + 16, 8)
+footer:SetPoint("BOTTOMRIGHT", -8, 8)
+footer:SetHeight(26)
+
+local function FooterButton(text, x)
+    local b = CreateFrame("Button", nil, footer, "UIPanelButtonTemplate")
+    b:SetSize(76, 22)
+    b:SetPoint("LEFT", x, 0)
+    b:SetText(text)
+    b:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
+    D.FlattenButton(b)
+    return b
+end
+
+-- this page's frames as a set, or nil when none of them exists
+local function PageFrames(key)
+    local keys = D.PAGE_FRAMES[key]
+    if not keys then return nil end
+    local set, any = {}, false
+    for _, k in ipairs(keys) do set[k] = true end
+    for _, entry in ipairs(D.movables) do
+        if set[entry.key] then any = true end
+    end
+    return any and set or nil
+end
+
+local moveBtn = FooterButton("Move", 0)
+local defaultsBtn = FooterButton("Defaults", 80)
+
+function D.UpdateFooter()
+    local key = panel.current
+    local frames = key and PageFrames(key)
+    local stub = key and panel.contents[key] and panel.contents[key].def.stub
+    moveBtn:SetShown(frames ~= nil and not stub)
+    moveBtn:SetText(D.unlocked and "Lock" or "Move")
+    defaultsBtn:SetShown(key and D.PAGE_RESET[key] ~= nil and not stub and _G[D.PAGE_RESET[key].db] ~= nil)
+end
+
+moveBtn:SetScript("OnClick", function()
+    if D.unlocked then
+        D.SetUnlocked(false)
+    else
+        D.SetUnlocked(true, PageFrames(panel.current))
+    end
+    D.UpdateFooter()
+end)
+D.Tip(moveBtn, "Move", "Unlocks only this page's frames, to drag them to a new place. Click again to lock. All frames at once: the Devices page or /deck unlock.")
+
+defaultsBtn:SetScript("OnClick", function()
+    local key = panel.current
+    D.Dialog({
+        text = ("Put the settings of \"%s\" back to their defaults? Places on screen stay. The game reloads to apply it."):format(PageName(key)),
+        accept = "Defaults",
+        onAccept = function()
+            ResetPage(key)
+            C_UI.Reload()
+        end,
+    })
+end)
+D.Tip(defaultsBtn, "Defaults", "Puts this page's settings back as they were at installation, then reloads. Places on screen stay.")
+
 -- changes that wait for a /reload, by key, with a button that does it
-local reloadBar = CreateFrame("Frame", nil, panel)
-reloadBar:SetPoint("BOTTOMLEFT", SIDE_W + 16, 8)
-reloadBar:SetPoint("BOTTOMRIGHT", -8, 8)
-reloadBar:SetHeight(26)
-reloadBar:Hide()
-local reloadText = reloadBar:CreateFontString(nil, "OVERLAY")
-reloadText:SetFont(D.FONT, 12, "OUTLINE")
-reloadText:SetPoint("LEFT", 4, 0)
-reloadText:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
-local reloadBtn = CreateFrame("Button", nil, reloadBar, "UIPanelButtonTemplate")
-reloadBtn:SetSize(90, 22)
+local reloadBtn = CreateFrame("Button", nil, footer, "UIPanelButtonTemplate")
+reloadBtn:SetSize(70, 22)
 reloadBtn:SetPoint("RIGHT")
 reloadBtn:SetText("Reload")
 reloadBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
 reloadBtn:SetScript("OnClick", function() C_UI.Reload() end)
 D.FlattenButton(reloadBtn)
+reloadBtn:Hide()
+local reloadText = footer:CreateFontString(nil, "OVERLAY")
+reloadText:SetFont(D.FONT, 12, "OUTLINE")
+reloadText:SetPoint("RIGHT", reloadBtn, "LEFT", -6, 0)
+reloadText:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
 
 local pendingReload = {}
 
@@ -206,9 +329,9 @@ function D.NeedReload(key, on)
     pendingReload[key] = (on ~= false) or nil
     local n = 0
     for _ in pairs(pendingReload) do n = n + 1 end
-    reloadText:SetText(n == 1 and "1 change takes effect after a reload."
-        or ("%d changes take effect after a reload."):format(n))
-    reloadBar:SetShown(n > 0)
+    reloadText:SetText(n == 1 and "1 change needs a reload" or ("%d changes need a reload"):format(n))
+    reloadText:SetShown(n > 0)
+    reloadBtn:SetShown(n > 0)
 end
 
 -------------------------------------------------------------------
@@ -262,6 +385,7 @@ function panel:ShowTab(key)
     pageTitle:SetText(PageName(key))
     self.current = key
     if D.UpdateModuleSwitch then D.UpdateModuleSwitch() end
+    D.UpdateFooter()
 end
 
 panel:SetScript("OnShow", function(self)
@@ -551,7 +675,34 @@ SlashCmdList.DECKUI = function(msg)
         D.ShowErrors()
     elseif msg == "deck" or msg == "pc" or msg == "auto" then
         D.SetDevice(msg)
-    else
+    elseif msg == "" then
         D.ToggleConfig()
+    else
+        -- /deck raid, /deck bags, ...: open that page
+        local page = D.FindPage(msg)
+        if page then
+            D.ToggleConfig(page)
+        else
+            print("DeckUI: no page \"" .. msg .. "\". Pages: " .. D.PageList())
+            D.ToggleConfig()
+        end
     end
+end
+
+-- a page by its key or its sidebar name, any case: "raid", "overview",
+-- "loot", "player and target"
+function D.FindPage(text)
+    text = text:lower()
+    for key in pairs(panel.contents) do
+        if key:lower() == text or PageName(key):lower() == text then return key end
+    end
+    for key in pairs(panel.contents) do
+        if PageName(key):lower():find(text, 1, true) then return key end
+    end
+end
+
+function D.PageList()
+    local keys = {}
+    for _, key in ipairs(panel.tabOrder) do keys[#keys + 1] = key:lower() end
+    return table.concat(keys, ", ")
 end

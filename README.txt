@@ -84,6 +84,8 @@ On login the Cross module also reports its input mode in chat:
 Commands
 --------
   /deck                    open/close the settings window
+  /deck <page>             open a page directly: /deck raid, /deck bags,
+                           /deck loot, /deck week ...
   /deck unlock             unlock frames (green overlays, drag them)
   /deck lock               lock frames
   /deck reset              reset all positions (current device only)
@@ -131,6 +133,10 @@ that does it.
 Each module is switched on or off with the button at the top right of its
 own page. A module that is off is listed in grey; its page says what it
 does. Switching on takes effect immediately, switching off after a reload.
+
+At the bottom of a page: "Move" unlocks only that page's frames to drag
+them (click again to lock), "Defaults" puts that page's settings back as
+they were at installation and reloads - places on screen stay.
 
 Overview
 --------

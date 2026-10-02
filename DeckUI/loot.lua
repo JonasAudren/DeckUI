@@ -345,7 +345,9 @@ ev:SetScript("OnEvent", function(_, event)
         D.MakeMovable(feed, "Loot list", DeckUIDB)
         D.MakeDraggable(feed)
         -- unlocked, both show with a sample so there is something to drag
-        D.OnUnlock(function(state)
+        D.OnUnlock(function(state, only)
+            -- unlocked for another page's frames: nothing to show here
+            if only and not (only["Loot"] or only["Loot list"]) then state = false end
             preview = state and true or false
             if state then
                 wipe(entries)

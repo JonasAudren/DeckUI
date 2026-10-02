@@ -391,7 +391,7 @@ local function Draw()
     if tracker:GetPoint() ~= "TOPLEFT" then D.PinTopLeft(tracker) end
     tracker:SetHeight(height)
     scroll:SetVerticalScroll(math.min(scroll:GetVerticalScroll(), math.max(0, y - (height - chrome))))
-    tracker:SetShown(anything or DeckQuestsDB.collapsed or D.unlocked)
+    tracker:SetShown(anything or DeckQuestsDB.collapsed or D.IsUnlocked("Quest tracker"))
     ns.PlaceSecureButtons()
 end
 

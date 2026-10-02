@@ -429,18 +429,27 @@ function D.PinTopLeft(frame)
     return true
 end
 
-function D.SetUnlocked(state)
+-- only: optional set of frame keys ({ ["Raid"] = true }) - unlock just
+-- those, as a settings page's "Move" button does; nil unlocks everything.
+-- Locking always locks all.
+function D.SetUnlocked(state, only)
     if state and InCombatLockdown() then
         print("DeckUI: not possible in combat.")
         return
     end
     D.unlocked = state
+    D.unlockedOnly = state and only or nil
     for _, entry in ipairs(D.movables) do
-        entry.overlay:SetShown(state)
+        entry.overlay:SetShown(D.IsUnlocked(entry.key))
     end
     -- frames that are hidden most of the time show a sample while unlocked
-    for _, fn in ipairs(D.unlockCallbacks) do xpcall(fn, geterrorhandler(), state) end
+    for _, fn in ipairs(D.unlockCallbacks) do xpcall(fn, geterrorhandler(), state, D.unlockedOnly) end
     print("DeckUI: frames " .. (state and "unlocked" or "locked"))
+end
+
+-- is the frame with this key unlocked right now?
+function D.IsUnlocked(key)
+    return D.unlocked and (not D.unlockedOnly or D.unlockedOnly[key]) and true or false
 end
 
 D.unlockCallbacks = {}

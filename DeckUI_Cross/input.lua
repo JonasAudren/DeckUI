@@ -383,7 +383,7 @@ leavePoll:SetScript("OnUpdate", function(_, dt)
     leaveElapsed = 0
     -- While frames are unlocked it stays visible, or it could never be
     -- dragged anywhere outside a vehicle.
-    leave:SetShown(D.unlocked or (CanLeave() and not BlizzardLeaveVisible()))
+    leave:SetShown(D.IsUnlocked("Leave vehicle") or (CanLeave() and not BlizzardLeaveVisible()))
 end)
 
 local function PrintLeave()

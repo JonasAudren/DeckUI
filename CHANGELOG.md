@@ -47,6 +47,15 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   inventory, info), instead of two rows of tiny tabs. Pages scroll, and a
   bar at the bottom shows when a change waits for a reload, with a button
   that does it.
+  - Every module is switched on and off at the top of its own page;
+    modules that are off are listed in grey and say what they do.
+  - "General" became an Overview of all modules, merchant and loot
+    settings have a page of their own, and the long explanations moved
+    into tooltips - pages are much shorter.
+  - At the bottom of each page: "Move" unlocks just that page's frames,
+    "Defaults" puts that page's settings back (places on screen stay).
+  - `/deck raid`, `/deck bags`, `/deck week` ... open a page directly.
+  - New test buttons for the boss frames and the Delver's Journey bar.
 - **Navigation:** the arrival time now says its unit ("45 s", "3 min")
   and shows up sooner once you head for the target.
 
