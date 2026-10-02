@@ -569,7 +569,8 @@ end
 -------------------------------------------------------------------
 -- DeckUI's round look (gold ring, dark disc, D.RoundMask), a calendar
 -- inside and, in its corner, how many Great Vault slots are unlocked this
--- week. Moved with /deck unlock (a click is a click, not a drag); its
+-- week. Dragged anywhere directly (owner's wish, 2026-10-02) - a drag
+-- does not count as a click - and with /deck unlock like everything; its
 -- place is kept per device. Shown unless switched off in the Week tab.
 local BTN = 36
 local button = CreateFrame("Button", "DeckWeekButton", UIParent)
@@ -631,13 +632,19 @@ function ns.UpdateButton()
     badge:SetText(n > 0 and n or "")
 end
 
-button:SetScript("OnClick", function() ns.Toggle() end)
+-- a press that turned into a drag is not a click
+button:SetScript("OnMouseDown", function(self) self.dragged = false end)
+button:SetScript("OnClick", function(self)
+    if self.dragged then return end
+    ns.Toggle()
+end)
 button:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
     GameTooltip:SetText("This week")
     GameTooltip:AddLine(("Great Vault: %d of 9 slots unlocked"):format(UnlockedSlots()), 1, 1, 1)
     GameTooltip:AddLine("Reset in " .. Duration(C_DateAndTime.GetSecondsUntilWeeklyReset()), 0.7, 0.7, 0.7)
     GameTooltip:AddLine("Click: open the week overview", 0.7, 0.7, 0.7)
+    GameTooltip:AddLine("Drag: move it", 0.7, 0.7, 0.7)
     GameTooltip:Show()
 end)
 button:SetScript("OnLeave", GameTooltip_Hide)
@@ -647,5 +654,10 @@ function ns.InitWindow()
     D.MakeMovable(win, "Week", DeckWeekDB)
     D.MakeDraggable(win)
     D.MakeMovable(button, "Week button", DeckWeekDB)
+    D.MakeDraggable(button)
+    button:HookScript("OnDragStart", function(self)
+        self.dragged = true
+        GameTooltip:Hide()
+    end)
     ns.UpdateButton()
 end

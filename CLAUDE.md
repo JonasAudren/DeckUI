@@ -599,7 +599,8 @@ the row, the character being played starts unfolded. Right click a character: fo
   (`ns.KNOWN_QUESTS`); each character asks `IsQuestFlaggedCompleted` for all of them.
   `/week forget <questID>` removes one.
 - Opened by a round button on screen (`DeckWeekButton`, `DeckWeekDB.showButton`, on; badge =
-  unlocked vault slots this week; moved only with /deck unlock - a click stays a click), `/week`,
+  unlocked vault slots this week; dragged directly with `D.MakeDraggable`, a press that became
+  a drag is not a click), `/week`,
   the hub binding DECKUI_WEEK (`D.ToggleWeek` -> `D.weekToggle`) and Shift-click on the
   minimap button.
 

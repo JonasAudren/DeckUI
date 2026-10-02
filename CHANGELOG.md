@@ -29,6 +29,8 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
     weekly quests are still learned as they appear.
   - Right click a weekly quest to hide it, right click a character to
     forget it.
+  - The round week button on screen can now be dragged anywhere directly,
+    without unlocking the frames first.
 - **Navigation:** the arrival time now says its unit ("45 s", "3 min")
   and shows up sooner once you head for the target.
 
