@@ -68,18 +68,18 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   game the same day): 600x540, a sidebar of pages grouped by theme (`D.PAGE_GROUPS`, names in
   `D.PAGE_NAMES`; a page no group names lands under "More"), the page scrolls, and a bar at the
   bottom collects changes waiting for a reload (`D.NeedReload(key[, false])`) with a Reload
-  button. Pages are still registered with `D.RegisterModule` and still build themselves; old
-  pages keep their hand-placed y values and are measured for the scroll height. New and moved
-  pages use **`D.Flow(content)`** (widgets.lua), which stacks the same widgets without pixel
-  numbers; `D.Tip` puts an explanation on mouse-over instead of a hint line. Buttons wear the flat
+  button. Pages are registered with `D.RegisterModule` and build themselves; each is measured
+  for the scroll height. Pages use **`D.Flow(content)`** (widgets.lua), which stacks the
+  widgets without pixel numbers; `D.Tip` puts an explanation on mouse-over instead of a hint line. Buttons wear the flat
   look (`D.FlattenButton`, `D.FlatBox`). **Modules are switched on their own page** (button top
   right, `D.UpdateModuleSwitch`); a module that is off has no page yet, so a stand-in
   (`def.stub`, `D.MODULE_DESCRIPTIONS`) is listed greyed and replaced when the module registers.
   "General" is shown as "Overview" (modules with their state, minimap button, damage meter, Lua
   errors); merchant and loot live on "Loot and merchant" (key "Loot"). "Cross hotbar only on
-  Steam Deck" sits on the Cross page and its stand-in (`D.SetCrossDeckOnly`). Moved to `D.Flow`
-  so far: Overview, Loot and merchant, Devices, Orbs, Group, Raid, Cross, Spec, Bags, Quests, Map (`Flow:Pair`, `Flow:Cycles`).
-  Still to move: Tooltip, Nav, Week.
+  Steam Deck" sits on the Cross page and its stand-in (`D.SetCrossDeckOnly`). **Every page is
+  built with `D.Flow`** since 2026-10-02 (`Flow:Pair`, `Flow:Cycles` for buttons side by side);
+  a new option is one more line, never a pixel shift. Explanations go into the widget's tooltip,
+  a page keeps at most a line or two of hint; settings that need a reload call `D.NeedReload`.
 - **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
   optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
   shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole
