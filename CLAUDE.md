@@ -109,12 +109,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   the manager not have caught up, learning the old name would undo the switch.
   `/deck layout` prints active and saved layout.
 - **At the merchant** (`DeckUI/merchant.lua`, `DeckUIDB.autoSellJunk` / `autoRepair` /
-  `repairGuild`, General tab, the first two off by default; not yet tested in game): on
+  `repairGuild`, General tab, the first two off by default; tested in game 2026-10-01): on
   MERCHANT_SHOW repair first (guild funds when allowed), then `C_MerchantFrame.SellAllJunkItems`,
   and repair once more a second later if the gold was short. C APIs only - Blizzard's "sell all
   junk" button asks through a StaticPopup, which we skip rather than show (see `D.Dialog`).
 - **Loot** (`DeckUI/loot.lua`, `DeckUIDB.fastLoot` / `lootWindow`, General tab, both off by
-  default; replacing Plumber's LootUI; not yet tested in game): fast loot takes every slot with
+  default; replacing Plumber's LootUI; tested in game 2026-10-01): fast loot takes every slot with
   `LootSlot` on LOOT_READY, "auto" worked out from `autoLootDefault` and the AUTOLOOTTOGGLE
   modifier (Plumber's fix for auto loot reported as manual). The window: Blizzard's LootFrame
   only gets `UnregisterEvent("LOOT_OPENED"/"LOOT_CLOSED")` - re-registered when switched off -
@@ -234,7 +234,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   does not resume. `/dc trace` prints modifier edges, casts and any re-applied bindings with
   timestamps to tell that apart from a cast that simply failed.
 - **Camera zoom on LB + D-pad up/down** (`DeckCrossDB.lbZoom`, off by default, Deck only;
-  not yet tested in game). The owner could not bind it: only Shift/Ctrl/Alt combine with
+  tested in game 2026-10-01). The owner could not bind it: only Shift/Ctrl/Alt combine with
   another key, and a gamepad button becomes one only through `GamePadEmulate*` - Shift/Ctrl
   are LT/RT, and `SetupGamepad` used to force Alt to "none". With the option LB is Alt, and
   `ALT-PADDUP`/`ALT-PADDDOWN` go to `CAMERAZOOMIN`/`CAMERAZOOMOUT` as override bindings
@@ -254,8 +254,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - oUF: `ClassPower` / `Runes` dots are StatusBars with a masked WHITE8x8 fill; `[deck:hpshort]`
   is our custom tag.
 - **Final Fantasy style for player and target** (`DeckUI_Orbs/ffstyle.lua`,
-  `DeckOrbsDB.style` = "orbs" | "ff", the "Style" button, needs a /reload; not yet tested in
-  game): FFXIV's parameter bar for the player (HP/MP bars with numbers, class resources as
+  `DeckOrbsDB.style` = "orbs" | "ff", the "Style" button, needs a /reload; tested in game
+  2026-10-01): FFXIV's parameter bar for the player (HP/MP bars with numbers, class resources as
   squares, cast below, buffs and debuffs above) and its wide target bar at the top (name,
   percent, cast, status icons, the target's target beside it). Spawned instead of the big
   orbs in the same Factory; focus and pet stay orbs. Positions are saved under their
@@ -267,7 +267,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   debuffs to the right. Holder "Boss frames (FF)". `/orbs boss` = test mode (five frames of
   your target, in whichever boss style is active).
 - **Party list** (`DeckUI_Orbs/party.lua`, `DeckOrbsDB.showParty`, off by default, needs a
-  /reload; not yet tested in game): FFXIV-style rows on oUF's group header - Blizzard's
+  /reload; tested in game 2026-10-01): FFXIV-style rows on oUF's group header - Blizzard's
   SecureGroupHeaderTemplate, which sorts members in combat by itself, sets the click
   attributes and, with `showParty`, hides Blizzard's party frames for the session (hence the
   reload). Party only (`[group:raid] hide`); tanks, healers, damage. Range and "my target" use
@@ -285,7 +285,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   the icon showed the whole sheet of class circles (2026-09-30). The same oUF as the orbs -
   a separate module would need its own copy.
 - **Raid frames** (`DeckUI_Orbs/raid.lua`, `DeckOrbsDB.showRaid`, off by default, needs a
-  /reload; not yet tested in game): a compact grid in class colours, one column per raid
+  /reload; tested in game 2026-10-01 in a real raid): a compact grid in class colours, one column per raid
   group - **eight headers with `groupFilter` "1".."8"**, because one header sorted by group
   fills its columns five at a time and a short group would pull the next one in. Tiles show
   name, role icon for tanks and healers only, `[deck:raidstatus]` (Dead/Ghost/Offline, no
@@ -415,7 +415,7 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   world quests and collections instead (owner's choice); the map opened with M stays clean.
   The same went for achievements, professions (`ProfessionsFrame_LoadUI`, `OpenRecipe`), the
   Traveler's Log and endeavors: those rows only stop tracking (shift) and have a menu.
-- **Delves and the hunt** (2026-10-01, replacing Plumber's; not yet tested in game):
+- **Delves and the hunt** (2026-10-01, replacing Plumber's; tested in game 2026-10-01):
   `delves.lua` takes a single delve power by itself (`DeckQuestsDB.autoDelvePower`, off by
   default; `C_PlayerChoice.SendPlayerChoiceResponse` + `OnUIClosed`, Blizzard's window never
   touched, only when `C_PartyInfo.IsPartyWalkIn()`, exactly one option with one button) and
@@ -424,7 +424,7 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   count is a line in `DelveEntry` from currencies 3103/3104 (left/total) - no spell ID needed.
   The active hunt (`C_QuestLog.GetActivePreyQuest`) heads the Quests section as "Hunt: ...";
   its left click super-tracks the target.
-- **Hunt table stars** (`hunt.lua`, `huntMarks`, on; not yet tested in game): offers whose
+- **Hunt table stars** (`hunt.lua`, `huntMarks`, on; tested in game 2026-10-01): offers whose
   target an achievement still misses get a star of ours, a child frame of the pin kept in our
   own table - nothing written onto Blizzard's pins (Plumber writes its icons there). No quest
   table either: the open criteria of achievements 42701/42702/42703 (+ 63451/63452 for 12.1's
@@ -528,7 +528,7 @@ just the same, so:
   ensembles (hand-kept tables); Plumber's delve cache lines are stale TWW data.
 - `/decktip debug` prints the styled count, anchor, scale, NineSlice alpha and inspect state.
 
-## Nav module (not yet tested in game)
+## Nav module (tested in game 2026-10-01)
 
 Compass bar, navigation target panel, quest stepping and /way. Built from Blizzard's 12.1.0
 source (read 2026-10-01).
@@ -548,7 +548,7 @@ source (read 2026-10-01).
 - **Key bindings sit in the hub** (`DeckUI/Bindings.xml`, names in DeckUI/core.lua): the game
   reads Bindings.xml at startup, before a LoadOnDemand module exists. They call
   `D.NavStep`, which forwards to `D.navStep` once DeckUI_Nav is loaded.
-- **Our beacon in the world** (`beacon.lua`, `DeckNavDB.beacon`, on; not yet tested in game):
+- **Our beacon in the world** (`beacon.lua`, `DeckNavDB.beacon`, on; tested in game 2026-10-01):
   name, distance and arrival time around the target icon, anchored to the engine's projected
   point `C_Navigation.GetFrame()`; off screen it sits on Blizzard's ellipse (500/200) with an
   arrow. Blizzard's `SuperTrackedFrame` is parked under a hidden frame (`SetParent` only) -
@@ -557,7 +557,7 @@ source (read 2026-10-01).
 - `/way` is ours unless TomTom (or another addon) has it; `/dway` always works.
 - `/decknav debug` prints map, position, facing, map size, the target and its angle.
 
-## Week module (not yet tested in game)
+## Week module (works in game 2026-10-01; due for a complete overhaul)
 
 The week at a glance for every character (owner's wish, 2026-10-01): Great Vault
 (`C_WeeklyRewards.GetActivities`, grouped by `Enum.WeeklyRewardChestThresholdType`), lockouts
