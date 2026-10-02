@@ -8,6 +8,30 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.5.0 (2026-10-02)
+
+- **Stance bar at the crosses** - forms, stances, auras and stealth as
+  round buttons between the two small middle crosses, in place of
+  Blizzard's stance bar. The active one has a gold ring, cooldowns run
+  as a circle. On the Steam Deck LB + X/Y/B/A picks a stance and
+  LB + D-pad left/right steps to the next or previous one, in combat too;
+  on the PC your own stance keys keep working. Tick "Stance bar at the
+  crosses" in the Cross tab.
+- **Week overview rebuilt** - all characters in one table: Great Vault,
+  keystone, prey hunts, delves, profession knowledge and weekly quests at
+  a glance. Click a character for the details: vault item levels,
+  lockouts, crests, currencies, renown.
+  - New: prey hunts per difficulty, the weekly delve quest and
+    Trovehunter's Bounty, coffer keys, the week's profession knowledge
+    (treatise, weekly quest, treasures and gathering) and the upgrade
+    crests of the current season - those were missing before.
+  - Midnight's important weekly quests are listed from the start; other
+    weekly quests are still learned as they appear.
+  - Right click a weekly quest to hide it, right click a character to
+    forget it.
+- **Navigation:** the arrival time now says its unit ("45 s", "3 min")
+  and shows up sooner once you head for the target.
+
 ## 1.4.0 (2026-10-01)
 
 - **New module: DeckUI Week** - your week at a glance, for every

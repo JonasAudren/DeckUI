@@ -241,7 +241,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   (smooth while held, one step on a tap - `Bindings_Standard.xml`). Switched off, Alt goes
   back to "none" only if it is still LB.
 - **Stance row at the crosses** (`DeckUI_Cross/stance.lua`, `DeckCrossDB.stanceBar`, off by
-  default; not yet tested in game). Round buttons between the two small middle crosses
+  default; tested in game 2026-10-02). Round buttons between the two small middle crosses
   (child of `DeckCrossAnchor`, so it scales and moves with them), one per form/stance/aura;
   Blizzard's stance bar is hidden like the mirrored bars (`ns.SetBlizzardBarHidden`, which
   refuses a bar that resolves to a mirrored one). The buttons are `SecureActionButtonTemplate`
