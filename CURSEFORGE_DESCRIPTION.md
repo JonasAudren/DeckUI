@@ -2,7 +2,7 @@
 
 A compact, controller-friendly interface for World of Warcraft on the **Steam Deck** – that also works on the PC with your normal key bindings.
 
-DeckUI is a hub with nine load-on-demand modules; enable or disable each one in `/deck`.
+DeckUI is a hub with nine load-on-demand modules; switch each one on or off on its own page in `/deck`.
 
 ## DeckUI Orbs – round unit frames
 - Player and target as large orbs: health fills the orb, power runs as a ring around it, cast bar inside the orb
@@ -16,8 +16,9 @@ DeckUI is a hub with nine load-on-demand modules; enable or disable each one in 
 
 ## Group – party list and raid frames
 - **Party list in Final Fantasy XIV style**: class icon, role, health and resource bars, your buffs and all debuffs (dispellable ones marked), your target highlighted, faded out of range – stacked or side by side
-- **Raid frames**: a compact grid in class colours, one column per raid group, up to three debuffs (dispellable ones marked), your heals over time and mana for healers; Blizzard's raid tools stay
-- Both with a **test mode** to set size and place without a group, sizes per device
+- **Raid frames** in the same style: every member a small parameter bar – name in class colour, a thin health bar, debuffs, your heals over time and shields, mana for healers. The tile is **framed in the debuff's colour when you can dispel it** and edged red while the member has aggro; Blizzard's raid tools stay
+- Raid frames your way: width, height and size per device, groups as columns or rows, sorted by group, role or class, health text, how many debuffs and buffs, opacity
+- Both with a **test button** to set size and place without a group
 
 ## DeckUI Cross – FFXIV-style cross hotbar
 - Two halves of round buttons: **LT** = left, **RT** = right, **LT+RT** = the small middle crosses (24 slots)
@@ -28,6 +29,7 @@ DeckUI is a hub with nine load-on-demand modules; enable or disable each one in 
 - Dimmed out of combat, full brightness in combat or whenever you touch it; size slider
 - Hides Blizzard's bars 1 and 2 (optional), and brings its own leave-vehicle button so you are never stuck in a vehicle
 - Steam Deck: zoom the camera with **LB + D-pad up/down** (optional)
+- Optional **stance bar** between the middle crosses: forms, stances and auras as round buttons; on the Steam Deck **LB + A/B/X/Y** picks one and **LB + D-pad left/right** steps through them, in combat too
 - Optional **assistant indicator**: shows the spell the single-button assistant wants next – green ring when you can cast it now, grey with a cooldown swirl when waiting is right
 
 ## DeckUI Spec – spec switcher
@@ -77,10 +79,11 @@ DeckUI is a hub with nine load-on-demand modules; enable or disable each one in 
 - `/way 45.2 67.8` sets a waypoint (decimal commas work too)
 
 ## DeckUI Week – your week at a glance (off until you switch it on)
-- One window with tabs, for **every character**: Great Vault progress, locked raids and dungeons, keystone and runs, weekly quests, renown and every currency with a weekly or seasonal cap
+- **Every character in one table**: Great Vault, keystone, prey hunts, delves, profession knowledge and weekly quests at a glance
+- Click a character for the details: vault item levels, lockouts, upgrade crests, currencies, renown, the week's profession knowledge source by source
+- Midnight's important weekly quests are listed from the start, others are learned as they show up; right click hides one
 - Characters you are not playing show what they had when last seen – marked once the weekly reset has passed
-- Weekly quests are learned as they show up in a quest log
-- Open it with a round button on screen (its number counts your unlocked vault slots), `/week`, a key binding or Shift-click on the minimap button
+- Open it with a round button on screen you can drag anywhere (its number counts your unlocked vault slots), `/week`, a key binding or Shift-click on the minimap button
 
 ## Loot and merchant (optional)
 - **Fast auto loot**, and **DeckUI's loot window**: a compact list with "Take all" (also a key binding); with auto loot a short list shows what you picked up
@@ -89,10 +92,13 @@ DeckUI is a hub with nine load-on-demand modules; enable or disable each one in 
 ## Blizzard's damage meter in DeckUI's look
 One checkbox on the Overview page gives the game's built-in damage meter flat bars, a dark background and a thin edge, matching the rest of DeckUI.
 
+## The settings window
+`/deck` opens one window with the pages in a sidebar, grouped by theme, and every page scrolls. Each module is switched on or off at the top of its own page; modules that are off are listed in grey and say what they do. Explanations sit in the tooltips, and a bar at the bottom says when a change needs a reload – with a button that does it. At the bottom of every page, **Move** unlocks just that page's frames and **Defaults** puts its settings back. `/deck raid`, `/deck bags`, `/deck week` and so on open a page directly.
+
 ## Steam Deck and PC
 DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → Devices → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
 
-Frame positions and sizes are kept per device anyway. Three switches in the **Devices** tab keep what the game otherwise shares between every computer you play on:
+Frame positions and sizes are kept per device anyway. Three switches on the **Devices** page keep what the game otherwise shares between every computer you play on:
 - **Key bindings** stay on the device you set them on
 - **Action bar layouts** – a different layout on the Deck and on the PC, per character and spec, put back at login
 - **Edit Mode layout** – one layout per device, switched automatically
@@ -100,25 +106,25 @@ Frame positions and sizes are kept per device anyway. Three switches in the **De
 ## Works alongside ConsolePort
 Most of ConsolePort works fine next to DeckUI – its radial menus, camera targeting, interface navigation and inventory menus. Its **action bar** does not: it sits on the same LT/RT plus D-pad and face button combinations, it re-asserts its own key overrides over ours, and it unregisters the events on Blizzard's action buttons that DeckUI reads the pushed state from.
 
-ConsolePort ships as several separate addons, so the fix is one checkbox: uncheck **Console Port Action Bar** in the addon list and keep **Console Port** itself. DeckUI tells you in chat when it sees the bar module enabled. If you would rather keep ConsolePort's bar, switch the Cross module off in `/deck`.
+ConsolePort ships as several separate addons, so the fix is one checkbox: uncheck **Console Port Action Bar** in the addon list and keep **Console Port** itself. DeckUI tells you in chat when it sees the bar module enabled. If you would rather keep ConsolePort's bar, switch the Cross module off on its page in `/deck`.
 
 
 ## Commands
-- `/deck` – settings, `/deck unlock` / `lock` – move frames, `/deck reset` – reset positions
+- `/deck` – settings, `/deck <page>` – open a page (`/deck raid`, `/deck loot`, ...), `/deck unlock` / `lock` – move frames, `/deck reset` – reset positions
 - `/deck device` – show the detected device, `/deck deck` / `pc` / `auto` – force one
-- `/orbs`, `/dc`, `/spec` – jump to a module tab
-- `/bags` – open or close the bags, `/bags config` – the Bags tab
-- `/quests` – fold or unfold the tracker, `/quests config` – the Quests tab, `/quests reset` – bring it back into view
-- `/deckmap` – the Map tab, `/deckmap reset` – bring both maps back to their default places
-- `/decktip` – the Tooltip tab
-- `/decknav` – the Nav tab, `/way x y` – a waypoint
+- `/orbs`, `/dc`, `/spec` – jump to a module page
+- `/bags` – open or close the bags, `/bags config` – the Bags page
+- `/quests` – fold or unfold the tracker, `/quests config` – the Quests page, `/quests reset` – bring it back into view
+- `/deckmap` – the Map page, `/deckmap reset` – bring both maps back to their default places
+- `/decktip` – the Tooltip page
+- `/decknav` – the Nav page, `/way x y` – a waypoint
 - `/week` – the week overview
-- `/orbs test` / `raid` / `boss` – test modes for party list, raid frames and boss frames
+- `/orbs test` / `raid` / `boss` – test modes for party list, raid frames and boss frames (also buttons on their pages)
 - `/deck errors` – every Lua error caught, ready to copy
 
 ## Setup on the Steam Deck
-1. `/dc` → "Set up gamepad (LT/RT)" once (enables the gamepad, LT = Shift, RT = Ctrl)
-2. `/dc` → "Apply default bindings" once: A jump, B menu, X interact, Y character; D-pad up/down cycles enemies, left/right cycles friends
+1. `/dc` → "Set up gamepad" once (enables the gamepad, LT = Shift, RT = Ctrl)
+2. `/dc` → "Default bindings" once: A jump, B menu, X interact, Y character; D-pad up/down cycles enemies, left/right cycles friends
 
 Step 2 writes into your key bindings, so it asks first and lists exactly which of your existing bindings it would replace. There is no undo, so read that list before you confirm – and if you would rather keep your own bindings, say no. The crosses work either way.
 
