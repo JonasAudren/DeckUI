@@ -64,8 +64,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   is where the heading is, and the two printed on top of each other.
   Slider/checkbox take `db` as a **function** returning the table, plus a key and an apply function.
   Widgets with a `Refresh()` method and a place in `content.widgets` are refreshed on tab show.
-- **The settings window** (`DeckUI/panel.lua`, rebuilt 2026-10-02 after the menu review; not yet
-  tested in game): 600x540, a sidebar of pages grouped by theme (`D.PAGE_GROUPS`, names in
+- **The settings window** (`DeckUI/panel.lua`, rebuilt 2026-10-02 after the menu review; tested in
+  game the same day): 600x540, a sidebar of pages grouped by theme (`D.PAGE_GROUPS`, names in
   `D.PAGE_NAMES`; a page no group names lands under "More"), the page scrolls, and a bar at the
   bottom collects changes waiting for a reload (`D.NeedReload(key[, false])`) with a Reload
   button. Pages are still registered with `D.RegisterModule` and still build themselves; old

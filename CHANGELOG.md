@@ -42,6 +42,11 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
     how many debuffs and buffs, background and out-of-range opacity, and
     switches for the dispel frame, aggro edge, mana bars, role icons and
     "only debuffs you can dispel".
+- **New settings window** - `/deck` now opens a wider window with the
+  pages listed in a sidebar, grouped by theme (units, actions, world,
+  inventory, info), instead of two rows of tiny tabs. Pages scroll, and a
+  bar at the bottom shows when a change waits for a reload, with a button
+  that does it.
 - **Navigation:** the arrival time now says its unit ("45 s", "3 min")
   and shows up sooner once you head for the target.
 
