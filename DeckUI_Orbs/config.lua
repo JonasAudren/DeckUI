@@ -8,7 +8,7 @@ local db  = function() return DeckOrbsDB end
 -- Moved to D.Flow 2026-10-02: explanations as tooltips, the two settings
 -- that need a reload report to the panel's reload bar, and the boss frames
 -- got their test button here (it was only /orbs boss).
-local loaded = {}   -- style and buff duration as this session loaded them
+local loaded = {}   -- settings that need a reload, as this session loaded them
 
 local function Refreshing(button, label)
     function button:Refresh() self:SetText(label()) end
@@ -74,70 +74,59 @@ D.RegisterModule("Orbs", {
 -- The party list has a tab of its own: the Orbs tab is full, and the
 -- window cannot grow on the Deck's 800-pixel screen. The raid frames got
 -- theirs when they gained their settings (2026-10-02).
+-- A test button that says whether its test runs: label(on) gives the text
+local function TestButton(f, c, label, isOn, toggle, tip)
+    local b = f:Button(label(false), function(self)
+        toggle()
+        C_Timer.After(0, function() self:Refresh() end)
+    end, tip)
+    function b:Refresh() self:SetText(label(isOn())) end
+    table.insert(c.widgets, b)
+    return b
+end
+
 D.RegisterModule("Group", {
     title = "Group",
     build = function(c)
-        D.Label(c, "Party list (Final Fantasy style)", -6, 15)
-        -- test mode beside the heading: five rows of yourself, session only
-        local partyTest = D.Button(c, "Test", -2, function()
-            ns.SetPartyTest(not ns.partyTest)
-        end)
-        partyTest:SetWidth(70)
-        partyTest:ClearAllPoints()
-        partyTest:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -2)
-        D.Checkbox(c, "Show the party list (hides Blizzard's; /reload)", -28, db, "showParty", function(v)
-            print("DeckUI Orbs: the party list " .. (v and "appears" or "goes") .. " after /reload.")
-        end)
-        D.Checkbox(c, "Side by side instead of stacked (this device)", -56, ns.DeviceDB, "partyAcross", function()
+        if loaded.showParty == nil then loaded.showParty = DeckOrbsDB.showParty end
+        local f = D.Flow(c)
+        c.widgets = c.widgets or {}
+
+        f:Label("Party list")
+        f:Checkbox("Show the party list (hides Blizzard's)", db, "showParty", function(v)
+            D.NeedReload("orbs:showParty", v ~= loaded.showParty)
+        end, "Final Fantasy style rows: tanks, healers, damage, each with class icon, health and auras. Party only - in a raid the raid frames take over. Needs a reload.")
+        TestButton(f, c, function(on) return on and "End party test" or "Test: five rows of you" end,
+            function() return ns.partyTest end, function() ns.SetPartyTest(not ns.partyTest) end,
+            "Shows the list with five copies of you, to see size and place. Switches out of combat; also /orbs test.")
+
+        f:Gap(4)
+        f:Label("Layout (this device)")
+        f:Checkbox("Side by side instead of stacked", ns.DeviceDB, "partyAcross", function()
             ns.ApplyPartyLayout()
         end)
-        D.Slider(c, "Party list size (this device)", -84, 0.6, 1.6, 0.05, pct, ns.DeviceDB, "partyScale", function(v)
+        f:Slider("Size", 0.6, 1.6, 0.05, pct, ns.DeviceDB, "partyScale", function(v)
             ns.DeviceDB().partyScale = v
             ns.ApplyPartyScale()
         end)
     end,
 })
 
--- A button that steps through a list of values, half the panel wide;
--- side "left" or "right". get/set read and write the value.
-local function Cycle(c, y, side, label, order, names, get, set)
-    local b = D.Button(c, label, y, function() end)
-    b:SetWidth(148)
-    b:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
-    b:ClearAllPoints()
-    if side == "left" then
-        b:SetPoint("TOPLEFT", c, "TOPLEFT", 8, y)
-    else
-        b:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, y)
-    end
-    local function Text() return label .. ": " .. (names[get()] or tostring(get())) end
-    b:SetScript("OnClick", function(self)
-        local cur, nextValue = get(), order[1]
-        for i, v in ipairs(order) do
-            if v == cur then nextValue = order[i % #order + 1] end
-        end
-        set(nextValue)
-        self:SetText(Text())
-    end)
-    function b:Refresh() self:SetText(Text()) end
-    c.widgets = c.widgets or {}
-    table.insert(c.widgets, b)
-    return b
-end
-
--- a shared raid setting through a Cycle button
-local function RaidCycle(c, y, side, label, key, order, names, apply)
-    return Cycle(c, y, side, label, order, names,
-        function() return DeckOrbsDB[key] end,
-        function(v) DeckOrbsDB[key] = v; apply() end)
-end
-
-local function Reload(what)
-    return function() print("DeckUI Orbs: " .. what .. " - takes effect after /reload.") end
-end
-
 local look = function() ns.ApplyRaidLook() end
 local layout = function() if ns.ApplyRaidLayout then ns.ApplyRaidLayout() end end
+
+-- a shared raid setting for Flow:Cycles
+local function RaidSetting(label, key, values, names, apply, tip)
+    return { label = label, values = values, names = names, tip = tip,
+             get = function() return DeckOrbsDB[key] end,
+             set = function(v) DeckOrbsDB[key] = v; apply(v) end }
+end
+
+-- a raid setting that only takes effect after a reload
+local function ReloadAfter(key)
+    return function(v) D.NeedReload("orbs:" .. key, v ~= loaded[key]) end
+end
+
 local function Counts()
     local t = {}
     for i = 0, 6 do t[i] = tostring(i) end
@@ -152,55 +141,69 @@ end
 D.RegisterModule("Raid", {
     title = "Raid",
     build = function(c)
-        D.Label(c, "Raid frames", -6, 15)
-        -- a full raid of yourself, session only
-        local raidTest = D.Button(c, "Test", -2, function()
-            ns.SetRaidTest(not ns.raidTest)
-        end)
-        raidTest:SetWidth(70)
-        raidTest:ClearAllPoints()
-        raidTest:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -2)
-        D.Checkbox(c, "Show the raid frames (hides Blizzard's; /reload)", -28, db, "showRaid", function(v)
-            print("DeckUI Orbs: the raid frames " .. (v and "appear" or "go") .. " after /reload.")
-        end)
+        for _, key in ipairs({ "showRaid", "raidDebuffs", "raidBuffs", "raidDispelOnly" }) do
+            if loaded[key] == nil then loaded[key] = DeckOrbsDB[key] end
+        end
+        local f = D.Flow(c)
+        c.widgets = c.widgets or {}
+        local px = function(v) return math.floor(v + 0.5) .. " px" end
 
-        D.Slider(c, "Size (this device)", -60, 0.5, 1.4, 0.05, pct, ns.DeviceDB, "raidScale", function(v)
+        f:Label("Raid frames")
+        f:Checkbox("Show the raid frames (hides Blizzard's)", db, "showRaid", ReloadAfter("showRaid"),
+            "Each member a small parameter bar like the Final Fantasy player frame. Blizzard's raid tools on the left stay. Needs a reload.")
+        TestButton(f, c, function(on) return on and "End raid test" or "Test: a raid of you" end,
+            function() return ns.raidTest end, function() ns.SetRaidTest(not ns.raidTest) end,
+            "Forty tiles of you, to see size and place. Switches out of combat; also /orbs raid.")
+
+        f:Gap(4)
+        f:Label("Size and arrangement (this device)")
+        f:Slider("Size", 0.5, 1.4, 0.05, pct, ns.DeviceDB, "raidScale", function(v)
             ns.DeviceDB().raidScale = v
             ns.ApplyRaidScale()
         end)
-        local px = function(v) return math.floor(v + 0.5) .. " px" end
-        D.Slider(c, "Width (this device)", -124, 60, 140, 2, px, ns.DeviceDB, "raidW", function(v)
+        f:Slider("Width", 60, 140, 2, px, ns.DeviceDB, "raidW", function(v)
             ns.DeviceDB().raidW = v
             layout()
         end)
-        D.Slider(c, "Height (this device)", -188, 30, 60, 2, px, ns.DeviceDB, "raidH", function(v)
+        f:Slider("Height", 30, 60, 2, px, ns.DeviceDB, "raidH", function(v)
             ns.DeviceDB().raidH = v
             layout()
         end)
+        f:Cycles(
+            { label = "Groups", values = { false, true }, names = { [false] = "Columns", [true] = "Rows" },
+              tip = "One column per raid group, or one row per group.",
+              get = function() return ns.DeviceDB().raidRows and true or false end,
+              set = function(v) ns.DeviceDB().raidRows = v; layout() end },
+            RaidSetting("Sort", "raidSort", { "group", "role", "class" },
+                { group = "Group", role = "Role", class = "Class" }, layout,
+                "By group keeps the groups the raid leader set; by role or class fills the grid from the whole raid."))
 
-        Cycle(c, -252, "left", "Groups", { false, true }, { [false] = "Columns", [true] = "Rows" },
-            function() return ns.DeviceDB().raidRows and true or false end,
-            function(v) ns.DeviceDB().raidRows = v; layout() end)
-        RaidCycle(c, -252, "right", "Sort", "raidSort", { "group", "role", "class" },
-            { group = "Group", role = "Role", class = "Class" }, layout)
-        RaidCycle(c, -292, "left", "Bar", "raidColor", { "ff", "class" },
-            { ff = "FF green", class = "Class" }, look)
-        RaidCycle(c, -292, "right", "Health", "raidHpText", { "none", "percent", "short" },
-            { none = "None", percent = "Percent", short = "1.2M" }, look)
-        local counts, countNames = Counts()
-        RaidCycle(c, -332, "left", "Debuffs", "raidDebuffs", counts, countNames, Reload("debuff count saved"))
-        RaidCycle(c, -332, "right", "Own buffs", "raidBuffs", counts, countNames, Reload("buff count saved"))
+        f:Gap(4)
+        f:Label("Look")
+        f:Cycles(
+            RaidSetting("Bar", "raidColor", { "ff", "class" }, { ff = "FF green", class = "Class" }, look),
+            RaidSetting("Health", "raidHpText", { "none", "percent", "short" },
+                { none = "None", percent = "Percent", short = "1.2M" }, look))
         local bgs, bgNames = Percents({ 0.5, 0.6, 0.7, 0.8, 0.9, 1 })
-        RaidCycle(c, -372, "left", "Background", "raidBgAlpha", bgs, bgNames, look)
         local ranges, rangeNames = Percents({ 0.2, 0.3, 0.4, 0.5, 0.6, 0.8 })
-        RaidCycle(c, -372, "right", "Out of range", "raidRangeAlpha", ranges, rangeNames, look)
+        f:Cycles(
+            RaidSetting("Background", "raidBgAlpha", bgs, bgNames, look),
+            RaidSetting("Out of range", "raidRangeAlpha", ranges, rangeNames, look,
+                "How see-through a member out of your range is."))
+        f:Checkbox("Frame the tile in the dispel colour", db, "raidDispelGlow", look,
+            "Shown only for debuffs you can dispel, in the colour of their type.")
+        f:Checkbox("Red edge while a member has aggro", db, "raidAggro", look)
+        f:Checkbox("Mana bar for healers", db, "raidMana", look)
+        f:Checkbox("Role icons for tanks and healers", db, "raidRoles", look)
 
-        D.Checkbox(c, "Frame the tile in the dispel colour", -412, db, "raidDispelGlow", look)
-        D.Checkbox(c, "Red edge while a member has aggro", -440, db, "raidAggro", look)
-        D.Checkbox(c, "Mana bar for healers", -468, db, "raidMana", look)
-        D.Checkbox(c, "Role icons for tanks and healers", -496, db, "raidRoles", look)
-        D.Checkbox(c, "Only debuffs you can dispel (/reload)", -524, db, "raidDispelOnly",
-            Reload("debuff filter saved"))
-        D.Hint(c, "Each tile is a small parameter bar like the Final Fantasy player frame: name in class colour, a thin health bar, debuffs top right, your buffs bottom right. The dispel frame shows only what you can dispel. Blizzard's raid tools on the left stay.", -556)
+        f:Gap(4)
+        f:Label("Auras (need a reload)")
+        local counts, countNames = Counts()
+        f:Cycles(
+            RaidSetting("Debuffs", "raidDebuffs", counts, countNames, ReloadAfter("raidDebuffs"),
+                "Top right on the tile."),
+            RaidSetting("Own buffs", "raidBuffs", counts, countNames, ReloadAfter("raidBuffs"),
+                "Bottom right: your heals over time and shields, up to two minutes long."))
+        f:Checkbox("Only debuffs you can dispel", db, "raidDispelOnly", ReloadAfter("raidDispelOnly"))
     end,
 })

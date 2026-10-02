@@ -351,6 +351,32 @@ function Flow:Pair(left, right)
     return a, b
 end
 
+-- Two buttons that step through a list of values each. A side is
+-- { label = , values = { ... }, names = { [value] = text }, get = fn, set = fn(v), tip = }
+-- and reads "label: name". Both refresh when the page shows.
+function Flow:Cycles(left, right)
+    local function Wire(b, def)
+        if not (b and def) then return end
+        local function Text() return def.label .. ": " .. (def.names[def.get()] or tostring(def.get())) end
+        b:SetScript("OnClick", function(self)
+            local cur, nextValue = def.get(), def.values[1]
+            for i, v in ipairs(def.values) do
+                if v == cur then nextValue = def.values[i % #def.values + 1] end
+            end
+            def.set(nextValue)
+            self:SetText(Text())
+        end)
+        function b:Refresh() self:SetText(Text()) end
+        Register(self.parent, b)
+    end
+    local a, b = self:Pair(
+        { text = left.label, title = left.label, tip = left.tip },
+        right and { text = right.label, title = right.label, tip = right.tip })
+    Wire(a, left)
+    Wire(b, right)
+    return a, b
+end
+
 -- anything else: build(parent, y) places it, height is what it takes
 function Flow:Add(height, build)
     local result = build(self.parent, self.y)
