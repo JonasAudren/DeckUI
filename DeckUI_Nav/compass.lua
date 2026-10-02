@@ -231,12 +231,14 @@ local function ArrivalTime(d)
     samples[#samples + 1] = { t = now, d = d }
     while #samples > 1 and now - samples[1].t > 3 do table.remove(samples, 1) end
     local first = samples[1]
-    if now - first.t < 1 then return end
+    if now - first.t < 0.5 then return end
     local closing = (first.d - d) / (now - first.t)
     if closing < 1 then return end
     local secs = math.floor(d / closing + 0.5)
     if secs >= 3600 then return end
-    return ("%d:%02d"):format(math.floor(secs / 60), secs % 60)
+    -- with its unit: a bare "0:45" read as a stray number (owner, 2026-10-02)
+    if secs < 60 then return ("%d s"):format(secs) end
+    return ("%d min"):format(math.ceil(secs / 60))
 end
 
 -- shared with the beacon (beacon.lua)
