@@ -332,6 +332,25 @@ function Flow:Button(text, onClick, tip)
     return b
 end
 
+-- two buttons side by side, each half the page wide; left and right are
+-- { text = , onClick = , tip = }. Returns both buttons.
+function Flow:Pair(left, right)
+    local width = math.floor((self.parent:GetWidth() - 24) / 2)
+    local function Make(def, point, x)
+        local b = D.Button(self.parent, def.text, self.y, def.onClick)
+        b:SetSize(width, 28)
+        b:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
+        b:ClearAllPoints()
+        b:SetPoint(point, self.parent, point, x, self.y)
+        D.Tip(b, def.title or def.text, def.tip)
+        return b
+    end
+    local a = Make(left, "TOPLEFT", 8)
+    local b = right and Make(right, "TOPRIGHT", -8)
+    self.y = self.y - 34
+    return a, b
+end
+
 -- anything else: build(parent, y) places it, height is what it takes
 function Flow:Add(height, build)
     local result = build(self.parent, self.y)

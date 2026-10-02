@@ -5,53 +5,69 @@ local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
 local min = function(v) return math.floor(v / 60 + 0.5) .. " min" end
 local db  = function() return DeckOrbsDB end
 
+-- Moved to D.Flow 2026-10-02: explanations as tooltips, the two settings
+-- that need a reload report to the panel's reload bar, and the boss frames
+-- got their test button here (it was only /orbs boss).
+local loaded = {}   -- style and buff duration as this session loaded them
+
+local function Refreshing(button, label)
+    function button:Refresh() self:SetText(label()) end
+    return button
+end
+
 D.RegisterModule("Orbs", {
     title = "Orbs",
     build = function(c)
-        D.Slider(c, "Size (this device)", -6, 0.6, 1.6, 0.05, pct, ns.DeviceDB, "scale", ns.SetScale)
-        D.Slider(c, "Opacity",     -70,  0.3, 1.0, 0.05, pct, db, "alpha", ns.SetAlpha)
-        D.Slider(c, "Brightness",  -134, 0.0, 0.5, 0.05, pct, db, "glow",  ns.SetGlow)
-        D.Slider(c, "Buffs up to duration (needs /reload)", -198, 60, 900, 60, min,
-            db, "buffMaxDuration", function(v)
-                ns.SetBuffMaxDuration(v)
-                print("DeckUI Orbs: buff duration saved - takes effect after /reload.")
-            end)
-
-        local hpBtn = D.Button(c, "Health text", -262, function() end)
-        local function HpLabel() return "Health text: " .. ns.HP_TEXT_NAMES[DeckOrbsDB.hpText or "percent"] end
-        hpBtn:SetScript("OnClick", function(b) ns.CycleHpText(); b:SetText(HpLabel()) end)
-        function hpBtn:Refresh() self:SetText(HpLabel()) end
+        loaded.style = loaded.style or DeckOrbsDB.style or "orbs"
+        loaded.buff = loaded.buff or DeckOrbsDB.buffMaxDuration
+        local f = D.Flow(c)
         c.widgets = c.widgets or {}
-        table.insert(c.widgets, hpBtn)
 
-        -- two buttons in one row: health text on the left, the style of
-        -- player and target (orbs or Final Fantasy's bars) on the right
+        f:Label("Size and look")
+        f:Slider("Size (this device)", 0.6, 1.6, 0.05, pct, ns.DeviceDB, "scale", ns.SetScale)
+        f:Slider("Opacity", 0.3, 1.0, 0.05, pct, db, "alpha", ns.SetAlpha)
+        f:Slider("Brightness", 0.0, 0.5, 0.05, pct, db, "glow", ns.SetGlow,
+            "How much the orbs glow from inside.")
+
         local STYLE_NAMES = { orbs = "Orbs", ff = "Final Fantasy" }
-        hpBtn:SetWidth(148)
-        hpBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
-        hpBtn:ClearAllPoints()
-        hpBtn:SetPoint("TOPLEFT", c, "TOPLEFT", 8, -262)
-        local styleBtn = D.Button(c, "Style", -262, function() end)
-        styleBtn:SetWidth(148)
-        styleBtn:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
-        styleBtn:ClearAllPoints()
-        styleBtn:SetPoint("TOPRIGHT", c, "TOPRIGHT", -8, -262)
+        local function HpLabel() return "Health: " .. ns.HP_TEXT_NAMES[DeckOrbsDB.hpText or "percent"] end
         local function StyleLabel() return "Style: " .. STYLE_NAMES[DeckOrbsDB.style or "orbs"] end
-        styleBtn:SetScript("OnClick", function(b)
-            DeckOrbsDB.style = (DeckOrbsDB.style == "ff") and "orbs" or "ff"
-            b:SetText(StyleLabel())
-            print("DeckUI Orbs: player and target as " .. STYLE_NAMES[DeckOrbsDB.style] .. " after /reload.")
-        end)
-        function styleBtn:Refresh() self:SetText(StyleLabel()) end
-        table.insert(c.widgets, styleBtn)
+        local hpBtn, styleBtn = f:Pair(
+            { text = "Health", title = "Health text", tip = "Percent, the full number, short (1.2M) or short with percent.",
+              onClick = function(b) ns.CycleHpText(); b:SetText(HpLabel()) end },
+            { text = "Style", title = "Style of player and target",
+              tip = "Round orbs, or Final Fantasy's parameter bar for you and its wide bar for your target. Needs a reload.",
+              onClick = function(b)
+                  DeckOrbsDB.style = (DeckOrbsDB.style == "ff") and "orbs" or "ff"
+                  b:SetText(StyleLabel())
+                  D.NeedReload("orbs:style", DeckOrbsDB.style ~= loaded.style)
+              end })
+        table.insert(c.widgets, Refreshing(hpBtn, HpLabel))
+        table.insert(c.widgets, Refreshing(styleBtn, StyleLabel))
 
-        D.Checkbox(c, "Show cast in orb",       -306, db, "showCast",       ns.SetCastShown)
-        D.Checkbox(c, "Show buffs and debuffs", -334, db, "showAuras",      ns.SetAurasShown)
-        D.Checkbox(c, "Only own debuffs on target", -362, db, "ownDebuffsOnly", ns.SetOwnDebuffsOnly)
-        D.Checkbox(c, "Show focus frame",       -390, db, "showFocus",      ns.SetFocusShown)
-        D.Checkbox(c, "Show boss frames (hides Blizzard's)", -418, db, "showBoss", ns.SetBossShown)
-        D.Checkbox(c, "Class resource dots on player orb", -446, db, "showClassPower", ns.SetClassPowerShown)
-        D.Checkbox(c, "Announce target (big name)",   -474, db, "announceTarget", ns.SetAnnounceTarget)
+        f:Gap(4)
+        f:Label("On the frames")
+        f:Checkbox("Cast in the orb", db, "showCast", ns.SetCastShown)
+        f:Checkbox("Buffs and debuffs", db, "showAuras", ns.SetAurasShown)
+        f:Checkbox("Only your own debuffs on the target", db, "ownDebuffsOnly", ns.SetOwnDebuffsOnly)
+        f:Checkbox("Class resource dots on the player", db, "showClassPower", ns.SetClassPowerShown,
+            "Combo points, holy power, runes and the like as dots on your orb or bar.")
+        f:Checkbox("Announce a new target (big name)", db, "announceTarget", ns.SetAnnounceTarget)
+        f:Slider("Buffs up to this duration", 60, 900, 60, min, db, "buffMaxDuration", function(v)
+            ns.SetBuffMaxDuration(v)
+            D.NeedReload("orbs:buffDuration", v ~= loaded.buff)
+        end, "Longer buffs (food, flasks, raid buffs) stay off your frame. Needs a reload.")
+
+        f:Label("Focus and bosses")
+        f:Checkbox("Focus frame", db, "showFocus", ns.SetFocusShown)
+        f:Checkbox("Boss frames (hide Blizzard's)", db, "showBoss", ns.SetBossShown)
+        local bossBtn = f:Button("Test boss frames", function(b)
+            ns.SetBossTest(not ns.bossTestOn)
+            C_Timer.After(0, function() b:Refresh() end)
+        end, "Five boss frames showing your target, to see size and place without a boss. Switches out of combat; also /orbs boss.")
+        table.insert(c.widgets, Refreshing(bossBtn, function()
+            return ns.bossTestOn and "End boss test" or "Test boss frames"
+        end))
     end,
 })
 
