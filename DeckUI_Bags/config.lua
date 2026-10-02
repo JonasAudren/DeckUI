@@ -18,25 +18,29 @@ local function Refresh()
     ns.FlushAll()
 end
 
+-- Moved to D.Flow 2026-10-02: explanations as tooltips; the one line
+-- people need before they look for it - how to open things - stays.
 D.RegisterModule("Bags", {
     title = "Bags",
     build = function(c)
         local count = function(v) return tostring(v) end
         local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
+        local f = D.Flow(c)
 
-        D.Label(c, "Windows (per device)", -6, 15)
-        D.Slider(c, "Bag columns", -28, 6, 24, 1, count, device, "columns", Relayout("columns"))
-        D.Slider(c, "Bank columns", -92, 7, 24, 1, count, device, "bankColumns", Relayout("bankColumns"))
-        D.Slider(c, "Size", -156, 0.6, 1.4, 0.05, pct, device, "scale", Relayout("scale"))
-        D.Hint(c, "Window too tall for the screen? More columns make it wider and shorter.", -216)
+        f:Hint("B, the bag bar and /bags open the bags, a banker opens the bank - as they would Blizzard's windows. Drag a window by its frame to move it.")
 
-        D.Label(c, "Items", -262, 15)
-        D.Checkbox(c, "Sort the bags into categories", -284, db, "categories", ns.SetCategoryView)
-        D.Checkbox(c, "Show item level on gear", -312, db, "itemLevel", Refresh)
-        D.Checkbox(c, "Mark junk (grey items) with a coin", -340, db, "markJunk", Refresh)
+        f:Label("Windows (this device)")
+        local tall = "Window too tall for the screen? More columns make it wider and shorter."
+        f:Slider("Bag columns", 6, 24, 1, count, device, "columns", Relayout("columns"), tall)
+        f:Slider("Bank columns", 7, 24, 1, count, device, "bankColumns", Relayout("bankColumns"), tall)
+        f:Slider("Size", 0.6, 1.4, 0.05, pct, device, "scale", Relayout("scale"))
 
-        D.Hint(c, "Categories: new, equipment, consumables, trade goods, quest, other, junk, and one empty slot counting the free ones. The button next to sort switches too. The bank keeps its tabs.", -378)
-        D.Hint(c, "B, the bag bar and /bags open the bags, a banker opens the bank, as they would Blizzard's windows. Drag a window by its frame to move it.", -438)
-        D.Hint(c, "Tracked items: drop an item on the row above the gold to see its count there, like a currency. Right-click one to stop.", -498)
+        f:Label("Items")
+        f:Checkbox("Sort the bags into categories", db, "categories", ns.SetCategoryView,
+            "New, equipment, consumables, trade goods, quest, other, junk, and one empty slot counting the free ones. The button next to sort switches too. The bank keeps its tabs.")
+        f:Checkbox("Item level on gear", db, "itemLevel", Refresh)
+        f:Checkbox("Mark junk (grey items) with a coin", db, "markJunk", Refresh)
+        f:Gap(4)
+        f:Hint("Tracked items: drop an item on the row above the gold to count it there like a currency; right-click one to stop.")
     end,
 })
