@@ -71,8 +71,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   button. Pages are still registered with `D.RegisterModule` and still build themselves; old
   pages keep their hand-placed y values and are measured for the scroll height. New and moved
   pages use **`D.Flow(content)`** (widgets.lua), which stacks the same widgets without pixel
-  numbers. Buttons wear the flat look (`D.FlattenButton`, `D.FlatBox`). Next steps planned: move
-  the pages to `D.Flow` one by one, hints into tooltips, an on/off switch and "Defaults" per page.
+  numbers; `D.Tip` puts an explanation on mouse-over instead of a hint line. Buttons wear the flat
+  look (`D.FlattenButton`, `D.FlatBox`). **Modules are switched on their own page** (button top
+  right, `D.UpdateModuleSwitch`); a module that is off has no page yet, so a stand-in
+  (`def.stub`, `D.MODULE_DESCRIPTIONS`) is listed greyed and replaced when the module registers.
+  "General" is shown as "Overview" (modules with their state, minimap button, damage meter, Lua
+  errors); merchant and loot live on "Loot and merchant" (key "Loot"). Moved to `D.Flow` so far:
+  Overview, Loot and merchant. Still to move: Devices and every module page.
 - **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
   optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
   shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole
@@ -118,11 +123,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   the manager not have caught up, learning the old name would undo the switch.
   `/deck layout` prints active and saved layout.
 - **At the merchant** (`DeckUI/merchant.lua`, `DeckUIDB.autoSellJunk` / `autoRepair` /
-  `repairGuild`, General tab, the first two off by default; tested in game 2026-10-01): on
+  `repairGuild`, "Loot and merchant" page, the first two off by default; tested in game 2026-10-01): on
   MERCHANT_SHOW repair first (guild funds when allowed), then `C_MerchantFrame.SellAllJunkItems`,
   and repair once more a second later if the gold was short. C APIs only - Blizzard's "sell all
   junk" button asks through a StaticPopup, which we skip rather than show (see `D.Dialog`).
-- **Loot** (`DeckUI/loot.lua`, `DeckUIDB.fastLoot` / `lootWindow`, General tab, both off by
+- **Loot** (`DeckUI/loot.lua`, `DeckUIDB.fastLoot` / `lootWindow`, "Loot and merchant" page, both off by
   default; replacing Plumber's LootUI; tested in game 2026-10-01): fast loot takes every slot with
   `LootSlot` on LOOT_READY, "auto" worked out from `autoLootDefault` and the AUTOLOOTTOGGLE
   modifier (Plumber's fix for auto loot reported as manual). The window: Blizzard's LootFrame
@@ -136,7 +141,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   also the binding DECKUI_LOOT_ALL. The one Blizzard call that writes elsewhere is
   `HandleModifiedItemClick` on a modified click (chat link, dressing room).
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
-  General tab, off by default; not yet tested in game). Its numbers are secret in combat, so
+  Overview page, off by default; not yet tested in game). Its numbers are secret in combat, so
   only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.
   UpdateStyle` (flat bar, dark background, no shadow edge, our font at Blizzard's size) and
   `DamageMeterSessionWindowMixin.SetStyle` (flat header and background, a thin edge). Mixin

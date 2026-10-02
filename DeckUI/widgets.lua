@@ -286,6 +286,18 @@ end
 local Flow = {}
 Flow.__index = Flow
 
+-- the explanation a page used to print under a widget, on mouse-over instead
+function D.Tip(frame, title, text)
+    if not text then return end
+    frame:HookScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(title, 1, 0.82, 0)
+        GameTooltip:AddLine(text, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    frame:HookScript("OnLeave", GameTooltip_Hide)
+end
+
 function D.Flow(parent, y)
     return setmetatable({ parent = parent, y = y or -6 }, Flow)
 end
@@ -298,22 +310,33 @@ function Flow:Label(text, size)
     return fs
 end
 
-function Flow:Checkbox(text, db, key, apply)
+-- tip: optional mouse-over explanation (D.Tip)
+function Flow:Checkbox(text, db, key, apply, tip)
     local cb = D.Checkbox(self.parent, text, self.y, db, key, apply or function() end)
+    D.Tip(cb, text, tip)
     self.y = self.y - 28
     return cb
 end
 
-function Flow:Slider(text, minV, maxV, step, fmt, db, key, apply)
+function Flow:Slider(text, minV, maxV, step, fmt, db, key, apply, tip)
     local s = D.Slider(self.parent, text, self.y, minV, maxV, step, fmt, db, key, apply)
+    D.Tip(s, text, tip)
     self.y = self.y - 64
     return s
 end
 
-function Flow:Button(text, onClick)
+function Flow:Button(text, onClick, tip)
     local b = D.Button(self.parent, text, self.y, onClick)
+    D.Tip(b, text, tip)
     self.y = self.y - 40
     return b
+end
+
+-- anything else: build(parent, y) places it, height is what it takes
+function Flow:Add(height, build)
+    local result = build(self.parent, self.y)
+    self.y = self.y - height
+    return result
 end
 
 function Flow:Hint(text)

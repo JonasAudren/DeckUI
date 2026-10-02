@@ -57,7 +57,7 @@ D.PAGE_GROUPS = {
     { title = "Units",     pages = { "Orbs", "Group", "Raid" } },
     { title = "Actions",   pages = { "Cross", "Spec" } },
     { title = "World",     pages = { "Quests", "Map", "Nav" } },
-    { title = "Inventory", pages = { "Bags" } },
+    { title = "Inventory", pages = { "Bags", "Loot" } },
     { title = "Info",      pages = { "Tooltip", "Week" } },
 }
 -- the sidebar's name where the module's title is too short to say it
@@ -214,9 +214,17 @@ end
 -------------------------------------------------------------------
 -- Pages
 -------------------------------------------------------------------
+-- A module's real page replaces its stand-in (a page with def.stub, see
+-- "Modules" below) when the module loads.
 function panel:AddTab(key, def)
-    if self.tabs[key] then return end
-    self.tabs[key] = NewEntry(key)
+    if self.tabs[key] then
+        local old = self.contents[key]
+        if not (old and old.def.stub) then return end
+        old:Hide()
+    else
+        self.tabs[key] = NewEntry(key)
+        table.insert(self.tabOrder, key)
+    end
 
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(PAGE_W, 10)
@@ -233,8 +241,8 @@ function panel:AddTab(key, def)
     end)
     self.contents[key] = content
 
-    table.insert(self.tabOrder, key)
     LayoutSidebar()
+    if self.current == key and self:IsShown() then self:ShowTab(key) end
 end
 
 function panel:ShowTab(key)
@@ -246,11 +254,14 @@ function panel:ShowTab(key)
         local b = self.tabs[k]
         b.bar:SetShown(on)
         b.fill:SetShown(on)
-        b.text:SetTextColor(on and GOLD[1] or 1, on and GOLD[2] or 1, on and GOLD[3] or 1)
+        -- gold: the page on show; grey: a module that is off
+        local grey = content.def.stub and 0.5 or 1
+        b.text:SetTextColor(on and GOLD[1] or grey, on and GOLD[2] or grey, on and GOLD[3] or grey)
     end
     scroll:SetVerticalScroll(0)
     pageTitle:SetText(PageName(key))
     self.current = key
+    if D.UpdateModuleSwitch then D.UpdateModuleSwitch() end
 end
 
 panel:SetScript("OnShow", function(self)
@@ -268,46 +279,178 @@ function D.ToggleConfig(tabKey)
 end
 
 -------------------------------------------------------------------
--- "General" tab
+-- Modules: a switch on their own page, a stand-in page while off
 -------------------------------------------------------------------
+-- Owner's choice (2026-10-02): a module is switched on and off at the top
+-- of its own page, not in a list on another one. A module that is off has
+-- not loaded, so it has no page of its own yet - a stand-in takes its
+-- place in the sidebar (greyed) and says what the module does. Switched
+-- on, the module loads and registers its page, which replaces the stand-in.
+D.MODULE_DESCRIPTIONS = {
+    Orbs    = "Round unit frames for you, your target, focus, pet and bosses - or Final Fantasy's bars - plus the party list and raid frames.",
+    Cross   = "The cross hotbar: Action Bar 1 and 2 as two crosses per side. LT/RT with the D-pad and face buttons on the Steam Deck, your own keys on the PC.",
+    Spec    = "A small bar of your specializations; click one to switch.",
+    Bags    = "One window for all bags, sorted into categories, and the bank and warband bank in the same look.",
+    Quests  = "Its own objective tracker in place of Blizzard's: quests, scenarios, delves, achievements, world quests.",
+    Map     = "A square minimap in a DeckUI frame and a smaller, cleaner world map.",
+    Tooltip = "The mouse-over tooltip in DeckUI's look, with spec and item level of players and a few extra lines.",
+    Nav     = "A compass bar, the navigation target with distance and arrival time, and /way waypoints.",
+    Week    = "The week at a glance for all your characters: Great Vault, keystone, hunts, delves, profession knowledge, weekly quests.",
+}
+
+local function ModuleLoaded(key)
+    return C_AddOns.IsAddOnLoaded(D.MODULE_ADDONS[key])
+end
+
+-- what the switch and the overview say about a module
+local function ModuleState(key)
+    local on, loaded = DeckUIDB.modules[key], ModuleLoaded(key)
+    if on and loaded then return "On", true end
+    if not on and loaded then return "Off after reload", true end
+    if on then
+        local allowed = D.ModuleAllowed(key)
+        return allowed and "On after reload" or "Not on this device", false
+    end
+    return "Off", false
+end
+D.ModuleState = ModuleState
+
+local switch = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+switch:SetSize(150, 22)
+switch:SetPoint("TOPRIGHT", -34, -10)
+switch:GetFontString():SetFont(D.FONT, 12, "OUTLINE")
+D.FlattenButton(switch)
+switch:Hide()
+
+function D.UpdateModuleSwitch()
+    local key = panel.current
+    if not (key and D.MODULE_ADDONS[key]) then
+        switch:Hide()
+        return
+    end
+    local state, live = ModuleState(key)
+    local color = DeckUIDB.modules[key] and "|cff33ff33" or "|cff888888"
+    switch:SetText("Module: " .. color .. state .. "|r")
+    switch:Show()
+end
+
+switch:SetScript("OnClick", function()
+    local key = panel.current
+    local on = not DeckUIDB.modules[key]
+    D.SetModuleEnabled(key, on)
+    -- a module once loaded stays until the reload
+    D.NeedReload("module:" .. key, not on and ModuleLoaded(key))
+    panel:ShowTab(key)
+end)
+
+local function StubPage(key)
+    return {
+        title = key, stub = true,
+        build = function(c)
+            local f = D.Flow(c)
+            f:Hint(D.MODULE_DESCRIPTIONS[key] or "")
+            if key == "Cross" then
+                f:Gap(6)
+                f:Checkbox("Cross hotbar only on Steam Deck", function() return DeckUIDB end, "crossDeckOnly",
+                    function() D.NeedReload("crossDeckOnly") end)
+            end
+            f:Gap(6)
+            c.stateText = f:Hint("")   -- last: its text changes length
+            c.widgets = c.widgets or {}
+            table.insert(c.widgets, { Refresh = function()
+                local state = ModuleState(key)
+                c.stateText:SetText(state == "Not on this device"
+                    and "Switched on, but set to the Steam Deck only."
+                    or "Switch it on with the button at the top right - it loads at once.")
+            end })
+        end,
+    }
+end
+
+-------------------------------------------------------------------
+-- "General": the modules at a glance, and what belongs to no module
+-------------------------------------------------------------------
+D.PAGE_NAMES.General = "Overview"
+
+local function ModuleRow(c, y, key)
+    local row = CreateFrame("Button", nil, c)
+    row:SetSize(300, 22)
+    row:SetPoint("TOP", 0, y)
+    D.FlatBox(row, 0.5, 0.2)
+    row:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+    row:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.06)
+    local name = row:CreateFontString(nil, "OVERLAY")
+    name:SetFont(D.FONT, 13, "OUTLINE")
+    name:SetPoint("LEFT", 8, 0)
+    name:SetText(D.PAGE_NAMES[key] or key)
+    local state = row:CreateFontString(nil, "OVERLAY")
+    state:SetFont(D.FONT, 12, "OUTLINE")
+    state:SetPoint("RIGHT", -8, 0)
+    row:SetScript("OnClick", function() panel:ShowTab(key) end)
+    D.Tip(row, D.PAGE_NAMES[key] or key, D.MODULE_DESCRIPTIONS[key])
+    function row:Refresh()
+        local text = ModuleState(key)
+        state:SetText((DeckUIDB.modules[key] and "|cff33ff33" or "|cff888888") .. text .. "|r")
+    end
+    return row
+end
+
 panel:AddTab("General", {
     title = "General",
     build = function(c)
         local db = function() return DeckUIDB end
-
-        D.Label(c, "Modules", -6, 15)
-        local modules = function() return DeckUIDB.modules end
-        for i, key in ipairs(D.MODULE_ORDER) do
-            D.Checkbox(c, D.MODULE_TITLES[key], -28 * i, modules, key,
-                function(v)
-                    D.SetModuleEnabled(key, v)
-                    -- a module once loaded stays until the reload
-                    D.NeedReload("module:" .. key, not v and C_AddOns.IsAddOnLoaded("DeckUI_" .. key))
-                end)
-        end
-
-        -- below the last module, however many there are
-        local y = -28 * #D.MODULE_ORDER - 32
-        D.Hint(c, "Enabling takes effect immediately, disabling after /reload.", y)
-
-        D.Label(c, "Other", y - 32, 15)
-        D.Checkbox(c, "Show minimap button", y - 54, db, "showMinimap",
-            function(v) D.SetMinimapShown(v) end)
-        D.Checkbox(c, "Damage meter in DeckUI's look", y - 82, db, "styleDamageMeter",
-            D.SetDamageMeterStyled)
-
-        D.Checkbox(c, "Sell junk at the merchant", y - 110, db, "autoSellJunk", function() end)
-        D.Checkbox(c, "Repair at the merchant", y - 138, db, "autoRepair", function() end)
-        D.Checkbox(c, "Repair with guild funds first", y - 166, db, "repairGuild", function() end)
-        D.Checkbox(c, "Fast auto loot", y - 194, db, "fastLoot", function() end)
-        D.Checkbox(c, "DeckUI's loot window", y - 222, db, "lootWindow",
-            function() D.ApplyLootWindow() end)
-
-        -- the error collector (errors.lua), with how many it holds
-        local errBtn = D.Button(c, "Lua errors", y - 260, function() D.ShowErrors() end)
-        function errBtn:Refresh() self:SetText(("Lua errors (%d)"):format(D.ErrorCount())) end
+        local f = D.Flow(c)
         c.widgets = c.widgets or {}
+
+        f:Label("Modules")
+        for _, key in ipairs(D.MODULE_ORDER) do
+            table.insert(c.widgets, f:Add(24, function(parent, y) return ModuleRow(parent, y, key) end))
+        end
+        f:Gap(4)
+        f:Hint("Click a module for its page; switch it on or off at the top right there.")
+
+        f:Gap(8)
+        f:Label("Interface")
+        f:Checkbox("Show minimap button", db, "showMinimap", function(v) D.SetMinimapShown(v) end,
+            "Left click opens these settings, Shift-click the week overview.")
+        f:Checkbox("Damage meter in DeckUI's look", db, "styleDamageMeter", D.SetDamageMeterStyled,
+            "Blizzard's damage meter with flat bars and DeckUI's font. Its numbers stay Blizzard's.")
+
+        f:Gap(8)
+        -- the error collector (errors.lua), with how many it holds
+        local errBtn = f:Button("Lua errors", function() D.ShowErrors() end,
+            "Every Lua error since login, from any addon, ready to copy. Also /deck errors.")
+        function errBtn:Refresh() self:SetText(("Lua errors (%d)"):format(D.ErrorCount())) end
         table.insert(c.widgets, errBtn)
+    end,
+})
+
+-------------------------------------------------------------------
+-- "Loot and merchant": what used to sit under "Other" in General
+-------------------------------------------------------------------
+D.PAGE_NAMES.Loot = "Loot and merchant"
+
+panel:AddTab("Loot", {
+    title = "Loot and merchant",
+    build = function(c)
+        local db = function() return DeckUIDB end
+        local nothing = function() end
+        local f = D.Flow(c)
+
+        f:Label("At the merchant")
+        f:Checkbox("Sell junk", db, "autoSellJunk", nothing,
+            "Grey items are sold as soon as a merchant opens.")
+        f:Checkbox("Repair", db, "autoRepair", nothing,
+            "Repairs everything when a merchant who can repair opens.")
+        f:Checkbox("Repair with guild funds first", db, "repairGuild", nothing,
+            "Uses the guild bank where you are allowed to; your own gold covers the rest.")
+
+        f:Gap(8)
+        f:Label("Loot")
+        f:Checkbox("Fast auto loot", db, "fastLoot", nothing,
+            "Takes everything the moment a corpse opens, without the loot window flickering up.")
+        f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
+            "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
     end,
 })
 
@@ -373,6 +516,12 @@ panel:AddTab("Devices", {
         D.Hint(c, "Blizzard keeps all three on its server, so every device loads the same. Tick them on each device: what is set up there when you tick a box becomes that device's, and later changes are remembered.", -484)
     end,
 })
+
+-- the stand-ins for every module not loaded yet; a module that loads
+-- later (at login, or switched on) replaces its own
+for _, key in ipairs(D.MODULE_ORDER) do
+    if not panel.contents[key] then panel:AddTab(key, StubPage(key)) end
+end
 
 -------------------------------------------------------------------
 -- Slash command

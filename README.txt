@@ -122,16 +122,31 @@ Diagnostics for the cross hotbar, useful when reporting a problem:
   /dc overlay [n]          print the visible parts of button n
 
 
-General tab
------------
-Modules           each module on or off. Enabling takes effect
-                  immediately, disabling after /reload.
+Settings window (/deck)
+-----------------------
+The pages are listed on the left, grouped by theme; the page scrolls. A
+bar at the bottom says when a change waits for a reload and has a button
+that does it.
+
+Each module is switched on or off with the button at the top right of its
+own page. A module that is off is listed in grey; its page says what it
+does. Switching on takes effect immediately, switching off after a reload.
+
+Overview
+--------
+Modules           every module with its state; click one for its page.
 Show minimap button
                   hide it if you prefer /deck.
 Damage meter in DeckUI's look
                   Blizzard's own damage meter with flat bars, a dark
                   background and a thin edge. Off by default; switching it
                   off again needs a /reload.
+Lua errors        collects every Lua error with its stack, to copy into a
+                  report (also /deck errors).
+
+
+Loot and merchant
+-----------------
 Sell junk at the merchant
                   sells what the game counts as junk whenever you talk to a
                   merchant; the buyback tab still has the last twelve items.
@@ -155,8 +170,6 @@ DeckUI's loot window
                   /deck unlock shows both with a sample to place them.
                   Drag it by its frame; it opens where you left it.
                   Both are off by default.
-Lua errors        collects every Lua error with its stack, to copy into a
-                  report (also /deck errors).
 
 
 Devices tab
@@ -384,8 +397,8 @@ Cross buttons light up but cast the wrong thing
 
 
 No cross hotbar on the PC
-    Either the Cross module is off in the General tab, or "Cross hotbar only
-    on Steam Deck" is checked in the Devices tab.
+    Either the Cross module is off (its page, top right), or "Cross hotbar
+    only on Steam Deck" is checked in the Devices page.
 
 Cross buttons are empty
     The crosses only display Action Bar 1 and 2. Put your spells on those two

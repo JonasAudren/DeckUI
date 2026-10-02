@@ -82,12 +82,12 @@ DeckUI is a hub with nine load-on-demand modules; enable or disable each one in 
 - Weekly quests are learned as they show up in a quest log
 - Open it with a round button on screen (its number counts your unlocked vault slots), `/week`, a key binding or Shift-click on the minimap button
 
-## Loot and merchant (General tab, optional)
+## Loot and merchant (optional)
 - **Fast auto loot**, and **DeckUI's loot window**: a compact list with "Take all" (also a key binding); with auto loot a short list shows what you picked up
 - **Sell junk and repair** at every merchant, with guild funds first
 
 ## Blizzard's damage meter in DeckUI's look
-One checkbox in the General tab gives the game's built-in damage meter flat bars, a dark background and a thin edge, matching the rest of DeckUI.
+One checkbox on the Overview page gives the game's built-in damage meter flat bars, a dark background and a thin edge, matching the rest of DeckUI.
 
 ## Steam Deck and PC
 DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → Devices → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
@@ -125,7 +125,7 @@ Step 2 writes into your key bindings, so it asks first and lists exactly which o
 ## Reporting a bug
 Please open an issue at **https://github.com/JonasAudren/DeckUI/issues** – that keeps reports in one place with a history. Comments here are fine for short questions.
 
-The quickest way to a good report: **`/deck errors`** (or the "Lua errors" button in the General tab) collects every Lua error with its details – select all, copy, paste it into the issue.
+The quickest way to a good report: **`/deck errors`** (or the "Lua errors" button on the Overview page) collects every Lua error with its details – select all, copy, paste it into the issue.
 
 DeckUI ships diagnostic commands whose output makes a report much easier to act on. Run the fitting one and paste what it prints in chat:
 
