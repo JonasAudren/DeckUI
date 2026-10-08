@@ -36,17 +36,32 @@ local OUT_OF_COMBAT = {}
 local bar        -- the oUF frame
 local buffs, buffKey
 
+-- FFXIV's status icons are shaped (owner's close-up, 2026-10-08): a buff's
+-- top edge rises to a point like a roof, a debuff's bottom edge falls to
+-- one. Our own masks in textures/ (status_up / status_down, 64x64 TGA)
+-- cut the icon, the dark edge behind it and the cooldown swipe alike.
+local TEXTURES = "Interface\\AddOns\\DeckUI_Orbs\\textures\\"
+
 local function Style(element, button)
-    if button.Icon then button.Icon:SetTexCoord(0.15, 0.85, 0.06, 0.94) end
-    -- the thin dark edge
+    local shape = TEXTURES .. (element.shape == "down" and "status_down" or "status_up")
+    if button.Icon then
+        button.Icon:SetTexCoord(0.12, 0.88, 0.06, 0.94)
+        local mask = button:CreateMaskTexture()
+        mask:SetTexture(shape, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetAllPoints(button.Icon)
+        button.Icon:AddMaskTexture(mask)
+    end
+    -- the thin dark edge: the same shape, black, a pixel larger all round
     local edge = button:CreateTexture(nil, "BACKGROUND", nil, -8)
     edge:SetPoint("TOPLEFT", -1, 1)
     edge:SetPoint("BOTTOMRIGHT", 1, -1)
-    edge:SetColorTexture(0, 0, 0, 0.9)
+    edge:SetTexture(shape)
+    edge:SetVertexColor(0, 0, 0, 0.95)
     if button.Cooldown then
         -- the time is written below the icon; no numbers on top of it
         button.Cooldown:SetHideCountdownNumbers(true)
         button.Cooldown:SetDrawEdge(false)
+        button.Cooldown:SetSwipeTexture(shape)
         button.Cooldown:SetSwipeColor(0, 0, 0, 0.45)
     end
     if button.Time then
@@ -98,12 +113,14 @@ local function BuildBar(self, unit)
     if not self.CreateAuras then return end
     buffs = Block(self, w, h, perRow, BUFF_ROWS, "TOPRIGHT")
     buffs.cancelButton = "RightButtonUp"
+    buffs.shape = "up"
     buffKey = buffs:AddGroup("HELPFUL", {
         maxFrameCount = BUFF_ROWS * perRow,
         candidateFilters = InCombatLockdown() and IN_COMBAT or OUT_OF_COMBAT,
     })
 
     local debuffs = Block(self, w, h, DEBUFFS, 1, "TOPLEFT")
+    debuffs.shape = "down"
     debuffs:AddGroup("HARMFUL", { maxFrameCount = DEBUFFS, showDebuffBorder = true })
 end
 

@@ -329,7 +329,9 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   out like FFXIV's status bar (owner's reference screenshot), mirrored at his wish: one strip,
   buffs from the right edge growing left (up to two rows), debuffs from the left edge; narrow upright icons (`width`/`height` on the
   container) with a dark edge, the time small below (`Time` re-anchored; the engine colours it, a SetTextColor of ours is
-  overwritten - green would need the container's `durationColors` curve), and
+  overwritten - green would need the container's `durationColors` curve), FFXIV's
+  shapes from our own masks (`DeckUI_Orbs/textures/status_up|down.tga`, made by `make-status-masks.py`: a buff's
+  top rises to a point, a debuff's bottom falls to one; icon, edge and swipe share them), and
   the dispel colour as a short strip above a debuff (`Border` re-anchored, FFXIV's Esuna mark). **Long buffs only out of combat**: the buff group's candidate filter is
   switched with `SetAuraGroupCandidateFilters` on PLAYER_REGEN_DISABLED/ENABLED between `{}`
   and `{ maxDuration = 60 }` - the container has no `minDuration` (Blizzard_AuraContainerUtil,
