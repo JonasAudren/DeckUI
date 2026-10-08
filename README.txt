@@ -282,6 +282,10 @@ the single-button assistant work, including its changing icon.
 
 Options in the Cross tab:
 
+  Quick menu: hold RB      Steam Deck only, off by default. While RB is held
+                           a menu shows: D-pad up map, right bags, down quest
+                           log, left character; Y talents, B group finder,
+                           A collections, X game menu.
   LB + D-pad up/down zooms the camera
                            off by default, Steam Deck only. LB becomes Alt
                            (the only way the game combines LB with another

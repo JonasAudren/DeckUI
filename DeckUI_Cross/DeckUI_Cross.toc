@@ -19,4 +19,5 @@ core.lua
 input.lua
 assist.lua
 stance.lua
+quickmenu.lua
 config.lua

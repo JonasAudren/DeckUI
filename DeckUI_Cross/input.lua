@@ -545,6 +545,7 @@ local function Init()
     ns.SetBlizzardBarsHidden(DeckCrossDB.hideBlizzardBars)
     if ns.InitAssist then ns.InitAssist() end
     if ns.InitStance then ns.InitStance() end
+    if ns.InitQuickMenu then ns.InitQuickMenu() end
     UpdateHighlight()
     print("DeckUI Cross: " .. (D.IsDeck() and "controller mode (LT/RT)" or "keyboard mode (mirrors Action Bar 1 + 2, Blizzard bindings)"))
     WarnConsolePortBar()
@@ -690,6 +691,9 @@ SlashCmdList.DECKCROSS = function(msg)
         return
     elseif msg == "trace" then
         ns.ToggleTrace()
+        return
+    elseif msg == "quick" then
+        ns.PrintQuickMenu()
         return
     elseif msg == "assist" then
         ns.PrintAssist()

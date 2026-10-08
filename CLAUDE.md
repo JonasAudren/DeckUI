@@ -157,7 +157,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `EventUtil.ContinueOnAddOnLoaded`, and existing windows are styled once directly. The
   "background opacity" setting keeps working: it sets the alpha of the textures we recolour.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
-  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/deck device`, `/deck bars`, `/deck layout`,
+  (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/dc quick`, `/deck device`, `/deck bars`, `/deck layout`,
   `/deck build`, `/deck errors`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
@@ -281,6 +281,16 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   next/previous. Next/previous depend on the current form, so a secure state driver on
   `[form:n]` re-binds them with `SetBindingClick` in its snippet - in combat too.
   `/dc bars` prints the row and where `StanceButton1` hangs.
+- **Quick menu on RB** (`DeckUI_Cross/quickmenu.lua`, `DeckCrossDB.quickMenu`, off by default,
+  Deck only; not yet tested in game). Holding RB shows a cross of eight entries; the D-pad and
+  face buttons open map, bags, quest log, character, talents, group finder, collections, game
+  menu. The keys go to **Blizzard's own binding commands** (TOGGLEWORLDMAP, OPENALLBAGS, ...),
+  never to our Lua opening a window (that ran the map's opening tainted, see the Quests notes).
+  RB is an override click on a hidden secure button registered for down and up; a
+  `SecureHandlerWrapScript` on its OnClick binds the eight keys (`owner:SetBinding`) on the
+  press and `ClearBindings` on the release - restricted code, so it works in combat. The
+  picture is shown from a plain HookScript. A command the client does not know is left out and
+  greyed; `/dc quick` prints the option, RB's binding and each command.
 - Gamepad glyph atlases (`Gamepad_Ltr_Face_*`) do not exist on this client; we ship our own
   TGA glyphs in `DeckUI_Cross/textures/`.
 - Health/power values may be *secret values*: display them via tags / Blizzard helpers

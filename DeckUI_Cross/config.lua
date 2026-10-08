@@ -21,6 +21,8 @@ D.RegisterModule("Cross", {
               tip = "Turns the gamepad on and makes LT Shift and RT Ctrl - the two halves of the crosses. Once per device." },
             { text = "Default bindings", onClick = ns.ApplyDefaultBindings,
               tip = "A jump, X interact, B game menu, Y character, D-pad cycles targets. Asks first and lists what it would replace." })
+        f:Checkbox("Quick menu: hold RB", db, "quickMenu", ns.SetQuickMenu,
+            "While RB is held: D-pad up map, right bags, down quest log, left character; Y talents, B group finder, A collections, X game menu. Steam Deck only.")
         f:Checkbox("LB + D-pad up/down zooms the camera", db, "lbZoom", ns.SetLBZoom,
             "LB becomes Alt - the only way the game combines LB with another button - so it is no longer a button of its own. Hold for a smooth zoom, tap for one step.")
 
