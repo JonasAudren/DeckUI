@@ -108,7 +108,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   saves the loaded bindings locally first; switching it off does *not* save, which would
   upload this machine's set over the server's. `/deck device` prints the state.
 - **Action bar contents per device** (`DeckUI/actionbars.lua`, `DeckUIDB.keepBars`, off by
-  default; not yet tested in game). What sits on the bars is server-side per character and
+  default; tested in game 2026-10-08). What sits on the bars is server-side per character and
   spec, with no CVar - the owner lays out his bars differently on the Deck, and the PC loaded
   that. So `DeckUIDB.barLayouts[device][name-realm][specID]` holds a copy, restored at login,
   /reload and spec change (ACTIVE_PLAYER_SPECIALIZATION_CHANGED, not the talent one), taken
@@ -120,7 +120,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   where every slot reads empty is never stored** - that is bars not loaded yet, and restoring
   it would wipe them. `/deck bars` prints the key, the saved layout and the last result.
 - **Edit Mode layout per device** (`DeckUI/editmode.lua`, `DeckUIDB.keepLayouts`, off by
-  default; not yet tested in game). Blizzard's layouts and the choice of the active one are
+  default; tested in game 2026-10-08). Blizzard's layouts and the choice of the active one are
   server-side, per character and spec. The owner makes one layout per device in Edit Mode;
   DeckUI learns by *name* which one is active on this device (`DeckUIDB.editLayouts`, keyed
   like the bars) and switches back at login, /reload and spec change. The name is read from
@@ -149,7 +149,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   also the binding DECKUI_LOOT_ALL. The one Blizzard call that writes elsewhere is
   `HandleModifiedItemClick` on a modified click (chat link, dressing room).
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
-  Overview page, off by default; not yet tested in game). Its numbers are secret in combat, so
+  Overview page, off by default; tested in game 2026-10-08). Its numbers are secret in combat, so
   only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.
   UpdateStyle` (flat bar, dark background, no shadow edge, our font at Blizzard's size) and
   `DamageMeterSessionWindowMixin.SetStyle` (flat header and background, a thin edge). Mixin
@@ -387,7 +387,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   ("Test", `/orbs raid`): forty "player" frames. Settings in their own **Raid** tab
   (DeckUI_Orbs/config.lua); the party list keeps the **Group** tab.
 
-## Bags module (bag window tested in game 2026-09-29; bank not yet)
+## Bags module (bag window tested in game 2026-09-29, bank 2026-10-08)
 
 Built from Blizzard's 12.1.0 source (Gethe/wow-ui-source, `live`, read 2026-09-29), not from
 memory - the bank changed completely in 11.2. Plan: one grid first, categories second.
@@ -434,10 +434,9 @@ per frame lays out (`w.Layout()` -> sections, columns, scale) and refreshes the 
   current until `ITEM_DATA_LOAD_RESULT`. "Old" is the item's own expansion - a hearthstone is 0.
 - **Auction filter** (auctioneer button, both windows, session only, combinable with the
   others): dims what `C_AuctionHouse.IsSellItemValid(location, false)` refuses - Blizzard's
-  own test from ContainerFrame.lua. Not yet tested in game, including whether it answers the
-  same away from the auction house.
+  own test from ContainerFrame.lua. Tested in game 2026-10-08.
 - **Tracked items** (`items.lua`, `DeckBagsDB.trackedItems`, account-wide list, up to six;
-  not yet tested in game): a row above the bag window's footer, item counts like currencies.
+  tested in game 2026-10-08): a row above the bag window's footer, item counts like currencies.
   Built instead of fitting Plumber's Backpack Item Tracker, which hangs off Blizzard's parked
   bag frames. Items are added by dropping them on the row (`GetCursorInfo`, then
   `ClearCursor` puts the item back) - the item buttons keep Blizzard's click handling.
@@ -475,7 +474,7 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   can anything anchored to them, so they hang off UIParent at screen coordinates copied from
   the rows out of combat and are re-placed on PLAYER_REGEN_ENABLED. Spell cooldowns go into
   the Cooldown frame untouched (secret values, see the Cross notes).
-- **The "find a group" eye** (reported missing 2026-09-30; not yet tested in game) is
+- **The "find a group" eye** (reported missing 2026-09-30; tested in game 2026-10-08) is
   Blizzard's own `QuestObjectiveFindGroupButtonTemplate` (quests, world quests, bonus
   objectives, shown when `QuestUtil.CanCreateQuestGroup`) and
   `ScenarioObjectiveTrackerFindGroupButtonTemplate` (the scenario stage, when
@@ -528,7 +527,7 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
 - `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have
   widgets, and the secure button state.
 
-## Map module (not yet tested in game)
+## Map module (tested in game 2026-10-08)
 
 A square minimap in a DeckUI frame and a smaller world map. Built from Blizzard's 12.1.0
 source (read 2026-09-29).
@@ -580,7 +579,7 @@ source (read 2026-09-29).
   nothing says which maps or APIs; minimap coordinates are simply blank when the position
   API returns nothing. `/deckmap debug` prints whether the restriction is active.
 
-## Tooltip module (not yet tested in game)
+## Tooltip module (tested in game 2026-10-08)
 
 GameTooltip restyled and extended. Built from Blizzard's 12.1.0 source (read 2026-09-30).
 **GameTooltip is one frame the whole game shares** - the widget taint above applies to it
@@ -609,7 +608,7 @@ just the same, so:
 - Health bar: Blizzard's (it watches the unit securely), restyled with textures only.
 - Inspect for other players' spec/item level: one at a time, 1.5 s apart, 5 s timeout, not
   in combat nor while Blizzard's inspect window is open; results cached by GUID for 5 min.
-- **Extras** (`extras.lua`, replacing Plumber's tooltip modules; not yet tested in game): the
+- **Extras** (`extras.lua`, replacing Plumber's tooltip modules; tested in game 2026-10-08): the
   quest an item in the bags starts (bag and slot read from `tooltip.processingInfo`, read
   only), unspent profession knowledge on the profession spell (trait currency per spec tree,
   counted once per currency, cached until a skill/trait event), and the Coffer Key count on a
@@ -648,7 +647,7 @@ source (read 2026-10-01).
 - `/way` is ours unless TomTom (or another addon) has it; `/dway` always works.
 - `/decknav debug` prints map, position, facing, map size, the target and its angle.
 
-## Week module (first version worked in game 2026-10-01; reworked 2026-10-02, not yet tested)
+## Week module (first version worked in game 2026-10-01; reworked 2026-10-02, tested 2026-10-08 - crests, knowledge and hunts included)
 
 The week at a glance for every character (owner's wish, 2026-10-01). Reworked the next day
 on the owner's verdict (layout, look and missing content): **one table, a row per
