@@ -167,6 +167,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   the engine's press-and-hold repeat (single-button assistant, hold-to-cast). `SetOverrideBindingClick`
   onto LibActionButton buttons breaks that. Our cross buttons only *display*; the pushed state is
   mirrored from Blizzard's buttons via `hooksecurefunc(native, "SetButtonState")`.
+- **Binding strings take the game's modifier order, ALT-CTRL-SHIFT-<key>.** LT+RT was bound as
+  "SHIFT-CTRL-PADDUP", which never matched; with both triggers held the game fell back to a
+  binding with one modifier, so the middle crosses lit up while a button of a half fired
+  (owner's report 2026-10-08; now "CTRL-SHIFT", tested in game the same day).
 - The crosses mirror **Action Bar 1** (buttons 1–12, with a page state driver like Blizzard's main
   bar) and **Action Bar 2** (buttons 13–24, slots 61–72). Deck = LT/RT + D-pad/ABXY,
   PC = the player's own Blizzard bindings of those bars (nothing to bind).

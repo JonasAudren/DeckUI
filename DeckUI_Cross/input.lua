@@ -9,7 +9,12 @@ local PAD_KEYS = {
     { "PADDUP", "PADDRIGHT", "PADDDOWN", "PADDLEFT" },
     { "PAD4",   "PAD2",      "PAD1",     "PAD3"     },
 }
-local MODS = { "SHIFT", "CTRL", "SHIFT-CTRL" }
+-- The game writes a combination in a fixed order, ALT-CTRL-SHIFT-<key>,
+-- and matches bindings by that string. "SHIFT-CTRL-PADDUP" never matched:
+-- with both triggers held the game fell back to a binding with one of the
+-- two modifiers, so LT+RT fired a button of the left or right half while
+-- the middle crosses lit up (owner's report, 2026-10-08).
+local MODS = { "SHIFT", "CTRL", "CTRL-SHIFT" }
 
 local DEFAULT_BINDINGS = {
     PAD1      = "JUMP",
