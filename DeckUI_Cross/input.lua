@@ -319,6 +319,17 @@ function ns.SetBlizzardBarsHidden(state)
             print("DeckUI Cross: " .. why)
         end
     end
+    -- Blizzard's vehicle / override bar (its own frame, with health and
+    -- power orbs, five buttons, the micro menu and a leave button) shows
+    -- when an encounter or a vehicle takes over the bar - the crosses page
+    -- to the same actions then, so it showed everything twice (owner's
+    -- screenshot, 2026-10-08). Hidden, the game routes ACTIONBUTTON keys to
+    -- Action Bar 1 instead, which pages to the override actions itself,
+    -- and our own leave-vehicle button appears in place of its one.
+    local override = _G.OverrideActionBar
+    if override then
+        if state then HideBar(override) else ShowBar(override) end
+    end
 end
 
 -------------------------------------------------------------------
@@ -417,6 +428,12 @@ function ns.PrintBars()
         else
             print("  " .. why)
         end
+    end
+    local override = _G.OverrideActionBar
+    if override then
+        print(string.format("  OverrideActionBar parent=%s shown=%s visible=%s",
+            override:GetParent() and (override:GetParent():GetName() or "?") or "nil",
+            tostring(override:IsShown()), tostring(override:IsVisible())))
     end
     PrintLeave()
     if ns.PrintStance then ns.PrintStance() end

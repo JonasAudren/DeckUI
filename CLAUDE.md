@@ -194,6 +194,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   It is polled (0.2 s) on purpose: taxis have no clean start event, and Blizzard updates its
   own button on the same events, so asking about its visibility there would race it.
   `VehicleExit` / `TaxiRequestEarlyLanding` are not protected - a plain button works in combat.
+- **Blizzard's override / vehicle bar (`OverrideActionBar`) is hidden with the mirrored bars**
+  (2026-10-08; not yet tested in game): an encounter that takes over the bar (Avatar of
+  Nalorakk) showed it under the crosses with orbs, five buttons and the micro menu, while the
+  crosses already paged to the same actions. Assumption to confirm in such a fight: with it
+  hidden, ACTIONBUTTONn keys reach Action Bar 1, which pages to the override actions, and the
+  crosses' pushed state still follows. `/dc bars` prints where the bar hangs.
 - `ActionButtonTemplate` has a `TextOverlayContainer` at frame level 500 whose textures darken the
   button while a modifier is held – strip its textures (`CleanOverlay`).
 - Blizzard's template draws the **icon in the BACKGROUND layer**; anything of ours behind the icon
