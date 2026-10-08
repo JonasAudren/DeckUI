@@ -8,6 +8,29 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.6.0
+
+- **Buff bar in Final Fantasy's style** - your status icons as a bar of
+  their own in place of Blizzard's buffs, which grew far too long in
+  combat and ran into the minimap on the Steam Deck. Buffs line up from
+  the right edge, debuffs from the left, each shaped like FFXIV's (a
+  point on top for a buff, at the bottom for a debuff) with the time left
+  below it and a coloured mark above a debuff you can dispel. Out of
+  combat it shows every buff, in combat only those of a minute or less.
+  Right click cancels a buff. Icon size and icons per row per device.
+  Tick "Own buff bar" on the Player and target page.
+- **Quick menu on the Steam Deck** - hold RB, then the D-pad opens the map,
+  bags, quest log or character, and Y, B, A, X the talents, group finder,
+  collections or game menu. Tick "Quick menu: hold RB" on the Cross page.
+- **Fixed: LT + RT** on the Steam Deck fired a button of the left or right
+  half instead of the small middle crosses.
+- **Vehicles and encounters** that take over your action bar no longer
+  show Blizzard's old bar under the crosses - the crosses already show
+  those actions, and DeckUI's own leave button stands in for its one.
+- **Final Fantasy style:** your pet is now a small bar beside yours instead
+  of a round orb. In a vehicle it shows you, while your bar shows the
+  vehicle.
+
 ## 1.5.0 (2026-10-02)
 
 - **Stance bar at the crosses** - forms, stances, auras and stealth as
