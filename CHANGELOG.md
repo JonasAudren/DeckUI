@@ -8,7 +8,7 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
-## 1.6.0
+## 1.6.0 (2026-10-08)
 
 - **Buff bar in Final Fantasy's style** - your status icons as a bar of
   their own in place of Blizzard's buffs, which grew far too long in
@@ -19,9 +19,11 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   combat it shows every buff, in combat only those of a minute or less.
   Right click cancels a buff. Icon size and icons per row per device.
   Tick "Own buff bar" on the Player and target page.
-- **Quick menu on the Steam Deck** - hold RB, then the D-pad opens the map,
-  bags, quest log or character, and Y, B, A, X the talents, group finder,
-  collections or game menu. Tick "Quick menu: hold RB" on the Cross page.
+- **Quick menu on the Steam Deck (still being tested)** - hold RB, then
+  the D-pad opens the map, bags, quest log or character, and Y, B, A, X
+  the talents, group finder, collections or game menu. Tick "Quick menu:
+  hold RB" on the Cross page. It has not been tried on a Steam Deck yet -
+  off by default, and feedback is very welcome.
 - **Name of the interact target** - with the interact key, the object it
   would use (a chest, an ore vein, a herb) gets its name below the game's
   icon, gold in reach and grey out of it, and a ring fills while you
@@ -35,9 +37,9 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 - **Auction prices on the road** - a "Scan now" button below the auction
   house reads every listing (at most every 15 minutes, the game's limit),
   and from then on every item's tooltip shows its cheapest buyout and
-  the age of the scan, a stack in your bags its whole value. The bag window shows what it all
-  would fetch, and valuable slots (100g and up, adjustable) get a gold
-  coin. On the Loot and merchant, Tooltip and Bags pages. The auction
+  the age of the scan, a stack in your bags its whole value. The bag
+  window shows what it all would fetch, and valuable slots (100g and up,
+  adjustable) get a gold coin. On the Loot and merchant, Tooltip and Bags pages. The auction
   house window itself can wear DeckUI's look too.
 - **Fixed: LT + RT** on the Steam Deck fired a button of the left or right
   half instead of the small middle crosses.
