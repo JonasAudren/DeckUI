@@ -324,7 +324,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   debuffs to the right. Holder "Boss frames (FF)". `/orbs boss` = test mode (five frames of
   your target, in whichever boss style is active).
 - **Buff bar** (`DeckUI_Orbs/buffs.lua`, `DeckOrbsDB.buffBar`, off by default, needs a /reload;
-  not yet tested in game; owner's wish 2026-10-08 - Blizzard's buffs grew too long in combat and
+  tested in game 2026-10-08, the combat switch included; owner's wish the same day - Blizzard's buffs grew too long in combat and
   ran into the minimap on the Deck). An oUF frame for "player" with two aura containers laid
   out like FFXIV's status bar (owner's reference screenshot), mirrored at his wish: one strip,
   buffs from the right edge growing left (up to two rows), debuffs from the left edge; narrow upright icons (`width`/`height` on the
