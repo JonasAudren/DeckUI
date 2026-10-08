@@ -12,6 +12,7 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - Class resource dots (combo points, holy power, runes, ...) around the player orb
 - Big target name announce on every target change
 - Class and reaction colours
+- **Own buff bar in Final Fantasy XIV style** (optional): status icons shaped like FFXIV's, the time below each, buffs from the right and debuffs from the left; in combat only short buffs, out of combat all of them - in place of Blizzard's buff frame
 - Or **in Final Fantasy XIV style**: HP/MP bars with numbers for you, a wide target bar at the top with cast, status icons and the target's target – and the bosses as FFXIV's **enemy list**: health, whom the boss is after, a red edge while it is you, its cast (grey when it cannot be interrupted) and your debuffs
 
 ## Group – party list and raid frames
@@ -29,6 +30,7 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - Dimmed out of combat, full brightness in combat or whenever you touch it; size slider
 - Hides Blizzard's bars 1 and 2 (optional), and brings its own leave-vehicle button so you are never stuck in a vehicle
 - Steam Deck: zoom the camera with **LB + D-pad up/down** (optional)
+- Optional **quick menu on RB** (Steam Deck, still being tested): hold RB and the D-pad or A/B/X/Y opens map, bags, quest log, character, talents, group finder, collections or the game menu
 - Optional **stance bar** between the middle crosses: forms, stances and auras as round buttons; on the Steam Deck **LB + A/B/X/Y** picks one and **LB + D-pad left/right** steps through them, in combat too
 - Optional **assistant indicator**: shows the spell the single-button assistant wants next – green ring when you can cast it now, grey with a cooldown swirl when waiting is right
 
@@ -43,6 +45,7 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - **Track any item like a currency**: drop it on the row above the gold to see its count there
 - **Old-expansions filter**: dims everything from the current expansion so leftovers stand out
 - **Auction filter**: dims everything the auction house would not take
+- **Auction value**: the window shows what its contents would fetch, and valuable slots get a gold coin (from your last auction house scan)
 - Columns and size per device (Steam Deck / PC)
 
 ## DeckUI Quests – objective tracker (off until you switch it on)
@@ -69,7 +72,7 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - Players: class colour, **spec and item level**
 - Whom the unit is targeting, with a warning when it is you
 - Hold Shift for item, spell and NPC IDs
-- Extras: the quest an item in your bags starts, your unspent profession knowledge, the keys a delve's rare chest wants
+- Extras: the quest an item in your bags starts, your unspent profession knowledge, the keys a delve's rare chest wants, and the **auction price** of any item from your last scan
 
 ## DeckUI Nav – finding your way (off until you switch it on)
 - **Compass bar** at the top: cardinal points, your navigation target, party members, rares and treasures from the minimap
@@ -84,6 +87,15 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - Midnight's important weekly quests are listed from the start, others are learned as they show up; right click hides one
 - Characters you are not playing show what they had when last seen – marked once the weekly reset has passed
 - Open it with a round button on screen you can drag anywhere (its number counts your unlocked vault slots), `/week`, a key binding or Shift-click on the minimap button
+
+## Auction house prices
+- **"Scan now"** below the auction house reads every listing (at most every 15 minutes, the game's limit) and keeps the cheapest buyout of each item
+- From then on, anywhere: the price in every item tooltip, a stack's value in your bags, the total value of your bags
+- The auction house window itself can wear DeckUI's dark, flat look (optional)
+
+## Quality of life (optional)
+- **Name of the interact target**: the object the interact key would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it - and a ring while you gather
+- **Talking head as a subtitle**: the quest speaker's box with its portrait becomes a quiet line of text; the voice plays as before
 
 ## Loot and merchant (optional)
 - **Fast auto loot**, and **DeckUI's loot window**: a compact list with "Take all" (also a key binding); with auto loot a short list shows what you picked up
@@ -112,6 +124,7 @@ ConsolePort ships as several separate addons, so the fix is one checkbox: unchec
 ## Commands
 - `/deck` – settings, `/deck <page>` – open a page (`/deck raid`, `/deck loot`, ...), `/deck unlock` / `lock` – move frames, `/deck reset` – reset positions
 - `/deck device` – show the detected device, `/deck deck` / `pc` / `auto` – force one
+- `/deck ah` – what the auction scan stored, `/deck softtarget` – the interact target settings
 - `/orbs`, `/dc`, `/spec` – jump to a module page
 - `/bags` – open or close the bags, `/bags config` – the Bags page
 - `/quests` – fold or unfold the tracker, `/quests config` – the Quests page, `/quests reset` – bring it back into view
@@ -139,6 +152,7 @@ DeckUI ships diagnostic commands whose output makes a report much easier to act 
 - `/dc page` – the active action bar page and the slot behind a button (use this when buttons are blank or show the wrong thing)
 - `/dc bars` – which Blizzard bars were found and hidden
 - `/dc overlay` – the visible parts of a cross button
+- `/dc quick` – the quick menu's button and commands
 - `/bags debug` / `/bags bank` – what the bag and bank windows are built from
 - `/quests debug` – whether Blizzard's tracker is off, and the state of the tracker's buttons
 - `/deckmap debug` – where the minimap sits, the world map's scale and the map options
