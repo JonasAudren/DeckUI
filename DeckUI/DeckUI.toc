@@ -18,4 +18,5 @@ editmode.lua
 damagemeter.lua
 merchant.lua
 loot.lua
+softtarget.lua
 minimap.lua

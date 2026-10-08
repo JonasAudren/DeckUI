@@ -539,6 +539,10 @@ panel:AddTab("General", {
             "Left click opens these settings, Shift-click the week overview.")
         f:Checkbox("Damage meter in DeckUI's look", db, "styleDamageMeter", D.SetDamageMeterStyled,
             "Blizzard's damage meter with flat bars and DeckUI's font. Its numbers stay Blizzard's.")
+        f:Checkbox("Name of the interact target", db, "softTargetName", D.SetSoftTargetName,
+            "With the interact key, the object it would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it. Needs the interact key on (Options > Gameplay > Controls); switching this on turns on the icon for objects. /deck softtarget shows both settings.")
+        f:Checkbox("Ring while casting on it", db, "softTargetCast", function() end,
+            "Fills around the icon while you cast or gather. The game does not say which object a cast is for, so it shows for any cast while a name is up.")
 
         f:Gap(8)
         -- the error collector (errors.lua), with how many it holds
@@ -671,6 +675,8 @@ SlashCmdList.DECKUI = function(msg)
         D.PrintBars()
     elseif msg == "layout" then
         D.PrintLayout()
+    elseif msg == "softtarget" then
+        D.PrintSoftTarget()
     elseif msg == "errors" then
         D.ShowErrors()
     elseif msg == "deck" or msg == "pc" or msg == "auto" then

@@ -501,6 +501,8 @@ local DEFAULTS = {
     repairGuild   = true,    -- with guild funds first, when allowed
     fastLoot      = false,   -- take every slot at once when auto looting (loot.lua)
     lootWindow    = false,   -- DeckUI's loot window instead of Blizzard's
+    softTargetName = false,  -- the interact target's name under its icon (softtarget.lua)
+    softTargetCast = true,   -- and a ring that fills while you cast on it
 }
 
 -- Blizzard's whole-UI scale, set per device at login when enabled

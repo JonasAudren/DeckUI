@@ -149,6 +149,12 @@ Damage meter in DeckUI's look
                   off again needs a /reload.
 Lua errors        collects every Lua error with its stack, to copy into a
                   report (also /deck errors).
+Name of the interact target
+                  with the interact key, the object it would use (chest,
+                  ore, herb) gets its name below the game's icon - gold in
+                  reach, grey out of it - and a ring while you cast on it.
+                  Needs the interact key (Options > Gameplay > Controls).
+                  Off by default; /deck softtarget shows the settings.
 
 
 Loot and merchant

@@ -148,6 +148,16 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   while unlocked, since both are hidden otherwise and could not be grabbed. Take all is
   also the binding DECKUI_LOOT_ALL. The one Blizzard call that writes elsewhere is
   `HandleModifiedItemClick` on a modified click (chat link, dressing room).
+- **The interact target's name** (`DeckUI/softtarget.lua`, `DeckUIDB.softTargetName` /
+  `softTargetCast`, Overview page, off by default; not yet tested in game; replaces Plumber's
+  "Nameplate: Soft Target", 2026-10-08). On PLAYER_SOFT_INTERACT_CHANGED (30 ms later, the plate
+  settles) a frame of ours on UIParent is anchored below the icon of
+  `C_NamePlate.GetNamePlateForUnit("softinteract").UnitFrame.SoftTargetFrame` - game objects only.
+  **Nothing on the nameplate is changed** (Plumber parents into it and resizes it). Gold/grey
+  from the cursor art `SetUnitCursorTexture` puts on a hidden probe texture ("unable" = out of
+  reach). The cast ring is a Cooldown fed `UnitCastingDuration`/`UnitChannelDuration` duration
+  objects. NAME_PLATE_UNIT_REMOVED of our plate hides it (plates are recycled). Needs the
+  interact key and CVar SoftTargetIconGameObject 1 (set on enabling); `/deck softtarget`.
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
   Overview page, off by default; tested in game 2026-10-08). Its numbers are secret in combat, so
   only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.
@@ -158,7 +168,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   "background opacity" setting keeps working: it sets the alpha of the textures we recolour.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
   (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/dc quick`, `/deck device`, `/deck bars`, `/deck layout`,
-  `/deck build`, `/deck errors`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
+  `/deck build`, `/deck errors`, `/deck softtarget`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 
