@@ -22,6 +22,11 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 - **Quick menu on the Steam Deck** - hold RB, then the D-pad opens the map,
   bags, quest log or character, and Y, B, A, X the talents, group finder,
   collections or game menu. Tick "Quick menu: hold RB" on the Cross page.
+- **Name of the interact target** - with the interact key, the object it
+  would use (a chest, an ore vein, a herb) gets its name below the game's
+  icon, gold in reach and grey out of it, and a ring fills while you
+  gather. Takes over from Plumber's soft target nameplate. Tick "Name of
+  the interact target" on the Overview page.
 - **Fixed: LT + RT** on the Steam Deck fired a button of the left or right
   half instead of the small middle crosses.
 - **Vehicles and encounters** that take over your action bar no longer
