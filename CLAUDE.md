@@ -202,7 +202,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   tree): in a vehicle Blizzard moves the micro menu *into* this bar and moves it back only when
   the bar's slide-out animation ends. The first version parked it under the hidden frame like
   the other bars, the animation never ran, and the micro menu was gone after leaving the
-  vehicle until a reload (reported 2026-10-08). The fade is not yet tested in game.
+  vehicle until a reload (reported 2026-10-08). The fade is tested in game: the menu comes back.
   `BlizzardLeaveVisible` counts its leave button only at a visible alpha, so ours stands in. `/dc bars` prints where the bar hangs.
 - `ActionButtonTemplate` has a `TextOverlayContainer` at frame level 500 whose textures darken the
   button while a modifier is held – strip its textures (`CleanOverlay`).
