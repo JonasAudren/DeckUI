@@ -201,6 +201,7 @@ D.PAGE_FRAMES = {
     Nav     = { "Compass", "Navigation target" },
     Week    = { "Week", "Week button" },
     Loot    = { "Loot", "Loot list" },
+    General = { "Talking head" },
 }
 
 -- What "Defaults" clears on each page: the SavedVariables table by name,
@@ -543,6 +544,10 @@ panel:AddTab("General", {
             "With the interact key, the object it would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it. Needs the interact key on (Options > Gameplay > Controls); switching this on turns on the icon for objects. /deck softtarget shows both settings.")
         f:Checkbox("Ring while casting on it", db, "softTargetCast", function() end,
             "Fills around the icon while you cast or gather. The game does not say which object a cast is for, so it shows for any cast while a name is up.")
+        f:Checkbox("Talking head as a subtitle", db, "talkingHead", function() D.ApplyTalkingHead() end,
+            "Blizzard's talking head box with its portrait becomes a line of text on a dark band: the speaker in gold, what is said in white. The voice plays as before. An open world map covers it. Move it with Move below.")
+        f:Checkbox("Its text in instances too", db, "talkingHeadInstances", function() end,
+            "Off: in dungeons and raids you only hear the voice.")
 
         f:Gap(8)
         -- the error collector (errors.lua), with how many it holds

@@ -149,6 +149,10 @@ Damage meter in DeckUI's look
                   off again needs a /reload.
 Lua errors        collects every Lua error with its stack, to copy into a
                   report (also /deck errors).
+Talking head as a subtitle
+                  Blizzard's talking head box becomes a line of text on a
+                  dark band; the voice plays as before. Its text can stay
+                  off in instances. Off by default.
 Name of the interact target
                   with the interact key, the object it would use (chest,
                   ore, herb) gets its name below the game's icon - gold in

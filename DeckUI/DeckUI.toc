@@ -19,4 +19,5 @@ damagemeter.lua
 merchant.lua
 loot.lua
 softtarget.lua
+talkinghead.lua
 minimap.lua

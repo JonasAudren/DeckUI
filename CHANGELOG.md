@@ -27,6 +27,11 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   icon, gold in reach and grey out of it, and a ring fills while you
   gather. Takes over from Plumber's soft target nameplate. Tick "Name of
   the interact target" on the Overview page.
+- **Talking head as a subtitle** - the box with the speaking portrait
+  that pops up during quests becomes a quiet line of text on a dark band,
+  the speaker in gold; the voice plays as before and an open map covers
+  it. Optionally only the voice in instances. Takes over from Plumber's
+  talking head. Tick "Talking head as a subtitle" on the Overview page.
 - **Fixed: LT + RT** on the Steam Deck fired a button of the left or right
   half instead of the small middle crosses.
 - **Vehicles and encounters** that take over your action bar no longer

@@ -158,6 +158,14 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   reach). The cast ring is a Cooldown fed `UnitCastingDuration`/`UnitChannelDuration` duration
   objects. NAME_PLATE_UNIT_REMOVED of our plate hides it (plates are recycled). Needs the
   interact key and CVar SoftTargetIconGameObject 1 (set on enabling); `/deck softtarget`.
+- **Talking head as a subtitle** (`DeckUI/talkinghead.lua`, `DeckUIDB.talkingHead` /
+  `talkingHeadInstances`, Overview page, off by default; not yet tested in game; replaces
+  Plumber's "Talking Head", 2026-10-08). Blizzard's `TalkingHeadFrame` only loses
+  TALKINGHEAD_REQUESTED (`UnregisterEvent`, re-registered when off; the frame comes with
+  Blizzard_TalkingHeadUI, hence `EventUtil.ContinueOnAddOnLoaded`). We read
+  `C_TalkingHead.GetCurrentLineInfo`, play the voice with `PlaySound(vo, "Talking Head")` as
+  Blizzard's frame did, and show name and text on a dark band (strata MEDIUM, under the world
+  map), movable "Talking head" (the Overview page's Move). Name/text may be secret: SetText only.
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
   Overview page, off by default; tested in game 2026-10-08). Its numbers are secret in combat, so
   only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.
