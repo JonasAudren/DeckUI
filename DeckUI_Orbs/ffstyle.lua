@@ -223,7 +223,8 @@ local function BuildPlayer(self, unit)
     cast.Text = castText
     self.Castbar = cast
 
-    if self.CreateAuras then
+    -- with the buff bar on (buffs.lua) it shows them instead
+    if self.CreateAuras and not DeckOrbsDB.buffBar then
         -- your buffs above the bar, debuffs above them
         local buffs = AuraRow(self, PLAYER_W, 22, "BOTTOMLEFT", "TOPLEFT", 4)
         buffs:AddGroup("HELPFUL", { candidateFilters = { maxDuration = DeckOrbsDB.buffMaxDuration } })

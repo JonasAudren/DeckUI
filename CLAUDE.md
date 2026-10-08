@@ -323,6 +323,21 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   engine), the cast below with oUF's `Shield` as a grey veil when not interruptible, your
   debuffs to the right. Holder "Boss frames (FF)". `/orbs boss` = test mode (five frames of
   your target, in whichever boss style is active).
+- **Buff bar** (`DeckUI_Orbs/buffs.lua`, `DeckOrbsDB.buffBar`, off by default, needs a /reload;
+  not yet tested in game; owner's wish 2026-10-08 - Blizzard's buffs grew too long in combat and
+  ran into the minimap on the Deck). An oUF frame for "player" with two aura containers laid
+  out like FFXIV's status bar (owner's reference screenshot), mirrored at his wish: one strip,
+  buffs from the right edge growing left (up to two rows), debuffs from the left edge; narrow upright icons (`width`/`height` on the
+  container) with a dark edge, the time small below (`Time` re-anchored; the engine colours it, a SetTextColor of ours is
+  overwritten - green would need the container's `durationColors` curve), and
+  the dispel colour as a short strip above a debuff (`Border` re-anchored, FFXIV's Esuna mark). **Long buffs only out of combat**: the buff group's candidate filter is
+  switched with `SetAuraGroupCandidateFilters` on PLAYER_REGEN_DISABLED/ENABLED between `{}`
+  and `{ maxDuration = 60 }` - the container has no `minDuration` (Blizzard_AuraContainerUtil,
+  read 2026-10-08; its filters are exclude/includeSpellIDs, dispel types, boss/role/priority
+  flags, isFromPlayerOrPlayerPet, maxDuration - which drops permanent auras too). Right click
+  cancels (`cancelButton`). `BuffFrame`/`DebuffFrame` are parked under a hidden parent (Edit
+  Mode never re-parents them). The player orb / FF bar drops its own auras while it is on.
+  Movable "Buffs"; icon height and buffs per row per device (`buffSize`, `buffPerRow`); 8 debuffs.
 - **Party list** (`DeckUI_Orbs/party.lua`, `DeckOrbsDB.showParty`, off by default, needs a
   /reload; tested in game 2026-10-01): FFXIV-style rows on oUF's group header - Blizzard's
   SecureGroupHeaderTemplate, which sorts members in combat by itself, sets the click

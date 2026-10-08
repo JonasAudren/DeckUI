@@ -233,9 +233,18 @@ Options in the Orbs tab:
                            the bosses as FFXIV's enemy list: name, health, a
                            red edge while one targets you, whom it targets,
                            its cast (grey if it cannot be interrupted) and your
-                           debuffs. Needs a /reload; focus and pet stay orbs.
+                           debuffs. Needs a /reload; focus stays an orb, the
+                           pet becomes a small bar.
                            /orbs boss shows five boss rows of your target, to
                            place them with /deck unlock.
+  Own buff bar             replaces Blizzard's buffs with a status bar like
+                           Final Fantasy's: buffs from the right edge, debuffs
+                           on the left, the time left below each icon, a coloured
+                           mark above a debuff you can dispel.
+                           Out of combat every buff, in combat only those of a
+                           minute or less. Right click cancels a buff. Icon
+                           size and icons per row per device. Off by default,
+                           needs a /reload.
 Party and raid settings sit in the Group tab:
 
   Party list               Final Fantasy style rows for your party: class icon,

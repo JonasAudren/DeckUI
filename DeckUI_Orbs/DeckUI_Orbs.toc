@@ -17,4 +17,5 @@ layout.lua
 ffstyle.lua
 party.lua
 raid.lua
+buffs.lua
 config.lua

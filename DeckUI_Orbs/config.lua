@@ -58,6 +58,26 @@ D.RegisterModule("Orbs", {
             D.NeedReload("orbs:buffDuration", v ~= loaded.buff)
         end, "Longer buffs (food, flasks, raid buffs) stay off your frame. Needs a reload.")
 
+        f:Label("Buff bar")
+        local count = function(v) return tostring(v) end
+        local px = function(v) return v .. " px" end
+        for _, key in ipairs({ "buffBar", "buffSize", "buffPerRow" }) do
+            if loaded[key] == nil then
+                loaded[key] = key == "buffBar" and DeckOrbsDB.buffBar or ns.DeviceDB()[key]
+            end
+        end
+        f:Checkbox("Own buff bar in Final Fantasy style", db, "buffBar", function(v)
+            D.NeedReload("orbs:buffBar", v ~= loaded.buffBar)
+        end, "Replaces Blizzard's buffs (top right) with a status bar like Final Fantasy's: buffs from the right edge, debuffs on the left, the time below each icon. Out of combat every buff, in combat only those of a minute or less. Right click cancels a buff. Your player frame then shows no auras of its own. Needs a reload; move it with Move below.")
+        f:Slider("Icon size (this device)", 18, 40, 1, px, ns.DeviceDB, "buffSize", function(v)
+            ns.DeviceDB().buffSize = v
+            D.NeedReload("orbs:buffSize", v ~= loaded.buffSize)
+        end)
+        f:Slider("Icons per row (this device)", 6, 20, 1, count, ns.DeviceDB, "buffPerRow", function(v)
+            ns.DeviceDB().buffPerRow = v
+            D.NeedReload("orbs:buffPerRow", v ~= loaded.buffPerRow)
+        end, "Buffs per row, up to two rows; debuffs: eight on the left.")
+
         f:Label("Focus and bosses")
         f:Checkbox("Focus frame", db, "showFocus", ns.SetFocusShown)
         f:Checkbox("Boss frames (hide Blizzard's)", db, "showBoss", ns.SetBossShown)

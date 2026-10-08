@@ -32,6 +32,7 @@ ns.DEFAULTS = {
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
     showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
     style           = "orbs",      -- player/target: "orbs" or "ff" (ffstyle.lua), needs /reload
+    buffBar         = false,       -- own buff bar in FF style (buffs.lua), replaces Blizzard's; /reload
     -- raid grid (raid.lua, Raid tab); sizes and arrangement are per device
     raidColor       = "ff",        -- health bar: "ff" (FF green) | "class"
     raidHpText      = "none",      -- "none" | "percent" | "short"
@@ -271,6 +272,9 @@ local function BuildOrb(self, unit, s)
         return
     end
 
+    -- the buff bar (buffs.lua) shows the player's auras instead
+    if unit == "player" and DeckOrbsDB.buffBar then return end
+
     local left = (unit == "player")
     local offset = 4
 
@@ -341,8 +345,10 @@ end
 -- (the party list's and the raid grid's sizes are per device too; eight
 -- groups side by side are 700 pixels wide, so the Deck starts smaller)
 local DEVICE_DEFAULTS = {
-    deck = { partyScale = 1, partyAcross = false, raidScale = 0.85, raidW = 84, raidH = 34, raidRows = false },
-    pc   = { partyScale = 1, partyAcross = false, raidScale = 1,    raidW = 96, raidH = 36, raidRows = false },
+    deck = { partyScale = 1, partyAcross = false, raidScale = 0.85, raidW = 84, raidH = 34, raidRows = false,
+             buffSize = 24, buffPerRow = 10 },
+    pc   = { partyScale = 1, partyAcross = false, raidScale = 1,    raidW = 96, raidH = 36, raidRows = false,
+             buffSize = 30, buffPerRow = 12 },
 }
 function ns.DeviceDB() return D.DeviceDB(DeckOrbsDB, DEVICE_DEFAULTS) end
 
