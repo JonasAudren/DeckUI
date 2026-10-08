@@ -303,6 +303,40 @@ function ns.SetBlizzardBarHidden(buttonName, state)
     return true
 end
 
+-- Blizzard's vehicle / override bar (its own frame, with health and power
+-- orbs, five buttons, the micro menu and a leave button) shows when an
+-- encounter or a vehicle takes over the bar - the crosses page to the same
+-- actions then, so it showed everything twice (owner's screenshot,
+-- 2026-10-08). It is FADED, not parked like the bars above: in a vehicle
+-- Blizzard moves the micro menu into this bar and moves it back only when
+-- the bar's slide-out animation ends. Parked under a hidden frame, the bar
+-- never slid out and the micro menu stayed in it, gone until a reload
+-- (reported the same day). Faded, it keeps playing its animations, just
+-- invisible and without the mouse; the ACTIONBUTTON keys still work, the
+-- crosses show the same actions, and our leave button stands in for its
+-- invisible one (BlizzardLeaveVisible asks for the alpha too).
+local overrideFaded, overrideHooked = false, false
+
+local function NoMouse(frame, on)
+    if frame.EnableMouse then frame:EnableMouse(on) end
+    for _, child in ipairs({ frame:GetChildren() }) do NoMouse(child, on) end
+end
+
+local function SetOverrideBarFaded(state)
+    local override = _G.OverrideActionBar
+    if not override then return end
+    if not overrideHooked then
+        overrideHooked = true
+        -- whatever Blizzard sets, a faded bar stays at 0
+        hooksecurefunc(override, "SetAlpha", function(self, alpha)
+            if overrideFaded and alpha ~= 0 then self:SetAlpha(0) end
+        end)
+    end
+    overrideFaded = state and true or false
+    override:SetAlpha(state and 0 or 1)
+    NoMouse(override, not state)
+end
+
 function ns.SetBlizzardBarsHidden(state)
     DeckCrossDB.hideBlizzardBars = state
     if InCombatLockdown() then
@@ -319,17 +353,7 @@ function ns.SetBlizzardBarsHidden(state)
             print("DeckUI Cross: " .. why)
         end
     end
-    -- Blizzard's vehicle / override bar (its own frame, with health and
-    -- power orbs, five buttons, the micro menu and a leave button) shows
-    -- when an encounter or a vehicle takes over the bar - the crosses page
-    -- to the same actions then, so it showed everything twice (owner's
-    -- screenshot, 2026-10-08). Hidden, the game routes ACTIONBUTTON keys to
-    -- Action Bar 1 instead, which pages to the override actions itself,
-    -- and our own leave-vehicle button appears in place of its one.
-    local override = _G.OverrideActionBar
-    if override then
-        if state then HideBar(override) else ShowBar(override) end
-    end
+    SetOverrideBarFaded(state)
 end
 
 -------------------------------------------------------------------
@@ -375,7 +399,8 @@ local function BlizzardLeaveVisible()
     local main = _G["MainMenuBarVehicleLeaveButton"]
     if main and main:IsVisible() then return true end
     local override = _G["OverrideActionBar"]
-    if override and override.LeaveButton and override.LeaveButton:IsVisible() then return true end
+    if override and override.LeaveButton and override.LeaveButton:IsVisible()
+        and override:GetEffectiveAlpha() > 0 then return true end
     return false
 end
 
@@ -431,9 +456,13 @@ function ns.PrintBars()
     end
     local override = _G.OverrideActionBar
     if override then
-        print(string.format("  OverrideActionBar parent=%s shown=%s visible=%s",
+        print(string.format("  OverrideActionBar parent=%s shown=%s visible=%s alpha=%.2f",
             override:GetParent() and (override:GetParent():GetName() or "?") or "nil",
-            tostring(override:IsShown()), tostring(override:IsVisible())))
+            tostring(override:IsShown()), tostring(override:IsVisible()), override:GetAlpha()))
+        local micro = _G.MicroMenu
+        if micro then
+            print("  MicroMenu parent=" .. (micro:GetParent() and (micro:GetParent():GetName() or "?") or "nil"))
+        end
     end
     PrintLeave()
     if ns.PrintStance then ns.PrintStance() end

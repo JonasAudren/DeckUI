@@ -195,10 +195,15 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   own button on the same events, so asking about its visibility there would race it.
   `VehicleExit` / `TaxiRequestEarlyLanding` are not protected - a plain button works in combat.
 - **Blizzard's override / vehicle bar (`OverrideActionBar`) is hidden with the mirrored bars**
-  (2026-10-08; tested in game the same day): an encounter that takes over the bar (Avatar of
-  Nalorakk) showed it under the crosses with orbs, five buttons and the micro menu, while the
-  crosses already paged to the same actions. With it hidden, the ACTIONBUTTONn keys reach
-  Action Bar 1, which pages to the override actions, and the crosses keep working. `/dc bars` prints where the bar hangs.
+  (2026-10-08): an encounter that takes over the bar (Avatar of Nalorakk) showed it under the
+  crosses with orbs, five buttons and the micro menu, while the crosses already paged to the
+  same actions. With it out of sight the ACTIONBUTTONn keys keep working (tested).
+  **It is faded, never parked** (alpha 0 held by a SetAlpha post-hook, mouse off down the
+  tree): in a vehicle Blizzard moves the micro menu *into* this bar and moves it back only when
+  the bar's slide-out animation ends. The first version parked it under the hidden frame like
+  the other bars, the animation never ran, and the micro menu was gone after leaving the
+  vehicle until a reload (reported 2026-10-08). The fade is not yet tested in game.
+  `BlizzardLeaveVisible` counts its leave button only at a visible alpha, so ours stands in. `/dc bars` prints where the bar hangs.
 - `ActionButtonTemplate` has a `TextOverlayContainer` at frame level 500 whose textures darken the
   button while a modifier is held – strip its textures (`CleanOverlay`).
 - Blizzard's template draws the **icon in the BACKGROUND layer**; anything of ours behind the icon
