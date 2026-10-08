@@ -299,7 +299,9 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   2026-10-01): FFXIV's parameter bar for the player (HP/MP bars with numbers, class resources as
   squares, cast below, buffs and debuffs above) and its wide target bar at the top (name,
   percent, cast, status icons, the target's target beside it). Spawned instead of the big
-  orbs in the same Factory; focus and pet stay orbs. Positions are saved under their
+  orbs in the same Factory; focus stays an orb, the pet is a small bar shaped like the
+  target-of-target's (`DeckFFPet`, 2026-10-08 - in a vehicle oUF puts you on the pet frame,
+  and the round pink orb beside the bars looked wrong). Positions are saved under their
   own keys ("Player (FF)", "Target (FF)"), so switching back keeps the orbs' places.
   **Bosses** in this style are FFXIV's enemy list (2026-10-01, `BuildBoss`): marker, name,
   percent, thin bar, "» target" line, a red left edge while the boss targets you

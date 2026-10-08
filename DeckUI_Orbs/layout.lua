@@ -620,6 +620,8 @@ oUF:Factory(function(self)
         tot:SetPoint("CENTER", target, "CENTER", 55, -45)
     end
 
+    -- in the FF style a small parameter bar (ffstyle.lua), else a small orb
+    if ff then self:SetActiveStyle("DeckFFPet") end
     local pet = self:Spawn("pet", "DeckOrbsPet")
     pet:SetFrameLevel(30)
     if ff then

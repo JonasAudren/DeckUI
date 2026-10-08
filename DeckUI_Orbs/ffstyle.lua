@@ -339,6 +339,34 @@ end, function(self)
     self.DeckBossAggro:SetAlpha(0)
 end)
 
+-------------------------------------------------------------------
+-- Pet: a small parameter bar beside yours
+-------------------------------------------------------------------
+-- It used to stay an orb in this style, and in a vehicle - where oUF puts
+-- the vehicle on the player bar and you on the pet frame - a round pink
+-- orb sat beside the bars (owner's screenshot, 2026-10-08). Now it is the
+-- target-of-target's shape: name, health number, a thin bar in FF green.
+local function BuildPet(self, unit)
+    self:SetSize(TOT_W, 34)
+    Clicks(self)
+    Panel(self, 0.6)
+
+    local hp = Text(self, 11, "RIGHT")
+    hp:SetPoint("TOPRIGHT", -6, -5)
+    self:Tag(hp, "[deck:hpshort]")
+
+    local name = Text(self, 12)
+    name:SetPoint("TOPLEFT", 6, -5)
+    name:SetPoint("RIGHT", hp, "LEFT", -4, 0)
+    self:Tag(name, "[raidcolor][name]")
+
+    local health = Bar(self, TOT_W - 12, 6)
+    health:SetPoint("TOPLEFT", 6, -22)
+    health.colorHealth = true
+    health.colorDisconnected = true
+    self.Health = health
+end
+
 local function BuildBoss(self, unit)
     self:SetSize(BOSS_W, BOSS_H)
     Clicks(self)
@@ -425,6 +453,7 @@ end
 oUF:RegisterStyle("DeckFFPlayer", BuildPlayer)
 oUF:RegisterStyle("DeckFFTarget", BuildTarget)
 oUF:RegisterStyle("DeckFFToT", BuildToT)
+oUF:RegisterStyle("DeckFFPet", BuildPet)
 oUF:RegisterStyle("DeckFFBoss", BuildBoss)
 
 -- layout.lua's Factory, in the "ff" style: the five boss rows under one
