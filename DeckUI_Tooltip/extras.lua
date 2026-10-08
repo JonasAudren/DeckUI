@@ -152,6 +152,34 @@ local function ChestKeyLine(tooltip, data)
 end
 
 -------------------------------------------------------------------
+-- The auction price (DeckUI/auction.lua keeps the scan)
+-------------------------------------------------------------------
+-- "AH  12g 40s" for one, and for a stack in the bags its whole value; the
+-- age of the scan in grey. Gear shares its item ID across item levels, so
+-- its price is the cheapest of them.
+local function Age(seconds)
+    if seconds < 3600 then return ("%d min"):format(math.max(1, math.floor(seconds / 60))) end
+    if seconds < 86400 then return ("%d h"):format(math.floor(seconds / 3600)) end
+    return ("%d d"):format(math.floor(seconds / 86400))
+end
+
+local function AuctionLine(tooltip, itemID)
+    if not D.AuctionPrice then return end
+    local price, age = D.AuctionPrice(itemID)
+    if not price then return end
+    local count = 1
+    local info = tooltip.processingInfo
+    local args = info and info.getterName == "GetBagItem" and info.getterArgs
+    if args and args[1] and args[2] then
+        local item = C_Container.GetContainerItemInfo(args[1], args[2])
+        count = item and item.stackCount or 1
+    end
+    local right = GetMoneyString(price, true)
+    if count > 1 then right = right .. ("  |cffaaaaaax%d|r %s"):format(count, GetMoneyString(price * count, true)) end
+    tooltip:AddDoubleLine(("AH |cff888888(%s ago)|r"):format(Age(age)), right, 0.9, 0.75, 0.2, 1, 1, 1)
+end
+
+-------------------------------------------------------------------
 -- Wiring
 -------------------------------------------------------------------
 local function Styled(tooltip)
@@ -165,6 +193,10 @@ function ns.InitExtras()
     TooltipDataProcessor.AddTooltipPostCall(T.Item, function(tooltip, data)
         if not (Styled(tooltip) and data and DeckTooltipDB.questItems) then return end
         if Plain(data.id) and data.id then QuestItemLines(tooltip, data.id) end
+    end)
+    TooltipDataProcessor.AddTooltipPostCall(T.Item, function(tooltip, data)
+        if not (Styled(tooltip) and data and DeckTooltipDB.ahPrice) then return end
+        if Plain(data.id) and data.id then AuctionLine(tooltip, data.id) end
     end)
     TooltipDataProcessor.AddTooltipPostCall(T.Spell, function(tooltip, data)
         if not (Styled(tooltip) and data and DeckTooltipDB.knowledge) then return end

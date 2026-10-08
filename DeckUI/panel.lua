@@ -584,6 +584,14 @@ panel:AddTab("Loot", {
             "Takes everything the moment a corpse opens, without the loot window flickering up.")
         f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
             "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
+
+        f:Gap(8)
+        f:Label("Auction house")
+        f:Checkbox("Scan button at the auction house", db, "ahScan", function() end,
+            "Below the auction house window: \"Scan now\" reads every listing - at most every 15 minutes (the game's limit), in small slices so nothing freezes. The game only allows it on a click. The prices then show in tooltips and the bags anywhere you go - as fresh as your last visit. /deck ah shows what is stored.")
+        f:Checkbox("Auction house window in DeckUI's look", db, "ahStyle", function(v)
+            D.NeedReload("ahStyle", true)
+        end, "Blizzard's frame art, portrait and parchment give way to DeckUI's dark panel, flat buttons and tabs. Only the look changes. Applies when the auction house is next opened after a reload.")
     end,
 })
 
@@ -680,6 +688,8 @@ SlashCmdList.DECKUI = function(msg)
         D.PrintBars()
     elseif msg == "layout" then
         D.PrintLayout()
+    elseif msg == "ah" then
+        D.PrintAuction()
     elseif msg == "softtarget" then
         D.PrintSoftTarget()
     elseif msg == "errors" then

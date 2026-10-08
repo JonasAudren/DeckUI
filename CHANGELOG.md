@@ -32,6 +32,13 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   the speaker in gold; the voice plays as before and an open map covers
   it. Optionally only the voice in instances. Takes over from Plumber's
   talking head. Tick "Talking head as a subtitle" on the Overview page.
+- **Auction prices on the road** - a "Scan now" button below the auction
+  house reads every listing (at most every 15 minutes, the game's limit),
+  and from then on every item's tooltip shows its cheapest buyout and
+  the age of the scan, a stack in your bags its whole value. The bag window shows what it all
+  would fetch, and valuable slots (100g and up, adjustable) get a gold
+  coin. On the Loot and merchant, Tooltip and Bags pages. The auction
+  house window itself can wear DeckUI's look too.
 - **Fixed: LT + RT** on the Steam Deck fired a button of the left or right
   half instead of the small middle crosses.
 - **Vehicles and encounters** that take over your action bar no longer

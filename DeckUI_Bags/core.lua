@@ -61,6 +61,13 @@ local function NewButton(grid, bag)
     b.DeckLevel:SetFont(D.FONT, 12, "OUTLINE")
     b.DeckLevel:SetPoint("TOPLEFT", 2, -2)
 
+    -- worth at least DeckBagsDB.valuableGold at the auction house (auction.lua)
+    b.DeckValuable = b:CreateTexture(nil, "OVERLAY", nil, 2)
+    b.DeckValuable:SetSize(13, 13)
+    b.DeckValuable:SetPoint("BOTTOMLEFT", 2, 2)
+    b.DeckValuable:SetTexture("Interface\\MoneyFrame\\UI-GoldIcon")
+    b.DeckValuable:Hide()
+
     -- the category view shows one empty slot standing in for all of them
     b.DeckFree = b:CreateFontString(nil, "OVERLAY")
     b.DeckFree:SetFont(D.FONT, 15, "OUTLINE")
@@ -193,6 +200,9 @@ function ns.UpdateButton(b)
     -- Blizzard marks junk only while a merchant is open. We mark it always:
     -- knowing what to sell before walking to the vendor is the point.
     b.JunkIcon:SetShown(DeckBagsDB.markJunk and info ~= nil and quality == POOR and not info.hasNoValue)
+
+    local price = info and DeckBagsDB.markValuable and D.AuctionPrice and D.AuctionPrice(info.itemID)
+    b.DeckValuable:SetShown(price ~= nil and price * (info.stackCount or 1) >= (DeckBagsDB.valuableGold or 100) * 10000)
 
     local level = DeckBagsDB.itemLevel and info and ItemLevel(bag, slot, info.itemID, info.hyperlink)
     b.DeckLevel:SetText(level or "")
@@ -336,6 +346,13 @@ function ns.NewWindow(name, titleText, opts)
     free:SetTextColor(0.7, 0.7, 0.7)
     w.free = free
 
+    -- what the window holds is worth at the auction house, by the last scan
+    local value = w:CreateFontString(nil, "OVERLAY")
+    value:SetFont(D.FONT, 12, "OUTLINE")
+    value:SetPoint("BOTTOM", 0, 10)
+    value:SetTextColor(0.9, 0.75, 0.2)
+    w.ahValue = value
+
     w.currencies = {}
     w.showCurrencies = opts.currencies
     w.Money = opts.money or GetMoney
@@ -433,6 +450,18 @@ local function RefreshFooter(w)
         free = free + (C_Container.GetContainerNumFreeSlots(bag) or 0)
     end
     w.free:SetText(("%d / %d free"):format(free, w.totalSlots or 0))
+    local worth = 0
+    if DeckBagsDB.ahValue and D.AuctionPrice then
+        for _, bag in ipairs(w.layoutBags or {}) do
+            for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
+                local item = C_Container.GetContainerItemInfo(bag, slot)
+                local price = item and D.AuctionPrice(item.itemID)
+                if price then worth = worth + price * (item.stackCount or 1) end
+            end
+        end
+    end
+    -- whole gold is enough for an estimate
+    w.ahValue:SetText(worth > 0 and ("AH value ~ %s"):format(GetMoneyString(worth - worth % 10000, true)) or "")
     w.money:SetText(GetMoneyString(w.Money() or 0, true))
     if w.showCurrencies then ns.UpdateCurrencies(w) end
     if w.OnRefresh then w:OnRefresh() end

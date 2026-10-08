@@ -341,6 +341,16 @@ local function Init()
     if DeckBagsDB.itemLevel == nil then DeckBagsDB.itemLevel = true end
     if DeckBagsDB.markJunk  == nil then DeckBagsDB.markJunk  = true end
     if DeckBagsDB.categories == nil then DeckBagsDB.categories = true end
+    -- auction prices from DeckUI/auction.lua's scan
+    if DeckBagsDB.ahValue == nil then DeckBagsDB.ahValue = true end
+    if DeckBagsDB.markValuable == nil then DeckBagsDB.markValuable = true end
+    if DeckBagsDB.valuableGold == nil then DeckBagsDB.valuableGold = 100 end
+    if D.OnAuctionPrices then
+        D.OnAuctionPrices(function()
+            ns.RequestRefresh()
+            ns.FlushAll()
+        end)
+    end
     ns.InitBags()
     if ns.InitBank then ns.InitBank() end
 end

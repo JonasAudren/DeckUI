@@ -40,6 +40,16 @@ D.RegisterModule("Bags", {
             "New, equipment, consumables, trade goods, quest, other, junk, and one empty slot counting the free ones. The button next to sort switches too. The bank keeps its tabs.")
         f:Checkbox("Item level on gear", db, "itemLevel", Refresh)
         f:Checkbox("Mark junk (grey items) with a coin", db, "markJunk", Refresh)
+
+        f:Label("Auction prices")
+        local gold = function(v) return v .. "g" end
+        f:Checkbox("Auction value of the window in its footer", db, "ahValue", Refresh,
+            "What everything in the window would fetch at the auction house, by the cheapest buyouts of your last scan. The scan runs when you open the auction house.")
+        f:Checkbox("Mark valuable items with a gold coin", db, "markValuable", Refresh)
+        f:Slider("Valuable from", 10, 1000, 10, gold, db, "valuableGold", function(v)
+            DeckBagsDB.valuableGold = v
+            Refresh()
+        end, "A slot counts as valuable when its whole stack is worth at least this much.")
         f:Gap(4)
         f:Hint("Tracked items: drop an item on the row above the gold to count it there like a currency; right-click one to stop.")
     end,

@@ -166,6 +166,31 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `C_TalkingHead.GetCurrentLineInfo`, play the voice with `PlaySound(vo, "Talking Head")` as
   Blizzard's frame did, and show name and text on a dark band (strata MEDIUM, under the world
   map), movable "Talking head" (the Overview page's Move). Name/text may be secret: SetText only.
+- **Auction prices** (`DeckUI/auction.lua`, `DeckUIDB.ahScan` on, "Loot and merchant" page;
+  not yet tested in game; owner's wish 2026-10-08: know prices on the road). On
+  AUCTION_HOUSE_SHOW, at most every 15 minutes (`ahLastScan`), `C_AuctionHouse.ReplicateItems()`
+  (Blizzard's documented full scan); REPLICATE_ITEM_LIST_UPDATE is read in slices of 4000 per
+  frame through `GetReplicateItemInfo(i)` (**0-based**; count 3rd, buyoutPrice 10th, itemID
+  17th return), keeping the lowest buyout per piece per item ID in
+  `DeckUIDB.ahPrices[GetNormalizedRealmName()] = { time, prices }`. Closing the AH drops a
+  half-read scan. Gear shares one price across item levels ("from"). Readers: `D.AuctionPrice
+  (itemID)` -> copper, age; `D.OnAuctionPrices(fn)` after a scan. The tooltip shows "AH" (+ the
+  stack's value in bags; DeckTooltipDB.ahPrice), the bag windows a footer total
+  (DeckBagsDB.ahValue) and a gold coin on slots worth >= `valuableGold` (100g). `/deck ah`.
+  **AUCTION_HOUSE_SHOW no longer exists** - Midnight opens the window through the player
+  interaction manager; the first version waited for it and never scanned (2026-10-08). The scan
+  now starts from a HookScript on AuctionHouseFrame's OnShow (Blizzard_AuctionHouseUI is load on
+  demand: `EventUtil.ContinueOnAddOnLoaded`); if no list arrives within ten seconds the status
+  line offers "Scan now". **ReplicateItems needs a click**: called from OnShow it was never
+  answered (owner's test 2026-10-08), the button worked (17,095 items) - so the window only
+  offers the button. `ahLastScan` is written when the list arrives, so an unanswered call does
+  not lock the 15 minutes. REPLICATE_ITEM_LIST_UPDATE fires tens of thousands of times (item
+  data arriving); only the first after our request is read.
+- **The auction house window restyled** (`DeckUI/auctionstyle.lua`, `DeckUIDB.ahStyle`, off by
+  default, reload to undo; not yet tested in game; owner's wish 2026-10-08). Textures only, like
+  the world map: NineSlice/Bg/portrait/parchment atlases at alpha 0, `D.FlatBox` behind the
+  window and its insets, `D.FlattenButton` on panel buttons, bottom tabs' nine pieces at alpha 0
+  with a flat box. Never a script or field - buy and post call protected functions.
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
   Overview page, off by default; tested in game 2026-10-08). Its numbers are secret in combat, so
   only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.
@@ -176,7 +201,7 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   "background opacity" setting keeps working: it sets the alpha of the textures we recolour.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
   (`/dc overlay`, `/dc bare`, `/dc bars`, `/dc page`, `/dc trace`, `/dc assist`, `/dc quick`, `/deck device`, `/deck bars`, `/deck layout`,
-  `/deck build`, `/deck errors`, `/deck softtarget`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
+  `/deck build`, `/deck errors`, `/deck softtarget`, `/deck ah`, `/deck deck|pc|auto`) – they were essential for Midnight issues.
 
 ## Hard-won Midnight facts (do not "simplify" these away)
 

@@ -163,6 +163,16 @@ Name of the interact target
 
 Loot and merchant
 -----------------
+Scan button at the auction house
+                  "Scan now" below the auction house window reads every
+                  listing, at most every 15 minutes; afterwards tooltips
+                  show each item's cheapest buyout (and a stack's value in
+                  your bags) anywhere, and the bags show the total value and
+                  mark valuable slots. As fresh as your last visit. On by
+                  default; /deck ah shows what is stored.
+Auction house window in DeckUI's look
+                  dark panel, flat buttons and tabs instead of Blizzard's
+                  frame art. Off by default; needs a reload.
 Sell junk at the merchant
                   sells what the game counts as junk whenever you talk to a
                   merchant; the buyback tab still has the last twelve items.

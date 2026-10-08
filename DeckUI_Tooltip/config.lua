@@ -32,5 +32,7 @@ D.RegisterModule("Tooltip", {
         f:Checkbox("Items that start a quest: the quest", db, "questItems", nothing)
         f:Checkbox("Profession spells: unspent knowledge", db, "knowledge", nothing)
         f:Checkbox("Rare chest in a delve: your keys", db, "chestKeys", nothing)
+        f:Checkbox("Items: auction price", db, "ahPrice", nothing,
+            "The cheapest buyout per piece from your last auction house scan (scanned when you open the auction house), and for a stack in your bags its whole value. Gear shares one price across its item levels.")
     end,
 })

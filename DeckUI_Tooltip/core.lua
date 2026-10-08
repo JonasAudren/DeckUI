@@ -38,6 +38,7 @@ local DEFAULTS = {
     questItems  = true,    -- items that start a quest: the quest (extras.lua)
     knowledge   = true,    -- profession spells: unspent knowledge
     chestKeys   = true,    -- the rare chest in a delve: the key it wants
+    ahPrice     = true,    -- items: the auction price from the last scan (DeckUI/auction.lua)
 }
 
 function ns.DeviceDB()

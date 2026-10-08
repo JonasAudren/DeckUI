@@ -505,6 +505,8 @@ local DEFAULTS = {
     softTargetCast = true,   -- and a ring that fills while you cast on it
     talkingHead   = false,   -- the talking head as a subtitle (talkinghead.lua)
     talkingHeadInstances = true, -- its text in instances too (off: the voice only)
+    ahScan        = true,    -- scan the auction house when it opens, every 15 min (auction.lua)
+    ahStyle       = false,   -- the auction house window in DeckUI's look (auctionstyle.lua)
 }
 
 -- Blizzard's whole-UI scale, set per device at login when enabled
