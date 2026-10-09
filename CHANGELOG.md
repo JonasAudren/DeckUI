@@ -50,6 +50,9 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   bag showing used and free slots, which opens your bags on a click. All
   off until you tick them, gone again when you untick them, and movable.
   Blizzard's bag buttons can be hidden there too.
+- **Round minimap, FFXIV style** - optional on the Map page: a round map
+  in a gold ring with N, E, S and W (they turn with you when the game
+  rotates the minimap), the zone above it, clock and coordinates below.
 - **Main menu as round buttons, FFXIV style** - the game's menu buttons
   as a row of round buttons with a gold ring that lights up when a button
   has news; they open what Blizzard's do. Tick "Main menu as round

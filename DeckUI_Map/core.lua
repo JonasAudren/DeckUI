@@ -25,6 +25,7 @@ end
 
 -- Shared, not per device
 local DEFAULTS = {
+    round        = false,   -- FFXIV's round minimap in a ring with N/E/S/W (minimap.lua)
     coordinates  = true,    -- player coordinates under the minimap
     clock        = true,
     zoneText     = true,

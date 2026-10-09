@@ -44,6 +44,10 @@ local function UpdatePosition()
         local r = edge * math.sqrt(2)
         x = math.max(-edge, math.min(edge, x * r))
         y = math.max(-edge, math.min(edge, y * r))
+    elseif _G.DeckMapMinimap then
+        -- DeckUI Map's round map: just outside its ring, whatever its size
+        local r = Minimap:GetWidth() / 2 + 22
+        x, y = x * r, y * r
     else
         x, y = x * RADIUS, y * RADIUS
     end

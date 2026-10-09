@@ -680,6 +680,13 @@ source (read 2026-09-29).
 - Square: `Minimap:SetMaskTexture(WHITE8x8)`, the round `MinimapCompassTexture` at alpha 0,
   and the global `GetMinimapShape() = "SQUARE"` - an addon convention Blizzard does not
   define; LibDBIcon and DeckUI's own minimap button (`D.UpdateMinimapButton`) read it.
+  **Round, FFXIV style** (`DeckMapDB.round`, off, live through `ns.ApplyShape`; tested in game
+  2026-10-09; owner's wish 2026-10-09): mask `TempPortraitAlphaMask`, our frame's backdrop at
+  alpha 0, a ring of our own (three D.DISC layers: gold line, dark band `RING` = 14 px, gold
+  line) with N/E/S/W on the band, zone above and clock/coordinates below the holder,
+  `GetMinimapShape()` answers "ROUND". With the CVar `rotateMinimap` on the letters turn: north
+  sits `GetPlayerFacing()` radians clockwise from the top. DeckUI's minimap button then
+  circles at the map's radius + 22.
 - **The world map is only scaled** (`WorldMapFrame:SetScale`): it is a UI panel re-anchored by
   the panel manager on every update, which divides by the frame's scale - a scale survives,
   a SetPoint would not. Never call `UpdateUIPanelPositions` from our code: it would run the

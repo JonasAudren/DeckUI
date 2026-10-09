@@ -41,7 +41,78 @@ hider:Hide()
 
 -- Addon button libraries ask this to place their buttons on the edge.
 -- Blizzard does not define it; it is a convention between addons.
-function GetMinimapShape() return "SQUARE" end
+function GetMinimapShape()
+    return (DeckMapDB and DeckMapDB.round) and "ROUND" or "SQUARE"
+end
+
+-------------------------------------------------------------------
+-- The round map, as FFXIV draws it (DeckMapDB.round, off by default)
+-------------------------------------------------------------------
+-- The owner's wish (2026-10-09, his FFXIV screenshot): a round minimap in
+-- a ring, N/E/S/W on the ring, zone above and coordinates below the map.
+-- The ring is ours: a gold line outside, a dark band carrying the letters,
+-- a gold line around the map. With the game's "Rotate Minimap" on, the
+-- letters turn with you: north sits clockwise from the top by exactly the
+-- facing (GetPlayerFacing counts counterclockwise from north).
+local RING = 14     -- band width around the round map, gold lines included
+local ring = CreateFrame("Frame", nil, holder)
+ring:SetAllPoints()
+ring:Hide()
+
+local function Disc(size, r, g, b, a, sublevel)
+    local t = ring:CreateTexture(nil, "BACKGROUND", nil, sublevel)
+    t:SetPoint("CENTER")
+    t:SetTexture(D.DISC)
+    t:SetVertexColor(r, g, b, a)
+    t.inset = size
+    return t
+end
+-- sizes are insets from the holder's edge, set in LayoutRing
+local outerGold = Disc(0, 0.78, 0.62, 0.3, 1, -8)
+local band      = Disc(2, 0.08, 0.07, 0.05, 0.95, -7)
+local innerGold = Disc(RING - 1, 0.78, 0.62, 0.3, 1, -6)
+
+local LETTERS = { { "N", 0 }, { "E", 90 }, { "S", 180 }, { "W", 270 } }
+local letters = {}
+for i, l in ipairs(LETTERS) do
+    local fs = ring:CreateFontString(nil, "OVERLAY")
+    fs:SetFont(D.FONT, 11, "OUTLINE")
+    fs:SetText(l[1])
+    if l[1] == "N" then fs:SetTextColor(1, 0.35, 0.25) else fs:SetTextColor(0.95, 0.85, 0.6) end
+    fs.angle = math.rad(l[2])
+    letters[i] = fs
+end
+
+local function PlaceLetters(facing)
+    local radius = holder:GetWidth() / 2 - RING / 2
+    for _, fs in ipairs(letters) do
+        local a = fs.angle + (facing or 0)
+        fs:ClearAllPoints()
+        fs:SetPoint("CENTER", ring, "CENTER", radius * math.sin(a), radius * math.cos(a))
+    end
+end
+
+local function LayoutRing()
+    local size = holder:GetWidth()
+    for _, t in ipairs({ outerGold, band, innerGold }) do
+        t:SetSize(size - 2 * t.inset, size - 2 * t.inset)
+    end
+    PlaceLetters()
+end
+
+-- the letters follow the facing only while the game rotates the map
+local lastFacing
+ring:SetScript("OnUpdate", function()
+    if not C_CVar.GetCVarBool("rotateMinimap") then
+        if lastFacing then lastFacing = nil; PlaceLetters() end
+        return
+    end
+    local facing = GetPlayerFacing()
+    if facing and facing ~= lastFacing then
+        lastFacing = facing
+        PlaceLetters(facing)
+    end
+end)
 
 -------------------------------------------------------------------
 -- Our own text: zone on top, clock and coordinates at the bottom
@@ -135,12 +206,27 @@ holder:SetScript("OnUpdate", function(_, dt)
 end)
 
 function ns.ApplyTexts()
+    local round = DeckMapDB.round
+    -- square: on dark strips inside the edges; round: outside the ring,
+    -- zone above, clock and coordinates below, as FFXIV places them
+    zone:ClearAllPoints()
+    clock:ClearAllPoints()
+    coords:ClearAllPoints()
+    if round then
+        zone:SetPoint("BOTTOM", holder, "TOP", 0, 2)
+        clock:SetPoint("TOPLEFT", holder, "BOTTOMLEFT", 4, -2)
+        coords:SetPoint("TOPRIGHT", holder, "BOTTOMRIGHT", -4, -2)
+    else
+        zone:SetPoint("TOP", holder, "TOP", 0, -BORDER - 2)
+        clock:SetPoint("BOTTOMLEFT", holder, "BOTTOMLEFT", BORDER + 4, BORDER + 2)
+        coords:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -BORDER - 4, BORDER + 2)
+    end
     zone:SetShown(DeckMapDB.zoneText)
-    topStrip:SetShown(DeckMapDB.zoneText)
+    topStrip:SetShown(DeckMapDB.zoneText and not round)
     clock:SetShown(DeckMapDB.clock)
     coords:SetShown(DeckMapDB.coordinates)
     clockButton:SetShown(DeckMapDB.clock)
-    bottomStrip:SetShown(DeckMapDB.clock or DeckMapDB.coordinates)
+    bottomStrip:SetShown((DeckMapDB.clock or DeckMapDB.coordinates) and not round)
     UpdateZone()
 end
 
@@ -223,7 +309,9 @@ end
 function ns.ApplyMinimapSize()
     local size = ns.DeviceDB().minimapSize
     holder:SetSize(size, size)
-    Minimap:SetSize(size - 2 * BORDER, size - 2 * BORDER)
+    local inset = DeckMapDB.round and RING or BORDER
+    Minimap:SetSize(size - 2 * inset, size - 2 * inset)
+    LayoutRing()
     -- the engine only re-renders the map on a zoom change; nudging the
     -- zoom makes it pick up the new size right away
     local z = Minimap:GetZoom()
@@ -233,17 +321,29 @@ function ns.ApplyMinimapSize()
     if D.UpdateMinimapButton then D.UpdateMinimapButton() end
 end
 
+-- square or round: the map's mask, our frame or our ring, the texts
+function ns.ApplyShape()
+    local round = DeckMapDB.round and true or false
+    Minimap:SetMaskTexture(round and "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+        or "Interface\\Buttons\\WHITE8x8")
+    holder:SetBackdropColor(0, 0, 0, round and 0 or 1)
+    holder:SetBackdropBorderColor(0.3, 0.3, 0.3, round and 0 or 1)
+    ring:SetShown(round)
+    ring:SetFrameLevel(math.max(0, holder:GetFrameLevel()))
+    ns.ApplyMinimapSize()
+    ns.ApplyTexts()
+end
+
 local function TakeOver()
     Minimap:SetParent(holder)
     Minimap:ClearAllPoints()
     Minimap:SetPoint("CENTER", holder, "CENTER")
     Minimap:SetFrameLevel(holder:GetFrameLevel() + 1)
-    Minimap:SetMaskTexture("Interface\\Buttons\\WHITE8x8")
     -- the round ring drawn around Blizzard's map
     if MinimapCompassTexture then MinimapCompassTexture:SetAlpha(0) end
     MinimapCluster:SetParent(hider)
     PlacePieces()
-    ns.ApplyMinimapSize()
+    ns.ApplyShape()
 end
 
 ns.OnInit(function()
@@ -252,7 +352,6 @@ ns.OnInit(function()
     D.MakeDraggable(holder)
     -- the map grows and shrinks from its top edge, where the zone text is
     holder:HookScript("OnDragStop", function() D.PinTopLeft(holder) end)
-    ns.ApplyTexts()
     ns.ApplyHover()
 
     if MinimapCluster.SetHeaderUnderneath then

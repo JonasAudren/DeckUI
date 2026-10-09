@@ -25,6 +25,8 @@ D.RegisterModule("Map", {
 
         f:Label("Minimap (this device)")
         f:Slider("Size", 120, 280, 5, px, device, "minimapSize", Store("minimapSize", ns.ApplyMinimapSize))
+        f:Checkbox("Round, like Final Fantasy XIV", db, "round", ns.ApplyShape,
+            "A round map in a gold ring with N, E, S and W on it - they turn with you when the game's Rotate Minimap is on. The zone sits above, clock and coordinates below.")
         f:Checkbox("Zone name on top", db, "zoneText", ns.ApplyTexts)
         f:Checkbox("Clock", db, "clock", ns.ApplyTexts, "Click it for the alarm and the stopwatch.")
         f:Checkbox("Your coordinates", db, "coordinates", ns.ApplyTexts,
