@@ -645,6 +645,12 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   in `CovenantMissionFrame.MapTab.dataProviders`. `/quests hunts` prints what it matched.
 - Blizzard shows no +2/+3 chest times; ours use the keystone rule (80% / 60% of the limit).
 - The tracker grows from its top edge (`D.PinTopLeft`); `/quests reset` brings it back.
+- **FFXIV's task list** (`DeckQuestsDB.xivLayout`, off, live; tested in game 2026-10-09; owner's
+  wish 2026-10-09): `Draw` reads the flag into `xiv` and lays out the same entries differently -
+  backdrop at alpha 0, title right with the fold button left of it, headings, titles, lines and
+  bars right-aligned to the tracker's right edge (indent counted from the right), objectives
+  light blue with ChatFrameExpandArrow after them, ReadyCheck-Ready after done ones. Quest item
+  buttons go left of the title's text (`drawn.head`) instead of left of the tracker.
 - `/quests debug` says whether Blizzard's tracker is gone, how many widget containers have
   widgets, and the secure button state.
 

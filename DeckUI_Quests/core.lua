@@ -268,6 +268,17 @@ local WHITE = { 1, 1, 1 }
 local DONE  = { 0.4, 0.9, 0.4 }
 local LINE  = { 0.8, 0.8, 0.8 }
 
+-- FFXIV's task list (DeckQuestsDB.xivLayout, off by default; owner's wish
+-- 2026-10-09 from his FFXIV screenshot): no box, everything right-aligned
+-- against the tracker's right edge, the objectives in FFXIV's light blue
+-- with an arrow after each, a tick after the done ones. Only how the same
+-- entries are laid out changes; set per draw from the setting.
+local xiv = false
+local XIV_LINE = { 0.55, 0.8, 1 }
+local XIV_DONE = { 0.5, 0.75, 0.55 }
+local XIV_OPEN_MARK = " |TInterface\\ChatFrame\\ChatFrameExpandArrow:12:12|t"
+local XIV_DONE_MARK = " |TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t"
+
 -- ns.drawn: every entry drawn this pass with the row frame it got, so a
 -- section can place something beside it (the quest item buttons).
 ns.drawn = {}
@@ -281,11 +292,20 @@ local function DrawEntry(entry, y, width, textSize)
     local head = Text()
     head:SetFont(D.FONT, textSize + 1, "OUTLINE")
     -- room for the find-group eye at the right end of the title
-    head:SetWidth(width - indent - (entry.findGroup and 22 or 0))
+    local eyeRoom = entry.findGroup and 22 or 0
+    head:SetWidth(width - indent - eyeRoom)
     head:ClearAllPoints()
-    head:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent, -y)
+    if xiv then
+        -- right-aligned, indented from the right; the eye keeps the right end
+        head:SetJustifyH("RIGHT")
+        head:SetPoint("TOPRIGHT", content, "TOPLEFT", PAD + width - indent - eyeRoom, -y)
+    else
+        head:SetJustifyH("LEFT")
+        head:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent, -y)
+    end
     head:SetText(entry.title or "")
     head:SetTextColor(unpack(entry.color or WHITE))
+    ns.drawn[#ns.drawn].head = head
     local top = y
     y = y + head:GetStringHeight() + LINE_GAP
 
@@ -295,16 +315,30 @@ local function DrawEntry(entry, y, width, textSize)
             fs:SetFont(D.FONT, textSize, "OUTLINE")
             fs:SetWidth(width - indent - 8)
             fs:ClearAllPoints()
-            fs:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent + 8, -y)
-            fs:SetText(line.text)
-            fs:SetTextColor(unpack(line.color or (line.done and DONE) or LINE))
+            if xiv then
+                fs:SetJustifyH("RIGHT")
+                fs:SetPoint("TOPRIGHT", content, "TOPLEFT", PAD + width - indent, -y)
+                local done = line.done
+                fs:SetText(line.text .. (done and XIV_DONE_MARK or XIV_OPEN_MARK))
+                fs:SetTextColor(unpack(line.color or (done and XIV_DONE) or XIV_LINE))
+            else
+                fs:SetJustifyH("LEFT")
+                fs:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent + 8, -y)
+                fs:SetText(line.text)
+                fs:SetTextColor(unpack(line.color or (line.done and DONE) or LINE))
+            end
             y = y + fs:GetStringHeight() + LINE_GAP
         end
         if line.bar or line.range then
             local b = Bar()
+            local barWidth = math.min(160, width - indent - 16)
             b:ClearAllPoints()
-            b:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent + 8, -y)
-            b:SetSize(math.min(160, width - indent - 16), BAR_HEIGHT)
+            if xiv then
+                b:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + width - indent - 16 - barWidth, -y)
+            else
+                b:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent + 8, -y)
+            end
+            b:SetSize(barWidth, BAR_HEIGHT)
             if line.range then
                 -- handed on untouched: StatusBar takes secret values
                 b:SetMinMaxValues(line.range[1], line.range[2])
@@ -342,6 +376,19 @@ local function Draw()
     local d = ns.DeviceDB()
     local width, textSize = d.width, d.textSize
     tracker:SetScale(d.scale)
+    xiv = DeckQuestsDB.xivLayout and true or false
+    -- the FFXIV list has no box; title right, the fold button left of it
+    tracker:SetBackdropColor(0.05, 0.05, 0.05, xiv and 0 or 0.6)
+    tracker:SetBackdropBorderColor(0.3, 0.3, 0.3, xiv and 0 or 0.8)
+    title:ClearAllPoints()
+    collapse:ClearAllPoints()
+    if xiv then
+        title:SetPoint("TOPRIGHT", -PAD, -PAD)
+        collapse:SetPoint("RIGHT", title, "LEFT", -4, 0)
+    else
+        title:SetPoint("TOPLEFT", PAD, -PAD)
+        collapse:SetPoint("TOPRIGHT", -4, -4)
+    end
     tracker:SetWidth(width + 2 * PAD)
     content:SetWidth(width + 2 * PAD)
 
@@ -368,6 +415,8 @@ local function Draw()
                 h.key = section.key
                 local folded = DeckQuestsDB.folded[section.key]
                 h.text:SetText((folded and "+ " or "- ") .. section.title .. "  (" .. #entries .. ")")
+                h.text:ClearAllPoints()
+                h.text:SetPoint(xiv and "RIGHT" or "LEFT")
                 h:ClearAllPoints()
                 h:SetPoint("TOPLEFT", content, "TOPLEFT", PAD, -y)
                 h:SetSize(width, 16)
@@ -613,9 +662,15 @@ function ns.PlaceSecureButtons()
             b.icon:SetTexture(s.icon)
             b:SetScale(s_b)
             b:ClearAllPoints()
-            -- the row's top, left of the tracker's edge, in UIParent space
+            -- the row's top, left of the tracker's edge, in UIParent space;
+            -- in the right-aligned list, left of the title's text instead
+            local left = tracker:GetLeft() * tracker:GetEffectiveScale()
+            local head = drawn.head
+            if xiv and head and head:GetRight() then
+                left = (head:GetRight() - head:GetStringWidth()) * head:GetEffectiveScale()
+            end
             b:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT",
-                (tracker:GetLeft() * tracker:GetEffectiveScale() / uiScale - 4) / s_b,
+                (left / uiScale - 4) / s_b,
                 rowTop * row:GetEffectiveScale() / uiScale / s_b)
             UpdateSecureState(b)
             b:Show()

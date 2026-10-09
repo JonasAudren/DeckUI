@@ -55,6 +55,9 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   marker, name and health, your current target lit. Tick "Enemy list" on
   the Orbs page; it needs enemy nameplates switched on. It is for
   reading - a click does not target.
+- **Quest tracker as FFXIV's task list** - optional: no box, everything
+  right-aligned, the objectives in light blue with an arrow and a tick
+  once done. Tick it on the Quests page.
 - **Tooltip: reputation and ensembles** - items and currencies that give
   reputation show the faction and your standing with it, and transmog
   ensembles how much of the set you have collected already. Both can be

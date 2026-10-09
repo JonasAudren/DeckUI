@@ -24,6 +24,9 @@ D.RegisterModule("Quests", {
 
         f:Hint("Drag the tracker by its frame to move it. Click a section heading to fold it, the - in the corner folds everything.")
 
+        f:Checkbox("Final Fantasy XIV's task list", db, "xivLayout", function() ns.RequestRedraw() end,
+            "No box, everything right-aligned against the tracker's right edge, the objectives in light blue with an arrow, a tick after the done ones - like FFXIV's list at the right of the screen. Drag it by its title then.")
+
         f:Label("Tracker (this device)")
         f:Slider("Width", 180, 400, 10, px, device, "width", Store("width"))
         f:Slider("Size", 0.6, 1.4, 0.05, pct, device, "scale", Store("scale"))
