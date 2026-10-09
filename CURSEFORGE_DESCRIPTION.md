@@ -4,6 +4,8 @@ A compact, controller-friendly interface for World of Warcraft on the **Steam De
 
 DeckUI is a hub with nine load-on-demand modules; switch each one on or off on its own page in `/deck`.
 
+**New in 1.7: Final Fantasy XIV's look** – capsule bars for you and your target, FFXIV's hotbars, nameplates, enemy list, scenario guide, round minimap and main menu, all as options to tick. And the Steam Deck now sets itself up again by itself after you played on the PC.
+
 ## DeckUI Orbs – round unit frames
 - Player and target as large orbs: health fills the orb, power runs as a ring around it, cast bar inside the orb
 - Focus (medium), target-of-target and pet (small, docked), up to five boss orbs
@@ -13,7 +15,9 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - Big target name announce on every target change
 - Class and reaction colours
 - **Own buff bar in Final Fantasy XIV style** (optional): status icons shaped like FFXIV's, the time below each, buffs from the right and debuffs from the left; in combat only short buffs, out of combat all of them - in place of Blizzard's buff frame
-- Or **in Final Fantasy XIV style**: HP/MP bars with numbers for you, a wide target bar at the top with cast, status icons and the target's target – and the bosses as FFXIV's **enemy list**: health, whom the boss is after, a red edge while it is you, its cast (grey when it cannot be interrupted) and your debuffs
+- Or **in Final Fantasy style**: HP/MP bars with numbers for you, a wide target bar at the top with cast, status icons and the target's target – and the bosses as FFXIV's **enemy list**: health, whom the boss is after, a red edge while it is you, its cast (grey when it cannot be interrupted) and your debuffs
+- Or **closer still to Final Fantasy XIV** (new in 1.7): rounded glossy bars without a box, HP and MP side by side with large numbers, the target as one long bar with its own target beside it, the focus as FFXIV's small focus box – and **FFXIV's experience bar** in place of Blizzard's (class, level and EXP; at the level cap the reputation you watch). Your cast can move to the **middle of the screen** with its icon and the time left
+- **Enemy list** (optional): the enemies fighting you or your group, one row each – a square that turns red while it targets you, raid marker, name and health, your current target lit
 
 ## Group – party list and raid frames
 - **Party list in Final Fantasy XIV style**: class icon, role, health and resource bars, your buffs and all debuffs (dispellable ones marked), your target highlighted, faded out of range – stacked or side by side
@@ -30,9 +34,16 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - Dimmed out of combat, full brightness in combat or whenever you touch it; size slider
 - Hides Blizzard's bars 1 and 2 (optional), and brings its own leave-vehicle button so you are never stuck in a vehicle
 - Steam Deck: zoom the camera with **LB + D-pad up/down** (optional)
-- Optional **quick menu on RB** (Steam Deck, still being tested): hold RB and the D-pad or A/B/X/Y opens map, bags, quest log, character, talents, group finder, collections or the game menu
+- Optional **quick menu on RB** (Steam Deck): hold RB and the D-pad or A/B/X/Y opens what you chose for each button – map, bags, quest log, character, talents, spellbook, professions, group finder, adventure guide, collections, mounts, achievements, guild, friends, calendar, the week overview or the game menu
+- Optional **ability menu on B** (Steam Deck, still being tested): tap B and the first seven slots of Action Bar 4 appear – your mounts, toys or anything else you put there – the D-pad and Y/A/X use one
+- **The Deck sets itself up** (still being tested): the game shares gamepad settings and key bindings between your devices, so the PC used to take the Deck's away. DeckUI puts the gamepad settings back by itself and gives every controller button you have not bound yourself its default key for the session – no more pressing "Set up gamepad" after every PC session
 - Optional **stance bar** between the middle crosses: forms, stances and auras as round buttons; on the Steam Deck **LB + A/B/X/Y** picks one and **LB + D-pad left/right** steps through them, in combat too
 - Optional **assistant indicator**: shows the spell the single-button assistant wants next – green ring when you can cast it now, grey with a cooldown swirl when waiting is right
+
+## Action bars in Final Fantasy XIV's look (new in 1.7, still being tested)
+- Action Bars 3 to 8 can be DeckUI's own: square slots with rounded corners like FFXIV's hotbars, your key in the corner, empty slots as dark squares
+- One row, one column or anything between, size per device; your keys keep working as before
+- Tick each bar on the "Action bars" page
 
 ## DeckUI Spec – spec switcher
 - One round icon per specialization, click to switch (out of combat), gold ring on the active spec
@@ -58,9 +69,11 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - **The hunt**: the active hunt at the top of your quests; on the hunt table a star marks the targets an achievement still needs
 - Achievements, Traveler's Log, neighbourhood endeavors, collections and recipes (reagents counted across bags, bank and warband bank), zone widgets such as capture bars
 - Fold single sections or the whole tracker; width, size, text size and height limit per device
+- **As FFXIV's task list** (optional): no box, everything right-aligned, the objectives in light blue with an arrow and a tick once done
+- **Scenario guide** (optional): a small banner at the top left with the current expansion's campaign quest – or, while the story waits, the next step and what it needs. A click follows it with a waypoint, a right click picks another campaign
 
 ## DeckUI Map – minimap and world map (off until you switch it on)
-- **Square minimap** in a plain frame: zone name, clock and your coordinates on its edges
+- **Square minimap** in a plain frame: zone name, clock and your coordinates on its edges – or **round like FFXIV's**, in a gold ring with N, E, S and W that turn with you
 - Tracking, calendar, addon menu, zoom and addon minimap buttons appear under the mouse; mail, crafting orders and instance difficulty always visible
 - **World map as a movable window**, never full screen, controls under the mouse, quest log closed by default and restyled to match
 - Switches for Blizzard's own map extras: player and cursor coordinates, fade while moving (no option for it in the game)
@@ -73,13 +86,14 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - Whom the unit is targeting, with a warning when it is you
 - Hold Shift for item, spell and NPC IDs
 - Extras: the quest an item in your bags starts, your unspent profession knowledge, the keys a delve's rare chest wants, and the **auction price** of any item from your last scan
+- **Reputation items and currencies** show the faction and your standing with it; **transmog ensembles** how much of the set you already have
 
 ## DeckUI Nav – finding your way (off until you switch it on)
 - **Compass bar** at the top: cardinal points, your navigation target, party members, rares and treasures from the minimap
 - Your target's name with an arrow, the **distance and arrival time**
 - **DeckUI's own beacon in the world** instead of Blizzard's diamond: the target's name above it, distance and arrival time below
 - Key bindings step through your tracked quests, nearest first – on a controller button, no map needed
-- `/way 45.2 67.8` sets a waypoint (decimal commas work too)
+- **Waypoints and routes**: as many as you like – Ctrl-click the world map or type `/way 45.2 67.8 name` (decimal commas work too). Numbered pins on the world map, the minimap and the compass, and a list to pick, rename or remove them (`/way list`, or a click on the compass). Reaching one moves on to the nearest – or with **Route** on to the next in order, for farming and gathering rounds
 
 ## DeckUI Week – your week at a glance (off until you switch it on)
 - **Every character in one table**: Great Vault, keystone, prey hunts, delves, profession knowledge and weekly quests at a glance
@@ -92,6 +106,13 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 - **"Scan now"** below the auction house reads every listing (at most every 15 minutes, the game's limit) and keeps the cheapest buyout of each item
 - From then on, anywhere: the price in every item tooltip, a stack's value in your bags, the total value of your bags
 - The auction house window itself can wear DeckUI's dark, flat look (optional)
+
+## Final Fantasy XIV around the screen (optional, new in 1.7)
+- **Enemy nameplates** like FFXIV's: level, marker and name with a thin red health bar under it – Blizzard's plate stays underneath, so clicking still targets
+- **An arrow over your target**, bobbing, red for enemies and green for friends
+- **Main menu as round buttons** with a gold ring that lights up when a button has news
+- **Server info**: realm, frame rate, addon CPU share, memory, latency, waiting mail and the time – each value on its own switch, the busiest addons on mouse-over
+- **Gold** and a **bag overview** (a block of dots per bag for used and free slots, a click opens the bags); Blizzard's bag buttons can be hidden
 
 ## Quality of life (optional)
 - **Name of the interact target**: the object the interact key would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it - and a ring while you gather
@@ -130,16 +151,15 @@ ConsolePort ships as several separate addons, so the fix is one checkbox: unchec
 - `/quests` – fold or unfold the tracker, `/quests config` – the Quests page, `/quests reset` – bring it back into view
 - `/deckmap` – the Map page, `/deckmap reset` – bring both maps back to their default places
 - `/decktip` – the Tooltip page
-- `/decknav` – the Nav page, `/way x y` – a waypoint
+- `/decknav` – the Nav page, `/way x y name` – a waypoint, `/way list` – the waypoint list, `/way clear` – remove them all
 - `/week` – the week overview
 - `/orbs test` / `raid` / `boss` – test modes for party list, raid frames and boss frames (also buttons on their pages)
 - `/deck errors` – every Lua error caught, ready to copy
 
 ## Setup on the Steam Deck
-1. `/dc` → "Set up gamepad" once (enables the gamepad, LT = Shift, RT = Ctrl)
-2. `/dc` → "Default bindings" once: A jump, B menu, X interact, Y character; D-pad up/down cycles enemies, left/right cycles friends
+Since 1.7 there is nothing to do: on the Deck DeckUI switches the gamepad on (LT = Shift, RT = Ctrl) and gives every controller button you have not bound yourself its default for the session – A jump, B menu, X interact, Y character, D-pad up/down cycles enemies, left/right friends. Nothing is written into your key bindings, so the PC cannot take it away. Both are switches on the Cross page.
 
-Step 2 writes into your key bindings, so it asks first and lists exactly which of your existing bindings it would replace. There is no undo, so read that list before you confirm – and if you would rather keep your own bindings, say no. The crosses work either way.
+You can still write the defaults into your saved key bindings with `/dc` → "Default bindings". That asks first and lists exactly which of your bindings it would replace; there is no undo.
 
 ## Reporting a bug
 Please open an issue at **https://github.com/JonasAudren/DeckUI/issues** – that keeps reports in one place with a history. Comments here are fine for short questions.
@@ -161,6 +181,9 @@ DeckUI ships diagnostic commands whose output makes a report much easier to act 
 - `/decknav debug` – map, position, facing and the navigation target's angle
 - `/orbs bosses` – what the boss frames see
 - `/quests hunts` – the hunt targets still open and what the hunt table marked
+- `/quests guide` – the campaigns the scenario guide sees, with their state and next step
+- `/orbs enemies` – what the enemy list sees for each nameplate
+- `/deck plates` / `/deck targetarrow` – the FFXIV nameplates and the target arrow
 
 Turning on Lua errors with `/console scriptErrors 1` before reproducing the problem gives you the actual error text, which is worth more than any description.
 
