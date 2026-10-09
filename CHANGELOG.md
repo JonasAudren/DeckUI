@@ -50,6 +50,17 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   bag showing used and free slots, which opens your bags on a click. All
   off until you tick them, gone again when you untick them, and movable.
   Blizzard's bag buttons can be hidden there too.
+- **Waypoints and routes** - as many waypoints as you like: Ctrl-click
+  the world map or type /way 45.2 67.8 name. They show as numbered pins on
+  the world map and the minimap and in a list (/way list, or the Nav
+  page) where you pick, rename or remove them. Reaching one moves on to
+  the nearest, or with Route on to the next in order - for farming and
+  gathering rounds. Compass and beacon follow along; the compass shows the
+  other points as numbered dots, and a click on it opens the list.
+- **Scenario guide, FFXIV style** - a small banner at the top left with
+  the campaign quest you are on, or, while the story waits, the next step
+  and what it needs. A click follows the quest or sets a waypoint where
+  the next one starts. Tick it on the Quests page.
 - **Enemy nameplates, FFXIV style** - over each enemy just its level,
   marker and name with a thin red health bar under it. Tick "Enemy
   nameplates like Final Fantasy XIV" on the Overview page.

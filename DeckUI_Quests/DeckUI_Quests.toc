@@ -18,4 +18,5 @@ scenario.lua
 tracking.lua
 delves.lua
 hunt.lua
+guide.lua
 config.lua

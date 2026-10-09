@@ -27,6 +27,9 @@ D.RegisterModule("Quests", {
         f:Checkbox("Final Fantasy XIV's task list", db, "xivLayout", function() ns.RequestRedraw() end,
             "No box, everything right-aligned against the tracker's right edge, the objectives in light blue with an arrow, a tick after the done ones - like FFXIV's list at the right of the screen. Drag it by its title then.")
 
+        f:Checkbox("Scenario guide: the story at a glance", db, "scenarioGuide", function() ns.ApplyGuide() end,
+            "Final Fantasy XIV's scenario guide: a small banner with the campaign quest you are on - or, when the story waits, the next step and what it needs (a level, a place). Click it to follow the quest or to set a waypoint where the next one starts. Move it with Move below; /quests guide shows what it found.")
+
         f:Label("Tracker (this device)")
         f:Slider("Width", 180, 400, 10, px, device, "width", Store("width"))
         f:Slider("Size", 0.6, 1.4, 0.05, pct, device, "scale", Store("scale"))

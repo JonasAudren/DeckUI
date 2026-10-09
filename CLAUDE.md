@@ -670,6 +670,20 @@ Traveler's Log, Endeavors, Recipes, Bonus Objectives, World Quests.
   language. An offer does not say its difficulty, so the star names the lists still missing
   the target (N/H/NM). Hook: `hooksecurefunc` on the quest-offer provider's `RefreshAllData`
   in `CovenantMissionFrame.MapTab.dataProviders`. `/quests hunts` prints what it matched.
+- **Scenario guide** (`guide.lua`, `DeckQuestsDB.scenarioGuide`, off, live; tested in game
+  2026-10-09; owner's FFXIV screenshot 2026-10-09): a banner top left with the story. Campaigns from
+  `C_CampaignInfo.GetAvailableCampaigns`, state InProgress/Stalled, **only the current
+  expansion's** (`GetQuestExpansion` of a quest in the log, a chapter's rewardQuestID or the
+  next quest, against `GetServerExpansionLevel`) - the first version showed an old campaign once
+  Midnight's was done (owner, 2026-10-09); then "Story complete". Among them the one with a
+  quest in the log (`C_QuestLog.GetInfo(i).campaignID`), else the newest. A right click
+  (`MenuUtil.CreateContextMenu`) picks any open campaign by hand (`DeckQuestsDB.guideCampaign`,
+  dropped once it is no longer open) or goes back to automatic. A
+  **stalled** campaign's next step is `C_CampaignInfo.GetFailureReason(id)` = { text, questID,
+  mapID } - what Blizzard's quest log campaign header shows (WarCampaignTemplates.lua, read
+  2026-10-09). Second line: "Chapter n/m: name" or that text. Click super-tracks a quest in the
+  log, else sets a user waypoint at `C_QuestLine.GetQuestLineInfo(questID, mapID)` x/y - never
+  `OpenWorldMap`, which Blizzard's banner calls (taint). Movable "Scenario guide"; `/quests guide`.
 - Blizzard shows no +2/+3 chest times; ours use the keystone rule (80% / 60% of the limit).
 - The tracker grows from its top edge (`D.PinTopLeft`); `/quests reset` brings it back.
 - **FFXIV's task list** (`DeckQuestsDB.xivLayout`, off, live; tested in game 2026-10-09; owner's
@@ -812,6 +826,24 @@ source (read 2026-10-01).
   no OnUpdate, but its events still run, so it still clears waypoints on arrival. Distance and
   arrival time are computed once in compass.lua's driver (`ns.navState`) for panel and beacon.
 - `/way` is ours unless TomTom (or another addon) has it; `/dway` always works.
+- **Waypoint list and routes** (`waypoints.lua`, `DeckNavDB.waypoints` / `routeMode`; tested in
+  game 2026-10-09; owner's wish 2026-10-09, after the scenario guide's click set nothing visible).
+  Any number of points (max 50), kept across sessions. **One at a time is pushed into Blizzard's
+  user waypoint and super-tracked** (`pushed` remembers what we set), so compass, panel, beacon
+  and diamond follow it unchanged. **Adding never needs a click handler of ours on the map**: a
+  Ctrl-click sets Blizzard's map pin, USER_WAYPOINT_UPDATED with a point we did not push puts it
+  into the list; `/way x y name` adds too. The pin vanishing (Blizzard clears it on arrival, or a
+  right click on it) or being within 10 yd counts as arrived: route mode goes to the next point
+  in order and loops, otherwise the point is removed and the nearest one left follows. Pins:
+  world map = frames of ours as children of `WorldMapFrame.ScrollContainer.Child`, scale
+  1/canvas scale, offsets x*w*scale, placed every frame while the map is open; minimap =
+  children of Minimap placed by yards (HereBeDragons' zoom table of yards across), turned with
+  `rotateMinimap`, clamped to the edge (round or square). **Never a map data provider** - those
+  run inside the map's refresh and would taint its pins. Other maps through
+  `C_Map.GetWorldPosFromMapPos` / `GetMapPosFromWorldPos`. List window "Waypoint list"
+  (`/way list`, Nav page, a click on the compass bar): click = go, right click = remove,
+  double click = rename. The compass shows the list's other points as numbered blue dots
+  (`ns.WaypointList` / `ns.WaypointPosOn`, up to ten); the active one is its target mark.
 - `/decknav debug` prints map, position, facing, map size, the target and its angle.
 
 ## Week module (first version worked in game 2026-10-01; reworked 2026-10-02, tested 2026-10-08 - crests, knowledge and hunts included)

@@ -833,6 +833,7 @@ local function Init()
         if section.Init then section.Init() end
     end
     if ns.InitDelves then ns.InitDelves() end
+    if ns.InitGuide then ns.InitGuide() end
     ns.RequestUpdate()
 end
 
@@ -865,6 +866,8 @@ SlashCmdList.DECKQUESTS = function(msg)
         print("DeckUI Quests: tracker back at its default place (top right).")
     elseif msg == "journey" then
         ns.ShowJourney()
+    elseif msg == "guide" then
+        ns.GuideDebug()
     elseif msg == "hunts" then
         ns.PrintHunts()
     elseif msg == "debug" then

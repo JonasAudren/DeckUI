@@ -30,6 +30,10 @@ D.RegisterModule("Nav", {
 
         f:Label("Switching and waypoints")
         f:Hint("Key bindings (Keybindings > AddOns > DeckUI) step through your tracked quests, nearest first - also /decknav next and prev.")
-        f:Hint("/way 45.2 67.8 sets a waypoint on this map, /way #mapID x y on another, /way clear removes it. With TomTom installed, use /dway.")
+        f:Button("Waypoint list", function() ns.ToggleWaypoints() end,
+            "All your waypoints: click one to head there, right click to remove it, double click to rename it. With Route on they are walked in order. Add points with Ctrl-click on the world map or /way 45.2 67.8 name - also /way list.")
+        f:Checkbox("Route: walk the waypoints in order", db, "routeMode", function() end,
+            "On: after arriving the next point in the list follows, and after the last the first again. Off: a reached point is removed and the nearest one left follows.")
+        f:Hint("/way 45.2 67.8 name adds a waypoint, /way #mapID x y one on another map, /way clear removes them all. With TomTom installed, use /dway.")
     end,
 })

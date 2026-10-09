@@ -216,34 +216,40 @@ end
 D.navStep = function(dir) ns.Step(dir) end
 
 -------------------------------------------------------------------
--- /way x y - Blizzard's own user waypoint, super-tracked
+-- /way x y [name] - a point for the waypoint list (waypoints.lua)
 -------------------------------------------------------------------
 -- "/way 45.2 67.8", "/way 45,2 67,8" (decimal commas), "/way #2339 45 67"
--- (another map), "/way clear". Anything after the numbers is ignored:
--- Blizzard's waypoint has no text of its own.
+-- (another map), anything after the numbers is the point's name.
+-- "/way list" opens the list, "/way clear" removes every point.
 local function SetWaypoint(msg)
     msg = (msg or ""):trim()
     if msg == "" then
-        print("DeckUI Nav: /way 45.2 67.8 sets a waypoint on this map, /way #mapID x y on another, /way clear removes it.")
+        print("DeckUI Nav: /way 45.2 67.8 [name] adds a waypoint on this map, /way #mapID x y on another, /way list shows them, /way clear removes them all.")
         return
     end
     if msg:lower() == "clear" then
-        C_Map.ClearUserWaypoint()
-        print("DeckUI Nav: waypoint cleared.")
+        ns.ClearWaypoints()
+        print("DeckUI Nav: all waypoints removed.")
+        return
+    end
+    if msg:lower() == "list" then
+        ns.ToggleWaypoints()
         return
     end
 
     local mapID
     local numbers = {}
+    local rest = ""
     for token in msg:gmatch("%S+") do
         local id = token:match("^#(%d+)$")
-        if id and not mapID and #numbers == 0 then
+        if #numbers == 2 then
+            rest = rest == "" and token or (rest .. " " .. token)
+        elseif id and not mapID and #numbers == 0 then
             mapID = tonumber(id)
         else
             local n = tonumber((token:gsub(",$", ""):gsub(",", ".")))
             if not n then break end
             numbers[#numbers + 1] = n
-            if #numbers == 2 then break end
         end
     end
     local x, y = numbers[1], numbers[2]
@@ -257,10 +263,8 @@ local function SetWaypoint(msg)
         print("DeckUI Nav: this map takes no waypoints.")
         return
     end
-    C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x / 100, y / 100))
-    C_SuperTrack.SetSuperTrackedUserWaypoint(true)
-    local info = C_Map.GetMapInfo(mapID)
-    print(("DeckUI Nav: waypoint at %.1f %.1f in %s."):format(x, y, info and info.name or ("map " .. mapID)))
+    local wp = ns.AddWaypoint(mapID, x / 100, y / 100, rest)
+    if wp then print(("DeckUI Nav: waypoint %s added."):format(wp.name)) end
 end
 
 -------------------------------------------------------------------
@@ -273,6 +277,7 @@ local function Init()
     end
     if ns.InitCompass then ns.InitCompass() end
     if ns.ApplyBeacon then ns.ApplyBeacon() end
+    if ns.InitWaypoints then ns.InitWaypoints() end
 end
 
 if IsLoggedIn() then
@@ -306,6 +311,8 @@ SlashCmdList.DECKNAV = function(msg)
         ns.Step(1)
     elseif msg == "prev" then
         ns.Step(-1)
+    elseif msg == "waypoints" then
+        ns.ToggleWaypoints()
     elseif msg == "debug" then
         local mapID, px, py = ns.PlayerPos()
         local facing = ns.Facing()

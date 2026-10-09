@@ -49,6 +49,19 @@ bar:SetPoint(unpack(bar.defaultPoint))
 bar:Hide()
 FlatBox(bar)
 
+-- a click on the bar opens the waypoint list (owner's wish, 2026-10-09)
+bar:EnableMouse(true)
+bar:SetScript("OnMouseUp", function(_, button)
+    if button == "LeftButton" and ns.ToggleWaypoints then ns.ToggleWaypoints() end
+end)
+bar:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText("Compass", 1, 0.82, 0)
+    GameTooltip:AddLine("Click: the waypoint list", 0.8, 0.8, 0.8)
+    GameTooltip:Show()
+end)
+bar:SetScript("OnLeave", GameTooltip_Hide)
+
 -- everything that slides lives in a clipping frame, so marks leaving
 -- the bar are cut at its edge instead of hanging out of it
 local clip = CreateFrame("Frame", nil, bar)
@@ -97,6 +110,29 @@ for i = 1, 4 do
     t:SetSize(6, 6)
     t:Hide()
     partyMarks[i] = t
+end
+
+-- the waypoint list's other points (waypoints.lua), numbered like their
+-- pins; the active one is the target mark already (owner's wish 2026-10-09)
+local MAX_WAYPOINT_MARKS = 10
+local waypointMarks = {}
+for i = 1, MAX_WAYPOINT_MARKS do
+    local f = CreateFrame("Frame", nil, clip)
+    f:SetSize(12, 12)
+    local ring = f:CreateTexture(nil, "ARTWORK", nil, 1)
+    ring:SetAllPoints()
+    ring:SetTexture(D.DISC)
+    ring:SetVertexColor(0, 0, 0, 0.9)
+    local dot = f:CreateTexture(nil, "ARTWORK", nil, 2)
+    dot:SetPoint("TOPLEFT", 1, -1)
+    dot:SetPoint("BOTTOMRIGHT", -1, 1)
+    dot:SetTexture(D.DISC)
+    dot:SetVertexColor(0.55, 0.75, 1)
+    f.num = f:CreateFontString(nil, "OVERLAY")
+    f.num:SetFont(D.FONT, 8, "OUTLINE")
+    f.num:SetPoint("CENTER")
+    f:Hide()
+    waypointMarks[i] = f
 end
 
 local vignetteMarks = {}
@@ -154,6 +190,7 @@ local state = {
     party = {},          -- i -> angle or nil
     partyColor = {},     -- i -> { r, g, b }
     vignettes = {},      -- { { angle, atlas }, ... }
+    waypoints = {},      -- { { angle, number }, ... } the list's other points
 }
 local samples = {}       -- { t, distance } for the arrival time
 
@@ -162,8 +199,23 @@ local function Collect()
     state.mapID = mapID
     state.target, state.mapDist, state.desc = nil, nil, nil
     wipe(state.vignettes)
+    wipe(state.waypoints)
     for i = 1, 4 do state.party[i] = nil end
     if not mapID then return end
+
+    if ns.WaypointList then
+        for i, wp in ipairs(ns.WaypointList()) do
+            if not wp.active then
+                local x, y = ns.WaypointPosOn(wp, mapID)
+                local angle
+                if x and y then angle = ns.Bearing(mapID, px, py, x, y) end
+                if angle then
+                    state.waypoints[#state.waypoints + 1] = { angle, i }
+                    if #state.waypoints == MAX_WAYPOINT_MARKS then break end
+                end
+            end
+        end
+    end
 
     local tx, ty, desc = ns.TargetPos(mapID)
     if tx then
@@ -302,6 +354,18 @@ local function Turn(facing)
             t:Show()
         else
             t:Hide()
+        end
+    end
+
+    for i, f in ipairs(waypointMarks) do
+        local w = state.waypoints[i]
+        local rel = w and ns.Relative(w[1], facing)
+        if rel and math.abs(rel) <= RANGE then
+            f.num:SetText(w[2])
+            Place(f, rel, "CENTER", 0)
+            f:Show()
+        else
+            f:Hide()
         end
     end
 
