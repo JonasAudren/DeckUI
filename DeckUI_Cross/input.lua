@@ -42,6 +42,7 @@ end
 -- Bindings
 -------------------------------------------------------------------
 local bindingsPending = false
+local lastBindApply, bindRefresh = 0, false   -- UPDATE_BINDINGS follow-up on the Deck
 
 -- /dc trace: print what the engine does while a key is held, with
 -- timestamps. The press-and-hold repeat runs on the engine's native
@@ -95,7 +96,25 @@ local function BindZoom()
     SetOverrideBinding(ns.header, true, "ALT-PADDDOWN", "CAMERAZOOMOUT")
 end
 
+-- The defaults on keys the player left empty, as override bindings of this
+-- session (DeckCrossDB.padDefaults, on). "Default bindings" writes them into
+-- the saved key bindings, which the game shares between devices through
+-- its server - logging in on the PC handed the Deck the PC's empty pad
+-- keys, and the button had to be pressed after every switch (owner's
+-- report, 2026-10-09). An override is never saved and never synced, and a
+-- key the player bound himself keeps his binding.
+local function BindPadDefaults()
+    if not DeckCrossDB.padDefaults then return end
+    for key, command in pairs(DEFAULT_BINDINGS) do
+        local own = GetBindingAction(key)   -- the saved binding, overrides left out
+        if not own or own == "" then
+            SetOverrideBinding(ns.header, false, key, command)
+        end
+    end
+end
+
 local function BindPad()
+    BindPadDefaults()
     local idx = 0
     for group = 1, 3 do
         for cluster = 1, 2 do
@@ -118,6 +137,7 @@ function ns.ApplyBindings()
         return
     end
     if trace then TraceSay("BINDINGS RE-APPLIED - this kills a running repeat") end
+    lastBindApply = GetTime()
     ClearOverrideBindings(ns.header)
     -- PC: nothing to bind, the player's own key bindings already drive
     -- the native commands the crosses mirror.
@@ -139,6 +159,39 @@ function ns.ApplyLabels()
         end)
     end
     ns.SetLabelsShown(DeckCrossDB.showLabels)
+end
+
+-- The gamepad's settings are CVars the game also shares between devices:
+-- after the PC, the Deck came up without LT = Shift and RT = Ctrl until
+-- "Set up gamepad" was pressed again, sometimes mid-session too (owner's
+-- report, 2026-10-09). On the Deck they are now checked at login, when a
+-- gamepad comes or goes and whenever one of them changes, and put back
+-- (DeckCrossDB.autoGamepad, on).
+local function WantedCVars()
+    return {
+        GamePadEnable       = "1",
+        GamePadEmulateShift = "PADLTRIGGER",
+        GamePadEmulateCtrl  = "PADRTRIGGER",
+        GamePadEmulateAlt   = LBIsAlt() and LB or nil,   -- nil: leave Alt alone
+    }
+end
+
+local ensuring = false
+function ns.EnsureGamepad(quiet)
+    if not (DeckCrossDB and DeckCrossDB.autoGamepad and D.IsDeck()) or ensuring then return end
+    ensuring = true
+    local fixed = {}
+    for cvar, value in pairs(WantedCVars()) do
+        if GetCVar(cvar) ~= value then
+            SetCVar(cvar, value)
+            fixed[#fixed + 1] = cvar
+        end
+    end
+    ensuring = false
+    if #fixed > 0 and not quiet then
+        table.sort(fixed)
+        print("DeckUI Cross: gamepad settings put back (" .. table.concat(fixed, ", ") .. ").")
+    end
 end
 
 function ns.SetupGamepad()
@@ -572,6 +625,10 @@ local function Init()
     if DeckCrossDB.hideBlizzardBars == nil then DeckCrossDB.hideBlizzardBars = true end
     -- the stance row (stance.lua): off until ticked; on the Deck its LB keys come with it
     if DeckCrossDB.stanceBar == nil then DeckCrossDB.stanceBar = false end
+    -- set the gamepad up by itself and fill empty pad keys (2026-10-09)
+    if DeckCrossDB.autoGamepad == nil then DeckCrossDB.autoGamepad = true end
+    if DeckCrossDB.padDefaults == nil then DeckCrossDB.padDefaults = true end
+    ns.EnsureGamepad()
     D.MakeMovable(ns.anchor, "Cross Hotbar", DeckCrossDB)
     D.MakeMovable(leave, "Leave vehicle", DeckCrossDB)
     ns.ApplyBindings()
@@ -580,6 +637,8 @@ local function Init()
     if ns.InitAssist then ns.InitAssist() end
     if ns.InitStance then ns.InitStance() end
     if ns.InitQuickMenu then ns.InitQuickMenu() end
+    if ns.InitAbilityMenu then ns.InitAbilityMenu() end
+    if ns.InitBars then ns.InitBars() end
     UpdateHighlight()
     print("DeckUI Cross: " .. (D.IsDeck() and "controller mode (LT/RT)" or "keyboard mode (mirrors Action Bar 1 + 2, Blizzard bindings)"))
     WarnConsolePortBar()
@@ -590,6 +649,10 @@ ev:RegisterEvent("PLAYER_REGEN_ENABLED")
 ev:RegisterEvent("PLAYER_REGEN_DISABLED")
 ev:RegisterEvent("MODIFIER_STATE_CHANGED")
 ev:RegisterEvent("UPDATE_BINDINGS")
+ev:RegisterEvent("CVAR_UPDATE")
+for _, e in ipairs({ "GAME_PAD_CONNECTED", "GAME_PAD_DISCONNECTED", "GAME_PAD_ACTIVE_CHANGED" }) do
+    pcall(ev.RegisterEvent, ev, e)
+end
 ev:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 ev:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 -- Not just for the trace any more: a rejected cast is what the red flash on
@@ -688,7 +751,27 @@ ev:SetScript("OnEvent", function(self, event, a1, a2, a3)
         if DeckCrossDB and not D.IsDeck() then
             ns.ApplyBindings()
             ns.ApplyLabels()
+        elseif DeckCrossDB and DeckCrossDB.padDefaults then
+            -- the saved set may have changed under us (a sync from the
+            -- server): fill empty pad keys again - once, a moment later,
+            -- and not for the UPDATE_BINDINGS our own overrides cause
+            if not bindRefresh and GetTime() - lastBindApply > 1 then
+                bindRefresh = true
+                C_Timer.After(0.5, function()
+                    bindRefresh = false
+                    ns.ApplyBindings()
+                end)
+            end
         end
+    elseif event == "CVAR_UPDATE" then
+        -- the name may come in any case
+        if type(a1) == "string" then
+            for cvar in pairs(WantedCVars()) do
+                if cvar:lower() == a1:lower() then ns.EnsureGamepad() break end
+            end
+        end
+    elseif event == "GAME_PAD_CONNECTED" or event == "GAME_PAD_DISCONNECTED" or event == "GAME_PAD_ACTIVE_CHANGED" then
+        ns.EnsureGamepad()
     end
 end)
 

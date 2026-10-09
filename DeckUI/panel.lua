@@ -55,7 +55,7 @@ close:SetPoint("TOPRIGHT", 2, 2)
 D.PAGE_GROUPS = {
     { title = "General",   pages = { "General", "Devices" } },
     { title = "Units",     pages = { "Orbs", "Group", "Raid" } },
-    { title = "Actions",   pages = { "Cross", "Spec" } },
+    { title = "Actions",   pages = { "Cross", "Bars", "Spec" } },
     { title = "World",     pages = { "Quests", "Map", "Nav" } },
     { title = "Inventory", pages = { "Bags", "Loot" } },
     { title = "Info",      pages = { "Tooltip", "Week" } },
@@ -63,7 +63,7 @@ D.PAGE_GROUPS = {
 -- the sidebar's name where the module's title is too short to say it
 D.PAGE_NAMES = {
     Orbs = "Player and target", Cross = "Cross hotbar", Spec = "Specialization",
-    Nav = "Navigation", Map = "Maps", Week = "Week overview",
+    Nav = "Navigation", Map = "Maps", Week = "Week overview", Bars = "Action bars",
 }
 
 -------------------------------------------------------------------
@@ -193,6 +193,7 @@ D.PAGE_FRAMES = {
     Group   = { "Party" },
     Raid    = { "Raid" },
     Cross   = { "Cross Hotbar", "Leave vehicle", "Assist indicator" },
+    Bars    = { "Bar 3", "Bar 4", "Bar 5", "Bar 6", "Bar 7", "Bar 8" },
     Spec    = { "Spec bar" },
     Bags    = { "Bags", "Bank" },
     Quests  = { "Quest tracker", "Delver's Journey" },
@@ -217,7 +218,8 @@ D.PAGE_RESET = {
     Orbs    = { db = "DeckOrbsDB", match = function(k) return not GroupKey(k) and not RaidKey(k) end },
     Group   = { db = "DeckOrbsDB", match = GroupKey },
     Raid    = { db = "DeckOrbsDB", match = RaidKey },
-    Cross   = { db = "DeckCrossDB" },
+    Cross   = { db = "DeckCrossDB", match = function(k) return k ~= "bars" and k ~= "barScale" end },
+    Bars    = { db = "DeckCrossDB", match = function(k) return k == "bars" or k == "barScale" end },
     Spec    = { db = "DeckSpecDB" },
     Bags    = { db = "DeckBagsDB", keep = { trackedItems = true } },
     Quests  = { db = "DeckQuestsDB" },

@@ -1,4 +1,5 @@
-"""make-status-masks.py - the masks for the buff bar (DeckUI_Orbs/buffs.lua).
+"""make-status-masks.py - the masks for the buff bar (DeckUI_Orbs/buffs.lua) and the
+action bars' rounded slot (DeckUI_Cross/bars.lua).
 
 FFXIV's status icons are shaped:
   status_up.tga    a rectangle whose top edge rises to a point in the middle (a roof) - buffs
@@ -48,3 +49,34 @@ def write(name, up):
 write("status_up.tga", True)
 write("status_down.tga", False)
 print("written to " + OUT)
+
+
+# The action bars' slot (DeckUI_Cross/bars.lua): FFXIV's square with rounded
+# corners, radius 10 of 64.
+CROSS_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DeckUI_Cross", "textures")
+RADIUS = 10
+
+
+def rounded(x, y):
+    hits = 0
+    for sx in range(4):
+        for sy in range(4):
+            px = x + (sx + 0.5) / 4
+            py = y + (sy + 0.5) / 4
+            # distance into the nearest corner's circle, if inside a corner box
+            cx = min(max(px, RADIUS), N - RADIUS)
+            cy = min(max(py, RADIUS), N - RADIUS)
+            hits += (px - cx) ** 2 + (py - cy) ** 2 <= RADIUS ** 2
+    return hits / 16
+
+
+pixels = bytearray()
+for y in range(N):
+    for x in range(N):
+        a = int(round(rounded(x, y) * 255))
+        v = 255 if a > 0 else 0
+        pixels += bytes((v, v, v, a))
+header = struct.pack("<BBBHHBHHHHBB", 0, 0, 2, 0, 0, 0, 0, 0, N, N, 32, 0x28)
+with open(os.path.join(CROSS_OUT, "slot_rounded.tga"), "wb") as f:
+    f.write(header + pixels)
+print("written to " + CROSS_OUT)

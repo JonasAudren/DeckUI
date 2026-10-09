@@ -8,6 +8,31 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.6.1
+
+- **The Steam Deck sets itself up.** After playing on the PC you no
+  longer have to press "Set up gamepad" and "Default bindings" again:
+  the game shares those settings between your devices, so the PC used to
+  take them away. DeckUI now puts the gamepad settings back by itself
+  whenever they change, and gives the controller buttons you have not
+  bound yourself their default keys for the session, without writing them
+  into your key bindings. Both are on by default, on the Cross page.
+- **Action bars in Final Fantasy's look** - Action Bars 3 to 8 can be
+  DeckUI's own: square slots with rounded corners like FFXIV's hotbars,
+  your key in the corner, empty slots as dark squares, one row, one
+  column or anything between, size per device. Your keys keep working
+  as before. Tick them on the new "Action bars" page.
+- **Ability menu on B (Steam Deck)** - tap B and the first seven slots
+  of Action Bar 4 appear; the D-pad and Y, A, X use one - your mounts,
+  toys or anything else you put on that bar - and B again closes it. On
+  the Deck the bar itself is hidden, on the PC it stays a normal bar. Tick
+  "Ability menu on B" on the Cross page.
+- **Quick menu: your own choice** - each of the eight buttons can open
+  what you pick on the Cross page: map, bags, quest log, character,
+  talents, spellbook, professions, group finder, adventure guide,
+  collections, mounts, achievements, guild, friends, calendar, the week
+  overview or the game menu. Tested on the Steam Deck now.
+
 ## 1.6.0 (2026-10-08)
 
 - **Buff bar in Final Fantasy's style** - your status icons as a bar of

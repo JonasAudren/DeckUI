@@ -333,15 +333,44 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `[form:n]` re-binds them with `SetBindingClick` in its snippet - in combat too.
   `/dc bars` prints the row and where `StanceButton1` hangs.
 - **Quick menu on RB** (`DeckUI_Cross/quickmenu.lua`, `DeckCrossDB.quickMenu`, off by default,
-  Deck only; not yet tested in game). Holding RB shows a cross of eight entries; the D-pad and
-  face buttons open map, bags, quest log, character, talents, group finder, collections, game
-  menu. The keys go to **Blizzard's own binding commands** (TOGGLEWORLDMAP, OPENALLBAGS, ...),
+  Deck only; tested on the Deck 2026-10-09). Holding RB shows a cross of eight entries; the D-pad
+  and face buttons open what each slot is set to - **the player chooses** since 2026-10-09
+  (`DeckCrossDB.quickEntries[1..8]`, a stepping button per slot on the Cross page, choices in
+  `ns.QUICK_COMMANDS`: binding commands plus DeckUI's own DECKUI_WEEK, "NONE" for empty). The keys go to **Blizzard's own binding commands** (TOGGLEWORLDMAP, OPENALLBAGS, ...),
   never to our Lua opening a window (that ran the map's opening tainted, see the Quests notes).
   RB is an override click on a hidden secure button registered for down and up; a
   `SecureHandlerWrapScript` on its OnClick binds the eight keys (`owner:SetBinding`) on the
   press and `ClearBindings` on the release - restricted code, so it works in combat. The
   picture is shown from a plain HookScript. A command the client does not know is left out and
   greyed; `/dc quick` prints the option, RB's binding and each command.
+- **Action bars 3-8 in FFXIV's look** (`DeckUI_Cross/bars.lua`, `DeckCrossDB.bars[n].shown` /
+  `perRow`, `barScale` per device, page "Action bars"; all off by default; not yet tested in game;
+  owner's wish 2026-10-09 with his FFXIV hotbar screenshot). LibActionButton buttons, state 0 =
+  the slot (Bar 3 49-60, 4 25-36, 5 37-48, 6 145-156, 7 157-168, 8 169-180), square with rounded
+  corners (`textures/slot_rounded.tga` from make-status-masks.py), key top left from
+  `keyBoundTarget` = the bar's MULTIACTIONBARnBUTTONi command. **Keys stay Blizzard's**: the
+  player's bindings drive Blizzard's own hidden buttons (native path), ours mirror their pushed
+  state like the crosses. `ns.ApplyBars` hides Blizzard's bar while ours shows - asked every time,
+  since HideBar/ShowBar are idempotent - and decides Action Bar 4 for the ability menu too.
+- **Ability menu on B** (`DeckUI_Cross/abilitymenu.lua`, `DeckCrossDB.abilityMenu`, off by
+  default, Deck only; not yet tested in game; owner's wish 2026-10-09 - mounts without a mouse).
+  A **tap** of B (PAD2, override click on a hidden secure toggle) opens a picture of Action Bar
+  4's first seven slots (MultiBarRight, slots 25-31); the D-pad and Y/A/X are bound from the
+  toggle's secure wrapper to seven secure buttons of type "action" on those slots, whose wrapper
+  clears the bindings on the release - so the keys are only taken while the menu is open, in
+  combat too. Tap, not hold: the thumb on B cannot reach Y/A/X. On the Deck Action Bar 4 is
+  hidden (`ns.SetBlizzardBarHidden`), on the PC it stays a bar.
+- **The Deck sets itself up** (2026-10-09; not yet tested in game). The owner had to press "Set
+  up gamepad" and "Default bindings" after every switch from the PC, sometimes mid-session too:
+  both write things **the game syncs between devices through its server** - the gamepad CVars
+  and the saved key bindings - so the PC handed the Deck its own values. Now, on the Deck:
+  `ns.EnsureGamepad` puts GamePadEnable / GamePadEmulateShift / Ctrl (and Alt while LB is in use)
+  back at login, on GAME_PAD_CONNECTED/DISCONNECTED/ACTIVE_CHANGED and on CVAR_UPDATE of one of
+  them (`DeckCrossDB.autoGamepad`, on); and the default pad keys (A jump, X interact, ...) are
+  **override bindings of the session** on keys whose saved binding is empty (`BindPadDefaults`,
+  `DeckCrossDB.padDefaults`, on) - never saved, never synced, the player's own keys untouched.
+  UPDATE_BINDINGS (a sync arriving) refills them half a second later, ignoring the ones our own
+  overrides cause (`lastBindApply`).
 - Gamepad glyph atlases (`Gamepad_Ltr_Face_*`) do not exist on this client; we ship our own
   TGA glyphs in `DeckUI_Cross/textures/`.
 - Health/power values may be *secret values*: display them via tags / Blizzard helpers

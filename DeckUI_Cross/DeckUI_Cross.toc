@@ -20,4 +20,6 @@ input.lua
 assist.lua
 stance.lua
 quickmenu.lua
+abilitymenu.lua
+bars.lua
 config.lua

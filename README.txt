@@ -309,12 +309,29 @@ crosses follow.
 Keys are bound to Blizzard's native commands, so press-and-hold casting and
 the single-button assistant work, including its changing icon.
 
+Action bars page: Action Bars 3 to 8 can each be replaced by a DeckUI bar
+in Final Fantasy's look - square slots with rounded corners, the key in the
+corner - laid out in one row, one column or anything between, with a size
+per device. Your key bindings keep working. All off by default.
+
 Options in the Cross tab:
 
+  Keep the gamepad set up by itself
+                           Steam Deck only, on by default. The game shares
+                           the gamepad settings between devices; DeckUI puts
+                           LT = Shift and RT = Ctrl back whenever they change.
+  Default keys on empty buttons
+                           on by default: A jump, X interact, B game menu,
+                           Y character, D-pad targets on every controller
+                           button you have not bound yourself, for the
+                           session only - nothing is saved.
+  Ability menu on B        Steam Deck only, off by default. Tap B: the first
+                           seven slots of Action Bar 4 show, the D-pad and
+                           Y, A, X use one; B again closes. Action Bar 4 is
+                           hidden on the Deck and stays a bar on the PC.
   Quick menu: hold RB      Steam Deck only, off by default. While RB is held
-                           a menu shows: D-pad up map, right bags, down quest
-                           log, left character; Y talents, B group finder,
-                           A collections, X game menu.
+                           a menu shows; what each D-pad direction and face
+                           button opens is chosen just below it.
   LB + D-pad up/down zooms the camera
                            off by default, Steam Deck only. LB becomes Alt
                            (the only way the game combines LB with another
