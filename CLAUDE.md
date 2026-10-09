@@ -787,8 +787,17 @@ the row, the character being played starts unfolded. Right click a character: fo
   `GetExampleRewardItemHyperlinks`), lockouts (`GetSavedInstanceInfo`, world bosses), keystone
   and runs (`C_MythicPlus`), renown of the current expansion (`C_MajorFactions`), Traveler's
   Log, the active hunt (`C_QuestLog.GetActivePreyQuest`).
-- **Kept by ID in `data.lua`** (Midnight; IDs as AlterEgo, Plumber and Myu's Knowledge Points
-  Tracker use them, read 2026-10-02 from the installed copies - follow them at a patch):
+- **Kept by ID in `data.lua`** (Midnight; first taken from AlterEgo, Plumber and Myu's Knowledge
+  Points Tracker 2026-10-02). **Our IDs rest on the game, not on other addons** (owner's decision
+  2026-10-09): `check-game-data.py` (repo root, run at every patch; `--items` adds the slow item
+  lookup) compares every hand-kept ID - Week's data.lua, the Nemesis currencies, the hunt
+  achievements, the delve chest - with Blizzard's client data from wago.tools (CurrencyTypes,
+  Achievement, QuestV2 + QuestV2CliTask titles, ItemSparse; needs a User-Agent, else 403); all
+  217 passed on 2026-10-09. Hidden tracking quests (treasures, treatises, hunts) have no name in
+  any data file: `/week record [stop|list|clear]` (record.lua) diffs
+  `C_QuestLog.GetAllCompletedQuestIDs` every 2 s while on and prints each newly flagged quest
+  with zone, title and what data.lua calls it ("not in data.lua" when new); kept in
+  `DeckWeekDB.recorded` (last 200). The data:
   crests, catalyst and spark per M+ season (`C_MythicPlus.GetCurrentSeason`: 17 = S1, 18 = S2,
   fallback 18), coffer keys/shards and other currencies, the delve weekly and Trovehunter's
   Bounty, prey quests per difficulty (4 a week each), weekly profession knowledge per base

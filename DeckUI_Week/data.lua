@@ -4,9 +4,19 @@ local ADDON, ns = ...
 -- Midnight's weekly content, by ID
 -------------------------------------------------------------------
 -- The game has no list of "what counts this week", so these are kept by
--- hand. The IDs are the ones AlterEgo, Plumber and Myu's Knowledge Points
--- Tracker use (read 2026-10-02 from the installed copies) - when one of
--- them changes a number at a patch, this is the place to follow.
+-- hand - and checked against the game itself, not against other addons
+-- (owner's decision, 2026-10-09):
+--   check-game-data.py  compares every ID here with Blizzard's client data
+--                       (wago.tools DB2 exports): currency names, that each
+--                       quest exists, and the titles the client keeps.
+--                       Run it at every patch.
+--   /week record        shows in game which quest the server flags when a
+--                       treasure is looted, a treatise handed in or a hunt
+--                       finished - the hidden tracking quests that no data
+--                       file names (record.lua).
+-- The first version of these IDs came from AlterEgo, Plumber and Myu's
+-- Knowledge Points Tracker (2026-10-02); all of them passed the check on
+-- 2026-10-09, and the owner tested crests, knowledge and hunts in game.
 -- Names are fallbacks only: a quest's title comes from the game when it
 -- has it (C_QuestLog.GetTitleForQuestID), in the client's language.
 -------------------------------------------------------------------
@@ -46,7 +56,7 @@ ns.DELVES = {
 }
 
 -- Prey hunts: each finished hunt flags one quest for the week; four per
--- difficulty count (Plumber's "n/4").
+-- difficulty count ("n/4").
 ns.PREY_CAP = 4
 ns.PREY = {}
 do

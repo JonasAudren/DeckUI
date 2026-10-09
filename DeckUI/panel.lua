@@ -226,7 +226,7 @@ D.PAGE_RESET = {
     Map     = { db = "DeckMapDB" },
     Tooltip = { db = "DeckTooltipDB" },
     Nav     = { db = "DeckNavDB" },
-    Week    = { db = "DeckWeekDB", keep = { chars = true, weeklies = true, hidden = true } },
+    Week    = { db = "DeckWeekDB", keep = { chars = true, weeklies = true, hidden = true, recorded = true } },
     Loot    = { db = "DeckUIDB", match = function(k) return LOOT_KEYS[k] end },
 }
 

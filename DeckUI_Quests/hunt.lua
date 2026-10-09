@@ -29,7 +29,7 @@ local LISTS = {
     { id = 42701, label = "N" },    -- normal targets
     { id = 42702, label = "H" },    -- hard
     { id = 42703, label = "NM" },   -- nightmare
-    { id = 63451, label = "NM" },   -- targets added in 12.1 (Plumber files them as nightmare)
+    { id = 63451, label = "NM" },   -- targets added in 12.1, counted as nightmare
     { id = 63452, label = "NM" },
 }
 

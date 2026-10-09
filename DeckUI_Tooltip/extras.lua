@@ -127,9 +127,10 @@ end
 -- The rare chest in a delve: the key it wants
 -------------------------------------------------------------------
 -- The world object carries the name of item 228942; it takes one
--- Restored Coffer Key (currency 3028). Both are The War Within's numbers
--- that Plumber still uses on 12.1 - if Midnight's delves changed them,
--- the line simply never shows.
+-- Restored Coffer Key (currency 3028, confirmed by check-game-data.py).
+-- The item is The War Within's and the 12.1 client data no longer lists it
+-- (check-game-data.py --items, 2026-10-09) - if Midnight's chest is named
+-- otherwise, the line simply never shows.
 local CHEST_ITEM, KEY_CURRENCY = 228942, 3028
 
 local function InDelve()

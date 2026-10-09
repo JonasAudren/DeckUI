@@ -13,5 +13,6 @@
 
 data.lua
 core.lua
+record.lua
 window.lua
 config.lua

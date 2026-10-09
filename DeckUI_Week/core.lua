@@ -359,12 +359,15 @@ end
 -- the hub's key binding and minimap button call this
 D.weekToggle = function() if ns.Toggle then ns.Toggle() end end
 
--- /week opens the window; /week config the tab; /week forget <questID>
+-- /week opens the window; /week config the tab; /week forget <questID>;
+-- /week record [stop|list|clear] finds the quest IDs the game flags (record.lua)
 SLASH_DECKWEEK1 = "/week"
 SlashCmdList.DECKWEEK = function(msg)
     msg = (msg or ""):lower():trim()
     if msg == "config" then
         D.ToggleConfig("Week")
+    elseif msg:match("^record") then
+        ns.Record(msg:match("^record%s*(%a*)"))
     elseif msg:match("^forget %d+$") then
         local id = tonumber(msg:match("%d+"))
         DeckWeekDB.weeklies[id] = nil

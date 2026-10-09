@@ -82,7 +82,8 @@ end
 local REWARD = Enum.UIWidgetRewardShownState or {}
 
 -- The Nemesis affix: enemy groups still standing, as Blizzard keeps them in
--- two currencies (left / total; read from Plumber's DelvesScenario.lua).
+-- two currencies (left / total). The client data names them "Delves -
+-- System - Seasonal Affix - Events Active / Maximum" (check-game-data.py).
 -- Shown only while the total is above zero, so no spell ID has to be
 -- known - Blizzard changes it between patches.
 local NEMESIS_LEFT, NEMESIS_TOTAL = 3103, 3104
