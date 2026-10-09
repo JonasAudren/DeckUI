@@ -552,6 +552,16 @@ panel:AddTab("General", {
             "Off: in dungeons and raids you only hear the voice.")
         f:Checkbox("Server info", db, "infoServer", function() D.ApplyInfoBars() end,
             "Final Fantasy XIV's line at the top right: your realm, a letter when mail waits, your latency and the time. Move it with Move below.")
+        -- what the server line shows, each value on its own switch
+        local onOff = { [true] = "on", [false] = "off" }
+        local function Part(key)
+            return { label = D.INFO_PART_NAMES[key], values = { true, false }, names = onOff,
+                     get = function() return D.InfoParts()[key] end,
+                     set = function(v) D.InfoParts()[key] = v; D.ApplyInfoBars() end }
+        end
+        for i = 1, #D.INFO_PARTS, 2 do
+            f:Cycles(Part(D.INFO_PARTS[i]), Part(D.INFO_PARTS[i + 1]))
+        end
         f:Checkbox("Gold", db, "infoGold", function() D.ApplyInfoBars() end,
             "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
         f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,

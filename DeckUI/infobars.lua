@@ -88,16 +88,49 @@ local function AddonShare()
     return nil, addons
 end
 
+-- Which values the line shows, each on its own switch (DeckUIDB.infoParts,
+-- owner's wish 2026-10-09: the line had grown long). In this order.
+D.INFO_PARTS = { "realm", "fps", "cpu", "mem", "latency", "clock" }
+D.INFO_PART_NAMES = { realm = "Realm", fps = "FPS", cpu = "CPU", mem = "Memory",
+                      latency = "Latency", clock = "Clock" }
+
+local function Parts()
+    DeckUIDB.infoParts = DeckUIDB.infoParts or {}
+    for _, key in ipairs(D.INFO_PARTS) do
+        if DeckUIDB.infoParts[key] == nil then DeckUIDB.infoParts[key] = true end
+    end
+    return DeckUIDB.infoParts
+end
+D.InfoParts = Parts
+
+local PART_TEXT = {
+    realm = function() return GetRealmName() or "" end,
+    fps = function()
+        local fps = GetFramerate() or 0
+        return ("%s%d fps|r"):format(FpsColour(fps), fps)
+    end,
+    cpu = function()
+        local share, addonMs = AddonShare()
+        return share and ("CPU %.0f%%"):format(share) or addonMs and ("CPU %.1f ms"):format(addonMs) or "CPU -"
+    end,
+    mem = function() return ("MEM %.0f MB"):format(collectgarbage("count") / 1024) end,
+    latency = function()
+        local _, _, home, world = GetNetStats()
+        local ms = math.max(home or 0, world or 0)
+        return ("%s%d ms|r"):format(LatencyColour(ms), ms)
+    end,
+    clock = function() return date("%H:%M") end,
+}
+
+local pieces = {}
 local function UpdateServer()
-    local _, _, home, world = GetNetStats()
-    local ms = math.max(home or 0, world or 0)
-    local fps = GetFramerate() or 0
-    local share, addonMs = AddonShare()
-    local cpu = share and ("CPU %.0f%%"):format(share) or addonMs and ("CPU %.1f ms"):format(addonMs) or "CPU -"
-    local mem = collectgarbage("count") / 1024
+    local parts = Parts()
+    wipe(pieces)
+    for _, key in ipairs(D.INFO_PARTS) do
+        if parts[key] then pieces[#pieces + 1] = PART_TEXT[key]() end
+    end
     local hasMail = HasNewMail()
-    serverText:SetText(("%s    %s%d fps|r    %s    MEM %.0f MB    %s%d ms|r    %s"):format(
-        GetRealmName() or "", FpsColour(fps), fps, cpu, mem, LatencyColour(ms), ms, date("%H:%M")))
+    serverText:SetText(table.concat(pieces, "    "))
     mail:ClearAllPoints()
     mail:SetPoint("RIGHT", serverText, "LEFT", -6, 0)
     mail:SetShown(hasMail and true or false)
@@ -312,6 +345,7 @@ end
 
 function D.ApplyInfoBars()
     server:SetShown(DeckUIDB.infoServer and true or false)
+    if server:IsShown() then UpdateServer() end
     gold:SetShown(DeckUIDB.infoGold and true or false)
     if InCombatLockdown() then
         pendingBags = true

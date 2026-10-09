@@ -39,6 +39,8 @@ local DEFAULTS = {
     knowledge   = true,    -- profession spells: unspent knowledge
     chestKeys   = true,    -- the rare chest in a delve: the key it wants
     ahPrice     = true,    -- items: the auction price from the last scan (DeckUI/auction.lua)
+    reputation  = true,    -- items and currencies that grant reputation: your standing
+    ensembles   = true,    -- transmog ensembles: how much of the set you have
 }
 
 function ns.DeviceDB()

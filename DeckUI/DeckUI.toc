@@ -12,6 +12,7 @@
 core.lua
 errors.lua
 widgets.lua
+reputation.lua
 panel.lua
 actionbars.lua
 editmode.lua

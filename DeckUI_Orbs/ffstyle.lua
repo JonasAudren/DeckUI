@@ -556,13 +556,27 @@ local function UpdateXP(line, bar, rested, level)
         or (IsXPUserDisabled and IsXPUserDisabled())
         or (GetMaxLevelForPlayerExpansion and level >= GetMaxLevelForPlayerExpansion())
     if capped then
-        line:SetText(("%s  Lv. %d    EXP  -/-"):format(class, level))
-        bar:SetMinMaxValues(0, 1)
-        bar:SetValue(0)
         rested:SetMinMaxValues(0, 1)
         rested:SetValue(0)
+        -- at the cap the watched faction takes the bar, as Blizzard's did
+        -- (owner's wish 2026-10-09; its reputation bar is parked with it)
+        local watched = C_Reputation.GetWatchedFactionData and C_Reputation.GetWatchedFactionData()
+        local status = watched and watched.factionID and watched.factionID > 0
+            and D.FactionStatus and D.FactionStatus(watched.factionID)
+        if status then
+            line:SetText(("%s  Lv. %d    %s  %s  %s/%s"):format(class, level, status.name, status.standing,
+                BreakUpLargeNumbers(status.cur), BreakUpLargeNumbers(status.max)))
+            bar:SetStatusBarColor(status.r, status.g, status.b)
+            bar:SetMinMaxValues(0, status.max)
+            bar:SetValue(status.cur)
+        else
+            line:SetText(("%s  Lv. %d    EXP  -/-"):format(class, level))
+            bar:SetMinMaxValues(0, 1)
+            bar:SetValue(0)
+        end
         return
     end
+    bar:SetStatusBarColor(0.95, 0.78, 0.3)
     local cur, max = UnitXP("player") or 0, UnitXPMax("player") or 1
     if max <= 0 then max = 1 end
     line:SetText(("%s  Lv. %d    EXP  %s/%s"):format(class, level,
@@ -844,8 +858,9 @@ local function SpawnXIVExpBar()
     xp.track:Hide()
 
     for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_XP_UPDATE", "PLAYER_LEVEL_UP",
-                             "UPDATE_EXHAUSTION", "ENABLE_XP_GAIN", "DISABLE_XP_GAIN" }) do
-        holder:RegisterEvent(event)
+                             "UPDATE_EXHAUSTION", "ENABLE_XP_GAIN", "DISABLE_XP_GAIN",
+                             "UPDATE_FACTION", "MAJOR_FACTION_RENOWN_LEVEL_CHANGED" }) do
+        pcall(holder.RegisterEvent, holder, event)   -- an event the client lacks is skipped
     end
     holder:SetScript("OnEvent", function(_, event, level)
         -- UnitLevel lags behind the level-up event, which brings the new level

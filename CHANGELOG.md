@@ -36,7 +36,8 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   to the game than the "Final Fantasy" panels: rounded glossy bars without
   a box, HP and MP side by side with large numbers, and the target as one
   long bar with name and percent above it. Blizzard's experience bar
-  becomes FFXIV's too: class, level and EXP over a thin bar, movable.
+  becomes FFXIV's too: class, level and EXP over a thin bar, movable -
+  at the level cap it shows the reputation you watch.
   Your focus is FFXIV's small focus box, your target's target sits in
   the target's line after a chevron, and your cast can move to the
   middle of the screen with its icon and the time left ("your cast in
@@ -45,7 +46,7 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 - **Server info, gold and a bag overview, FFXIV style** - three small
   displays you can tick on the Overview page: your realm with frame
   rate, addon CPU share, memory, latency, waiting mail and the time
-  (the busiest addons on mouse-over); the gold you carry; and a block of dots per
+  (the busiest addons on mouse-over; each value can be switched off); the gold you carry; and a block of dots per
   bag showing used and free slots, which opens your bags on a click. All
   off until you tick them, gone again when you untick them, and movable.
   Blizzard's bag buttons can be hidden there too.
@@ -54,6 +55,10 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   marker, name and health, your current target lit. Tick "Enemy list" on
   the Orbs page; it needs enemy nameplates switched on. It is for
   reading - a click does not target.
+- **Tooltip: reputation and ensembles** - items and currencies that give
+  reputation show the faction and your standing with it, and transmog
+  ensembles how much of the set you have collected already. Both can be
+  switched off on the Tooltip page.
 
 ## 1.6.0 (2026-10-08)
 

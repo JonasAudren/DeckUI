@@ -173,7 +173,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   wish the same day): the game has no machine CPU, so CPU is the addons' share of the frame
   from `C_AddOnProfiler` (Overall / Application metric, RecentAverageTime; "CPU -" without
   it), memory is `collectgarbage("count")`; the tooltip lists the top five addons of each
-  (`UpdateAddOnMemoryUsage` only there); gold only with a coin; one block of dots
+  (`UpdateAddOnMemoryUsage` only there); each value has its own switch (`DeckUIDB.infoParts`,
+  `D.INFO_PARTS`, on/off buttons under the checkbox, all on by default); gold only with a coin; one block of dots
   per bag (0-5, reagent bag tinted), free count above. The bag overview's click is a
   `SecureActionButtonTemplate` of type "click" on `MainMenuBarBackpackButton` - our Lua never
   calls ToggleAllBags (bank taint, see Bags) - so it shows/hides and resizes only out of combat.
@@ -422,7 +423,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   player): `DeckXIVExpBar`, movable "EXP bar", class/level/EXP over a thin bar (rested behind);
   Main/SecondaryStatusTrackingBarContainer parked under a hidden parent (Edit Mode systems, like
   the buff frames), so watched reputation/honour bars go with them. At the cap UnitXPMax is huge
-  ("0/100,000,000" at 90), so `GetMaxLevelForPlayerExpansion` decides "-/-".
+  ("0/100,000,000" at 90), so `GetMaxLevelForPlayerExpansion` decides. At the cap the bar
+  shows the **watched faction** instead (`C_Reputation.GetWatchedFactionData` ->
+  `D.FactionStatus`, DeckUI/reputation.lua: paragon, renown, friendship or classic standing,
+  in that order; not yet tested), "-/-" when none is watched.
   More of FFXIV's screen (2026-10-09, not yet tested): the **focus** is FFXIV's small "FOCUS"
   box in this style (`DeckXIVFocus`, "Focus (FF)"), the **target's target** sits in the
   target's line after a "»" chevron, and **`DeckOrbsDB.xivCastCenter`** (off, reload) moves your
@@ -731,8 +735,14 @@ just the same, so:
   counted once per currency, cached until a skill/trait event), and the Coffer Key count on a
   delve's rare chest (object named like item 228942, currency 3028 - TWW numbers Plumber still
   uses; if Midnight changed them the line just never shows). Lines only - Plumber's `Show()`,
-  rebuilds and line rewrites were not copied. Left for later: reputation items and transmog
-  ensembles (hand-kept tables); Plumber's delve cache lines are stale TWW data.
+  rebuilds and line rewrites were not copied. Plumber's delve cache lines are stale TWW data.
+  **Reputation and ensembles** (2026-10-09, not yet tested; `reputation` / `ensembles`, on):
+  an item's use spell (`C_Item.GetItemSpell`) is looked up in `repdata.lua` - **generated**
+  from wago.tools' SpellEffect rows with Effect 103 (SpellID -> EffectMiscValue_0 = faction),
+  479 spells; refresh it at a patch the way its header says - and the standing comes from
+  `D.FactionStatus`; currencies ask `C_CurrencyInfo.GetFactionGrantedByCurrency`. Ensembles:
+  `C_Item.GetItemLearnTransmogSet` -> `C_Transmog.GetAllSetAppearancesByID` ->
+  `GetSourceInfo().isCollected`, counted per set and cached until a collection event.
 - `/decktip debug` prints the styled count, anchor, scale, NineSlice alpha and inspect state.
 
 ## Nav module (tested in game 2026-10-01)

@@ -12,8 +12,7 @@ local D = DeckUI
 -- here (see core.lua).
 --
 -- Left out on purpose: Plumber's delve cache lines (its item and quest
--- lists are The War Within's and stale in Midnight), reputation items and
--- transmog ensembles (big hand-kept tables, planned separately), the
+-- lists are The War Within's and stale in Midnight), the
 -- Ctrl-click "show in quest log" (opening the quest log from our code
 -- taints it, see DeckUI_Quests/quests.lua).
 -------------------------------------------------------------------
@@ -180,6 +179,71 @@ local function AuctionLine(tooltip, itemID)
 end
 
 -------------------------------------------------------------------
+-- Items and currencies that grant reputation: your standing with it
+-------------------------------------------------------------------
+-- Added 2026-10-09 (the part of Plumber's tooltip modules left for later).
+-- An item grants reputation through its use spell; which faction that
+-- spell feeds comes from the game data in repdata.lua (generated, not hand
+-- kept). Currencies ask the game itself (GetFactionGrantedByCurrency).
+local function StandingLine(tooltip, factionID)
+    local status = D.FactionStatus and D.FactionStatus(factionID)
+    if not status then return end
+    tooltip:AddDoubleLine(status.name, ("%s  %s/%s"):format(status.standing,
+        BreakUpLargeNumbers(status.cur), BreakUpLargeNumbers(status.max)),
+        GOLD[1], GOLD[2], GOLD[3], status.r, status.g, status.b)
+end
+
+local function ReputationItemLine(tooltip, itemID)
+    local _, spellID = C_Item.GetItemSpell(itemID)
+    local factionID = spellID and ns.SPELL_FACTION and ns.SPELL_FACTION[spellID]
+    if factionID then StandingLine(tooltip, factionID) end
+end
+
+local function ReputationCurrencyLine(tooltip, currencyID)
+    local grant = C_CurrencyInfo.GetFactionGrantedByCurrency
+    local factionID = grant and grant(currencyID)
+    if factionID then StandingLine(tooltip, factionID) end
+end
+
+-------------------------------------------------------------------
+-- Transmog ensembles: how much of the set you already have
+-------------------------------------------------------------------
+-- An ensemble item teaches a whole transmog set (C_Item.
+-- GetItemLearnTransmogSet). The line counts its appearances you have
+-- collected, cached per set until the collection changes.
+local ensembles = {}
+
+local function EnsembleCount(setID)
+    if ensembles[setID] then return ensembles[setID][1], ensembles[setID][2] end
+    local items = C_Transmog.GetAllSetAppearancesByID(setID)
+    if not items then return end
+    local have, total = 0, 0
+    for _, item in ipairs(items) do
+        local source = C_TransmogCollection.GetSourceInfo(item.itemModifiedAppearanceID)
+        if source then
+            total = total + 1
+            if source.isCollected then have = have + 1 end
+        end
+    end
+    ensembles[setID] = { have, total }
+    return have, total
+end
+
+local function EnsembleLine(tooltip, itemID)
+    local learn = C_Item.GetItemLearnTransmogSet
+    local setID = learn and learn(itemID)
+    if not setID then return end
+    local have, total = EnsembleCount(setID)
+    if not total or total == 0 then return end
+    if have >= total then
+        tooltip:AddDoubleLine("Ensemble", "all collected", GOLD[1], GOLD[2], GOLD[3], 0.6, 0.6, 0.6)
+    else
+        tooltip:AddDoubleLine("Ensemble", ("%d/%d collected"):format(have, total),
+            GOLD[1], GOLD[2], GOLD[3], 1, 1, 1)
+    end
+end
+
+-------------------------------------------------------------------
 -- Wiring
 -------------------------------------------------------------------
 local function Styled(tooltip)
@@ -198,6 +262,17 @@ function ns.InitExtras()
         if not (Styled(tooltip) and data and DeckTooltipDB.ahPrice) then return end
         if Plain(data.id) and data.id then AuctionLine(tooltip, data.id) end
     end)
+    TooltipDataProcessor.AddTooltipPostCall(T.Item, function(tooltip, data)
+        if not (Styled(tooltip) and data and Plain(data.id) and data.id) then return end
+        if DeckTooltipDB.reputation then ReputationItemLine(tooltip, data.id) end
+        if DeckTooltipDB.ensembles then EnsembleLine(tooltip, data.id) end
+    end)
+    if T.Currency then
+        TooltipDataProcessor.AddTooltipPostCall(T.Currency, function(tooltip, data)
+            if not (Styled(tooltip) and data and DeckTooltipDB.reputation) then return end
+            if Plain(data.id) and data.id then ReputationCurrencyLine(tooltip, data.id) end
+        end)
+    end
     TooltipDataProcessor.AddTooltipPostCall(T.Spell, function(tooltip, data)
         if not (Styled(tooltip) and data and DeckTooltipDB.knowledge) then return end
         if Plain(data.id) and data.id then KnowledgeLine(tooltip, data.id) end
@@ -215,4 +290,11 @@ function ns.InitExtras()
         ev:RegisterEvent(e)
     end
     ev:SetScript("OnEvent", function() wipe(knowledge) end)
+
+    -- ensemble counts are kept until the collection changes
+    local tm = CreateFrame("Frame")
+    for _, e in ipairs({ "TRANSMOG_COLLECTION_SOURCE_ADDED", "TRANSMOG_COLLECTION_SOURCE_REMOVED" }) do
+        pcall(tm.RegisterEvent, tm, e)
+    end
+    tm:SetScript("OnEvent", function() wipe(ensembles) end)
 end

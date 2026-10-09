@@ -13,5 +13,6 @@
 
 core.lua
 lines.lua
+repdata.lua
 extras.lua
 config.lua
