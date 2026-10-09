@@ -158,6 +158,14 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   reach). The cast ring is a Cooldown fed `UnitCastingDuration`/`UnitChannelDuration` duration
   objects. NAME_PLATE_UNIT_REMOVED of our plate hides it (plates are recycled). Needs the
   interact key and CVar SoftTargetIconGameObject 1 (set on enabling); `/deck softtarget`.
+- **Target arrow** (`DeckUI/targetarrow.lua`, `DeckUIDB.targetArrow`, Overview page, off, live;
+  tested in game 2026-10-09; owner's FFXIV screenshot the same day). FFXIV's arrowhead over the
+  target: a frame of ours on UIParent anchored BOTTOM to TOP of
+  `C_NamePlate.GetNamePlateForUnit("target")` - nothing on the plate changes; no plate, no
+  arrow. Texture `DeckUI/textures/target_arrow.tga` (make-status-masks.py), a black larger copy
+  as outline, an additive gradient as shine, a Translation animation bobbing it. Red when
+  `UnitCanAttack`, green when `UnitIsFriend`, gold when either is secret. Updated 30 ms after
+  PLAYER_TARGET_CHANGED / NAME_PLATE_UNIT_ADDED/REMOVED / UNIT_FACTION; `/deck targetarrow`.
 - **Talking head as a subtitle** (`DeckUI/talkinghead.lua`, `DeckUIDB.talkingHead` /
   `talkingHeadInstances`, Overview page, off by default; not yet tested in game; replaces
   Plumber's "Talking Head", 2026-10-08). Blizzard's `TalkingHeadFrame` only loses

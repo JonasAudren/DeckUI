@@ -20,6 +20,7 @@ damagemeter.lua
 merchant.lua
 loot.lua
 softtarget.lua
+targetarrow.lua
 talkinghead.lua
 infobars.lua
 mainmenu.lua

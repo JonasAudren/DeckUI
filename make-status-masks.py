@@ -107,3 +107,35 @@ for name, left in (("bar_cap_left.tga", True), ("bar_cap_right.tga", False)):
     with open(os.path.join(OUT, name), "wb") as f:
         f.write(header + pixels)
 print("bar caps written to " + OUT)
+
+
+# The target arrow over the target's nameplate (DeckUI/targetarrow.lua): FFXIV's
+# arrowhead pointing down, with a notch in its top edge. White on transparent; the
+# addon colours it and lays a larger black copy behind it as the outline.
+HUB_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DeckUI", "textures")
+ARROW = [(6, 6), (32, 22), (58, 6), (32, 60)]   # clockwise, y grows down
+
+
+def inside(px, py, poly):
+    hit = False
+    j = len(poly) - 1
+    for i in range(len(poly)):
+        xi, yi = poly[i]
+        xj, yj = poly[j]
+        if (yi > py) != (yj > py) and px < (xj - xi) * (py - yi) / (yj - yi) + xi:
+            hit = not hit
+        j = i
+    return hit
+
+
+pixels = bytearray()
+for y in range(N):
+    for x in range(N):
+        hits = sum(inside(x + (sx + 0.5) / 4, y + (sy + 0.5) / 4, ARROW) for sx in range(4) for sy in range(4))
+        a = int(round(hits / 16 * 255))
+        v = 255 if a > 0 else 0
+        pixels += bytes((v, v, v, a))
+os.makedirs(HUB_OUT, exist_ok=True)
+with open(os.path.join(HUB_OUT, "target_arrow.tga"), "wb") as f:
+    f.write(header + pixels)
+print("target arrow written to " + HUB_OUT)
