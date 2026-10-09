@@ -29,16 +29,17 @@ D.RegisterModule("Orbs", {
         f:Slider("Brightness", 0.0, 0.5, 0.05, pct, db, "glow", ns.SetGlow,
             "How much the orbs glow from inside.")
 
-        local STYLE_NAMES = { orbs = "Orbs", ff = "Final Fantasy" }
+        local STYLE_NAMES = { orbs = "Orbs", ff = "Final Fantasy", ffxiv = "Final Fantasy XIV" }
+        local STYLE_NEXT = { orbs = "ff", ff = "ffxiv", ffxiv = "orbs" }
         local function HpLabel() return "Health: " .. ns.HP_TEXT_NAMES[DeckOrbsDB.hpText or "percent"] end
         local function StyleLabel() return "Style: " .. STYLE_NAMES[DeckOrbsDB.style or "orbs"] end
         local hpBtn, styleBtn = f:Pair(
             { text = "Health", title = "Health text", tip = "Percent, the full number, short (1.2M) or short with percent.",
               onClick = function(b) ns.CycleHpText(); b:SetText(HpLabel()) end },
             { text = "Style", title = "Style of player and target",
-              tip = "Round orbs, or Final Fantasy's parameter bar for you and its wide bar for your target. Needs a reload.",
+              tip = "Round orbs; Final Fantasy's parameter bar and wide target bar on dark panels; or Final Fantasy XIV, closer to the game: capsule bars without a box, large numbers, class, level and EXP. Needs a reload.",
               onClick = function(b)
-                  DeckOrbsDB.style = (DeckOrbsDB.style == "ff") and "orbs" or "ff"
+                  DeckOrbsDB.style = STYLE_NEXT[DeckOrbsDB.style or "orbs"] or "orbs"
                   b:SetText(StyleLabel())
                   D.NeedReload("orbs:style", DeckOrbsDB.style ~= loaded.style)
               end })

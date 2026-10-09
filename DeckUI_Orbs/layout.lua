@@ -31,7 +31,7 @@ ns.DEFAULTS = {
     hpText          = "percent",   -- "percent" | "absolute" | "both"
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
     showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
-    style           = "orbs",      -- player/target: "orbs" or "ff" (ffstyle.lua), needs /reload
+    style           = "orbs",      -- player/target: "orbs", "ff" or "ffxiv" (ffstyle.lua), /reload
     buffBar         = false,       -- own buff bar in FF style (buffs.lua), replaces Blizzard's; /reload
     -- raid grid (raid.lua, Raid tab); sizes and arrangement are per device
     raidColor       = "ff",        -- health bar: "ff" (FF green) | "class"
@@ -593,7 +593,7 @@ oUF:Factory(function(self)
     ns.GLOW = DeckOrbsDB.glow
 
     -- player and target: the orbs, or Final Fantasy's bars (ffstyle.lua)
-    local ff = DeckOrbsDB.style == "ff"
+    local ff = ns.IsFFStyle()
     local player, target, tot
     if ff then
         player, target, tot = ns.SpawnFF(self)
@@ -627,7 +627,7 @@ oUF:Factory(function(self)
     end
 
     -- in the FF style a small parameter bar (ffstyle.lua), else a small orb
-    if ff then self:SetActiveStyle("DeckFFPet") end
+    if ff then self:SetActiveStyle(ns.FFStyle("Pet")) end
     local pet = self:Spawn("pet", "DeckOrbsPet")
     pet:SetFrameLevel(30)
     if ff then

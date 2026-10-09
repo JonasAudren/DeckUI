@@ -399,6 +399,18 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   engine), the cast below with oUF's `Shield` as a grey veil when not interruptible, your
   debuffs to the right. Holder "Boss frames (FF)". `/orbs boss` = test mode (five frames of
   your target, in whichever boss style is active).
+  **A third style "ffxiv"** (2026-10-09, owner's screenshot of FFXIV's parameter bar; not yet
+  tested in game): no panel, capsule bars (`PillBar`: dark edge, track, gloss/shade gradients
+  over the colour), HP and MP side by side with large numbers under them; the target one long
+  capsule. **FFXIV's EXP bar replaces Blizzard's** (owner's wish the same day, not under the
+  player): `DeckXIVExpBar`, movable "EXP bar", class/level/EXP over a thin bar (rested behind);
+  Main/SecondaryStatusTrackingBarContainer parked under a hidden parent (Edit Mode systems, like
+  the buff frames), so watched reputation/honour bars go with them. At the cap UnitXPMax is huge
+  ("0/100,000,000" at 90), so `GetMaxLevelForPlayerExpansion` decides "-/-". The round ends are
+  two masks, `textures/bar_cap_left|right.tga` (make-status-masks.py), square at each end and
+  loaded with CLAMPTOWHITE so bars of any length keep round ends. Styles `DeckXIV*`; bosses keep
+  the FF enemy list, positions are shared with "ff". `ns.IsFFStyle()` is what layout.lua asks,
+  `ns.FFStyle(part)` names the oUF style.
 - **Buff bar** (`DeckUI_Orbs/buffs.lua`, `DeckOrbsDB.buffBar`, off by default, needs a /reload;
   tested in game 2026-10-08, the combat switch included; owner's wish the same day - Blizzard's buffs grew too long in combat and
   ran into the minimap on the Deck). An oUF frame for "player" with two aura containers laid

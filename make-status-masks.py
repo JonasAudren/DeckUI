@@ -80,3 +80,30 @@ header = struct.pack("<BBBHHBHHHHBB", 0, 0, 2, 0, 0, 0, 0, 0, N, N, 32, 0x28)
 with open(os.path.join(CROSS_OUT, "slot_rounded.tga"), "wb") as f:
     f.write(header + pixels)
 print("written to " + CROSS_OUT)
+
+
+# The "Final Fantasy XIV" style's bars (DeckUI_Orbs/ffstyle.lua): capsules of any
+# length, so the round ends are two masks of their own - a half disc on one side,
+# white on the other - anchored square at each end of a bar and loaded with
+# CLAMPTOWHITE, which leaves everything outside them untouched.
+def cap(x, y, left):
+    hits = 0
+    for sx in range(4):
+        for sy in range(4):
+            px = x + (sx + 0.5) / 4
+            py = y + (sy + 0.5) / 4
+            straight = px >= N / 2 if left else px <= N / 2
+            hits += straight or (px - N / 2) ** 2 + (py - N / 2) ** 2 <= (N / 2) ** 2
+    return hits / 16
+
+
+for name, left in (("bar_cap_left.tga", True), ("bar_cap_right.tga", False)):
+    pixels = bytearray()
+    for y in range(N):
+        for x in range(N):
+            a = int(round(cap(x, y, left) * 255))
+            v = 255 if a > 0 else 0
+            pixels += bytes((v, v, v, a))
+    with open(os.path.join(OUT, name), "wb") as f:
+        f.write(header + pixels)
+print("bar caps written to " + OUT)

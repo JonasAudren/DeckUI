@@ -32,6 +32,12 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   talents, spellbook, professions, group finder, adventure guide,
   collections, mounts, achievements, guild, friends, calendar, the week
   overview or the game menu. Tested on the Steam Deck now.
+- **A third style for player and target: Final Fantasy XIV** - closer
+  to the game than the "Final Fantasy" panels: rounded glossy bars without
+  a box, HP and MP side by side with large numbers, and the target as one
+  long bar with name and percent above it. Blizzard's experience bar
+  becomes FFXIV's too: class, level and EXP over a thin bar, movable. Pick it with the "Style" button on the Orbs page
+  (reload needed).
 
 ## 1.6.0 (2026-10-08)
 

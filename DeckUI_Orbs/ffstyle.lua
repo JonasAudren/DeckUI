@@ -13,7 +13,7 @@ local oUF = ns.oUF
 -- Here in DeckUI's colours: a dark fill with a thin grey edge.
 --
 -- Chosen with the "Style" button in the Orbs tab (DeckOrbsDB.style,
--- "orbs" or "ff"); it needs a /reload, since oUF styles a frame once when
+-- "orbs", "ff" or "ffxiv" - the third further below); it needs a /reload, since oUF styles a frame once when
 -- it is spawned. Every Orbs setting that makes sense still applies: size,
 -- opacity, health text, cast, auras, own debuffs only, class resources,
 -- the target announce. The positions are saved apart from the orbs'
@@ -451,11 +451,341 @@ local function BuildBoss(self, unit)
     end
 end
 
+-------------------------------------------------------------------
+-- The third style, "ffxiv": closer to the game itself
+-------------------------------------------------------------------
+-- The owner's wish (2026-10-09, his screenshot of FFXIV's parameter bar):
+-- no box at all - capsule bars with a glossy top and a dark edge, HP and
+-- MP side by side, each number large under its bar with a small label,
+-- and a line under them with class, level and EXP over a thin EXP bar.
+-- The target is one long capsule with name and percent above it.
+-- Bosses keep the enemy list above; positions are shared with "ff".
+--
+-- The round ends are two masks (textures/bar_cap_left|right, made by
+-- make-status-masks.py), square at each end of a bar and CLAMPTOWHITE, so
+-- a bar of any length keeps round ends instead of a stretched shape.
+local CAP_L = "Interface\\AddOns\\DeckUI_Orbs\\textures\\bar_cap_left"
+local CAP_R = "Interface\\AddOns\\DeckUI_Orbs\\textures\\bar_cap_right"
+local XIV_PLAYER_W = 300
+local XIV_TARGET_W = 420
+local XIV_TOT_W = 150
+
+-- round both ends of a texture of the bar; grow reaches past the bar (the edge)
+local function Caps(bar, height, grow)
+    local size = height + 2 * grow
+    local l = bar:CreateMaskTexture()
+    l:SetTexture(CAP_L, "CLAMPTOWHITE", "CLAMPTOWHITE")
+    l:SetSize(size, size)
+    l:SetPoint("LEFT", bar, "LEFT", -grow, 0)
+    local r = bar:CreateMaskTexture()
+    r:SetTexture(CAP_R, "CLAMPTOWHITE", "CLAMPTOWHITE")
+    r:SetSize(size, size)
+    r:SetPoint("RIGHT", bar, "RIGHT", grow, 0)
+    return function(texture)
+        texture:AddMaskTexture(l)
+        texture:AddMaskTexture(r)
+    end
+end
+
+local function PillBar(parent, width, height)
+    local bar = CreateFrame("StatusBar", nil, parent)
+    bar:SetStatusBarTexture(WHITE)
+    bar:SetSize(width, height)
+    local round = Caps(bar, height, 0)
+    round(bar:GetStatusBarTexture())
+
+    -- a dark edge one pixel around, the empty track inside it
+    local edge = bar:CreateTexture(nil, "BACKGROUND", nil, -8)
+    edge:SetTexture(WHITE)
+    edge:SetPoint("TOPLEFT", -1, 1)
+    edge:SetPoint("BOTTOMRIGHT", 1, -1)
+    edge:SetVertexColor(0, 0, 0, 0.9)
+    Caps(bar, height, 1)(edge)
+    local track = bar:CreateTexture(nil, "BACKGROUND", nil, -7)
+    track:SetTexture(WHITE)
+    track:SetAllPoints()
+    track:SetVertexColor(0.1, 0.1, 0.12, 0.85)
+    round(track)
+
+    -- the gloss: lighter at the top, darker at the bottom, whatever the colour
+    local half = math.max(1, math.floor(height / 2))
+    local shine = bar:CreateTexture(nil, "OVERLAY")
+    shine:SetTexture(WHITE)
+    shine:SetPoint("TOPLEFT")
+    shine:SetPoint("TOPRIGHT")
+    shine:SetHeight(half)
+    shine:SetBlendMode("ADD")
+    shine:SetGradient("VERTICAL", CreateColor(1, 1, 1, 0), CreateColor(1, 1, 1, 0.3))
+    round(shine)
+    local shade = bar:CreateTexture(nil, "OVERLAY")
+    shade:SetTexture(WHITE)
+    shade:SetPoint("BOTTOMLEFT")
+    shade:SetPoint("BOTTOMRIGHT")
+    shade:SetHeight(half)
+    shade:SetGradient("VERTICAL", CreateColor(0, 0, 0, 0.35), CreateColor(0, 0, 0, 0))
+    round(shade)
+
+    bar.edge, bar.track = edge, track
+    return bar
+end
+
+-- FFXIV's MP is pink; other resources keep their colours
+local function PinkMana(element, unit)
+    if UnitPowerType(unit) == MANA then element:SetStatusBarColor(0.88, 0.42, 0.68) end
+end
+
+-- "HP" small, the number large beside it, under a bar
+local function BarNumber(self, bar, label)
+    local small = Text(self, 10)
+    small:SetPoint("TOPLEFT", bar, "BOTTOMLEFT", 2, -10)
+    small:SetTextColor(0.85, 0.85, 0.85)
+    small:SetText(label)
+    local big = Text(self, 18)
+    big:SetPoint("BOTTOMLEFT", small, "BOTTOMRIGHT", 4, -1)
+    return small, big
+end
+
+-- class, level and EXP on the EXP bar; the player's own, plain numbers.
+-- At the level cap the client still hands out a huge UnitXPMax (owner's
+-- screenshot: "0/100,000,000" at 90), so the cap is asked for itself.
+local function UpdateXP(line, bar, rested, level)
+    local class = UnitClass("player") or ""
+    level = level or UnitLevel("player")
+    local capped = (IsPlayerAtEffectiveMaxLevel and IsPlayerAtEffectiveMaxLevel())
+        or (IsXPUserDisabled and IsXPUserDisabled())
+        or (GetMaxLevelForPlayerExpansion and level >= GetMaxLevelForPlayerExpansion())
+    if capped then
+        line:SetText(("%s  Lv. %d    EXP  -/-"):format(class, level))
+        bar:SetMinMaxValues(0, 1)
+        bar:SetValue(0)
+        rested:SetMinMaxValues(0, 1)
+        rested:SetValue(0)
+        return
+    end
+    local cur, max = UnitXP("player") or 0, UnitXPMax("player") or 1
+    if max <= 0 then max = 1 end
+    line:SetText(("%s  Lv. %d    EXP  %s/%s"):format(class, level,
+        BreakUpLargeNumbers(cur), BreakUpLargeNumbers(max)))
+    bar:SetMinMaxValues(0, max)
+    bar:SetValue(cur)
+    rested:SetMinMaxValues(0, max)
+    rested:SetValue(math.min(max, cur + (GetXPExhaustion() or 0)))
+end
+
+local function BuildPlayerXIV(self, unit)
+    local W = XIV_PLAYER_W
+    local half = math.floor((W - 10) / 2)
+    self:SetSize(W, 58)
+    Clicks(self)
+
+    local name = Text(self, 12)
+    name:SetPoint("TOPLEFT", 2, 0)
+    name:SetWidth(W - 4)
+    name:SetTextColor(1, 0.82, 0.55)
+    self:Tag(name, "[name]")
+
+    local health = PillBar(self, half, 8)
+    health:SetPoint("TOPLEFT", 0, -17)
+    health.colorHealth = true
+    self.Health = health
+    local _, hp = BarNumber(self, health, "HP")
+    self:Tag(hp, ns.HP_TAGS[DeckOrbsDB.hpText] or ns.HP_TAGS.percent)
+    self.hpText = hp
+
+    local power = PillBar(self, half, 8)
+    power:SetPoint("TOPRIGHT", 0, -17)
+    power.colorPower = true
+    power.PostUpdateColor = PinkMana
+    local ppLabel, pp = BarNumber(self, power, "MP")
+    self:Tag(pp, "[deck:ppshort]")
+    -- the label names the resource: MP, or Rage, Energy, ...
+    power.PostUpdate = function(element, unitID)
+        local _, token = UnitPowerType(unitID)
+        local label = "MP"
+        if token and token ~= "MANA" then label = _G[token] or token end
+        ppLabel:SetText(label)
+    end
+    self.Power = power
+
+    -- class resources under the numbers
+    local anchor = CreateFrame("Frame", nil, self)
+    anchor:SetSize(W, 1)
+    anchor:SetPoint("TOPLEFT", 0, -46)
+    local points = PointBars(self, MAX_POINTS, W)
+    points.PostUpdate = function(element, cur, max, hasMaxChanged)
+        if hasMaxChanged or not element.laidOut then
+            element.laidOut = true
+            LayoutPoints(element, max, W, anchor)
+        end
+    end
+    self.ClassPower = points
+    local runes = PointBars(self, 6, W)
+    runes.colorSpec = true
+    LayoutPoints(runes, 6, W, anchor)
+    self.Runes = runes
+
+    local cast = PillBar(self, W, 6)
+    cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -6)
+    cast:SetStatusBarColor(1, 0.85, 0.3)
+    local castText = Text(cast, 11)
+    castText:SetPoint("TOPLEFT", cast, "BOTTOMLEFT", 2, -2)
+    castText:SetWidth(W - 4)
+    cast.Text = castText
+    self.Castbar = cast
+
+    if self.CreateAuras and not DeckOrbsDB.buffBar then
+        local buffs = AuraRow(self, W, 22, "BOTTOMLEFT", "TOPLEFT", 4)
+        buffs:AddGroup("HELPFUL", { candidateFilters = { maxDuration = DeckOrbsDB.buffMaxDuration } })
+        local debuffs = AuraRow(self, W, 22, "BOTTOMLEFT", "TOPLEFT", 30)
+        debuffs:AddGroup("HARMFUL", { showDebuffBorder = true })
+    end
+end
+
+local function BuildTargetXIV(self, unit)
+    local W = XIV_TARGET_W
+    self:SetSize(W, 30)
+    Clicks(self)
+
+    local hp = Text(self, 14, "RIGHT")
+    hp:SetPoint("TOPRIGHT", -2, 0)
+    self:Tag(hp, ns.HP_TAGS[DeckOrbsDB.hpText] or ns.HP_TAGS.percent)
+    self.hpText = hp
+
+    local name = Text(self, 14)
+    name:SetPoint("TOPLEFT", 2, 0)
+    name:SetWidth(W - 90)
+    self:Tag(name, "[difficulty]Lv. [level]|r [raidcolor][name]")
+
+    local health = PillBar(self, W, 10)
+    health:SetPoint("TOPLEFT", 0, -19)
+    health.colorClass = true
+    health.colorReaction = true
+    health.colorTapped = true
+    health.colorDisconnected = true
+    self.Health = health
+
+    local cast = PillBar(self, W, 6)
+    cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -4)
+    cast:SetStatusBarColor(1, 0.55, 0.2)
+    local castText = Text(cast, 11)
+    castText:SetPoint("TOPLEFT", cast, "BOTTOMLEFT", 2, -2)
+    castText:SetWidth(W - 4)
+    castText:SetTextColor(1, 0.85, 0.3)
+    cast.Text = castText
+    self.Castbar = cast
+
+    if self.CreateAuras then
+        local auras = AuraRow(self, W, 22, "TOPLEFT", "BOTTOMLEFT", -28)
+        local filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL"
+        local key = auras:AddGroup(filter, { maxFrameCount = 8, showDebuffBorder = true })
+        table.insert(ns.targetDebuffs, { container = auras, key = key })
+        auras:AddGroup("HELPFUL", { maxFrameCount = 6, showStealableBorder = true })
+    end
+end
+
+-- target of target and pet: a name (and the pet's health) over a short capsule
+local function BuildSmallXIV(self, withHp)
+    self:SetSize(XIV_TOT_W, 26)
+    Clicks(self)
+    local name = Text(self, 12)
+    name:SetPoint("TOPLEFT", 2, 0)
+    if withHp then
+        local hp = Text(self, 11, "RIGHT")
+        hp:SetPoint("TOPRIGHT", -2, 0)
+        self:Tag(hp, "[deck:hpshort]")
+        name:SetPoint("RIGHT", hp, "LEFT", -4, 0)
+        self:Tag(name, "[raidcolor][name]")
+    else
+        name:SetWidth(XIV_TOT_W - 4)
+        self:Tag(name, "|cffaaaaaa»|r [raidcolor][name]")
+    end
+    local health = PillBar(self, XIV_TOT_W, 6)
+    health:SetPoint("TOPLEFT", 0, -17)
+    return health
+end
+
+local function BuildToTXIV(self, unit)
+    local health = BuildSmallXIV(self, false)
+    health.colorClass = true
+    health.colorReaction = true
+    self.Health = health
+end
+
+local function BuildPetXIV(self, unit)
+    local health = BuildSmallXIV(self, true)
+    health.colorHealth = true
+    health.colorDisconnected = true
+    self.Health = health
+end
+
+-- FFXIV's EXP bar in place of Blizzard's (owner's wish 2026-10-09: not
+-- under the parameter bar but instead of the game's own): class, level and
+-- EXP over a thin bar, rested EXP lighter behind it, movable "EXP bar".
+-- Blizzard's status tracking bars (EXP, and reputation/honour when watched)
+-- are Edit Mode systems, parked under a hidden parent like the buff frames
+-- (buffs.lua) - Edit Mode re-applies points, never the parent.
+local XIV_EXP_W = 460
+local hiddenParent = CreateFrame("Frame")
+hiddenParent:Hide()
+
+local function SpawnXIVExpBar()
+    local holder = CreateFrame("Frame", "DeckXIVExpBar", UIParent)
+    holder:SetSize(XIV_EXP_W, 20)
+    holder.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", 0, 6 }
+    holder:SetPoint(unpack(holder.defaultPoint))
+
+    local line = Text(holder, 11)
+    line:SetPoint("TOPLEFT", 2, 0)
+    line:SetWidth(XIV_EXP_W - 4)
+    line:SetTextColor(0.85, 0.85, 0.85)
+    local rested = PillBar(holder, XIV_EXP_W, 5)
+    rested:SetPoint("BOTTOMLEFT", 0, 1)
+    rested:SetStatusBarColor(0.35, 0.5, 0.95, 0.6)
+    local xp = PillBar(holder, XIV_EXP_W, 5)
+    xp:SetPoint("BOTTOMLEFT", 0, 1)
+    xp:SetFrameLevel(rested:GetFrameLevel() + 1)
+    xp:SetStatusBarColor(0.95, 0.78, 0.3)
+    xp.edge:Hide()
+    xp.track:Hide()
+
+    for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_XP_UPDATE", "PLAYER_LEVEL_UP",
+                             "UPDATE_EXHAUSTION", "ENABLE_XP_GAIN", "DISABLE_XP_GAIN" }) do
+        holder:RegisterEvent(event)
+    end
+    holder:SetScript("OnEvent", function(_, event, level)
+        -- UnitLevel lags behind the level-up event, which brings the new level
+        UpdateXP(line, xp, rested, event == "PLAYER_LEVEL_UP" and level or nil)
+    end)
+    UpdateXP(line, xp, rested)
+    D.MakeMovable(holder, "EXP bar", DeckOrbsDB)
+
+    ns.OutOfCombat("parkStatusBars", function()
+        for _, name in ipairs({ "MainStatusTrackingBarContainer", "SecondaryStatusTrackingBarContainer" }) do
+            local frame = _G[name]
+            if frame and frame:GetParent() ~= hiddenParent then frame:SetParent(hiddenParent) end
+        end
+    end)
+    return holder
+end
+
 oUF:RegisterStyle("DeckFFPlayer", BuildPlayer)
 oUF:RegisterStyle("DeckFFTarget", BuildTarget)
 oUF:RegisterStyle("DeckFFToT", BuildToT)
 oUF:RegisterStyle("DeckFFPet", BuildPet)
 oUF:RegisterStyle("DeckFFBoss", BuildBoss)
+oUF:RegisterStyle("DeckXIVPlayer", BuildPlayerXIV)
+oUF:RegisterStyle("DeckXIVTarget", BuildTargetXIV)
+oUF:RegisterStyle("DeckXIVToT", BuildToTXIV)
+oUF:RegisterStyle("DeckXIVPet", BuildPetXIV)
+
+-- the oUF style for a part ("Player", "Target", "ToT", "Pet") in the style
+-- chosen; both Final Fantasy styles count as "ff" for everything else
+function ns.IsFFStyle()
+    return DeckOrbsDB.style == "ff" or DeckOrbsDB.style == "ffxiv"
+end
+function ns.FFStyle(part)
+    return (DeckOrbsDB.style == "ffxiv" and "DeckXIV" or "DeckFF") .. part
+end
 
 -- layout.lua's Factory, in the "ff" style: the five boss rows under one
 -- movable holder, saved apart from the boss orbs' place.
@@ -479,19 +809,21 @@ end
 -- layout.lua's Factory asks this when the style is "ff": spawn, place,
 -- and hand back the frames it keeps for the settings.
 function ns.SpawnFF(factory)
-    factory:SetActiveStyle("DeckFFPlayer")
+    factory:SetActiveStyle(ns.FFStyle("Player"))
     local player = factory:Spawn("player", "DeckFFPlayer")
     player.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", -300, 150 }
     player:SetPoint(unpack(player.defaultPoint))
     D.MakeMovable(player, "Player (FF)", DeckOrbsDB)
 
-    factory:SetActiveStyle("DeckFFTarget")
+    factory:SetActiveStyle(ns.FFStyle("Target"))
     local target = factory:Spawn("target", "DeckFFTarget")
     target.defaultPoint = { "TOP", UIParent, "TOP", 0, -90 }
     target:SetPoint(unpack(target.defaultPoint))
     D.MakeMovable(target, "Target (FF)", DeckOrbsDB)
 
-    factory:SetActiveStyle("DeckFFToT")
+    if DeckOrbsDB.style == "ffxiv" then SpawnXIVExpBar() end
+
+    factory:SetActiveStyle(ns.FFStyle("ToT"))
     local tot = factory:Spawn("targettarget", "DeckFFTargetTarget")
     tot:SetPoint("TOPLEFT", target, "TOPRIGHT", 6, 0)
 
