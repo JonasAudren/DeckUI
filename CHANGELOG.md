@@ -47,6 +47,7 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   waiting mail and the time; the gold you carry; and a block of dots per
   bag showing used and free slots, which opens your bags on a click. All
   off until you tick them, gone again when you untick them, and movable.
+  Blizzard's bag buttons can be hidden there too.
 
 ## 1.6.0 (2026-10-08)
 

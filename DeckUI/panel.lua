@@ -556,6 +556,8 @@ panel:AddTab("General", {
             "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
         f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,
             "FFXIV's inventory overview: a block of dots per bag, bright for a used slot, dark for a free one, the free slots as a number. A click opens your bags. In combat it appears or goes once the fight ends.")
+        f:Checkbox("Hide Blizzard's bag buttons", db, "hideBagBar", function() D.ApplyInfoBars() end,
+            "The backpack and bag slots at the bottom right go out of sight - the bag overview above takes their place. Your bag key still opens the bags; untick to have them back.")
 
         f:Gap(8)
         -- the error collector (errors.lua), with how many it holds

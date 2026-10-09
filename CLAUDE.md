@@ -174,6 +174,9 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `SecureActionButtonTemplate` of type "click" on `MainMenuBarBackpackButton` - our Lua never
   calls ToggleAllBags (bank taint, see Bags) - so it shows/hides and resizes only out of combat.
   It is registered for AnyUp *and* AnyDown: with AnyUp alone a click did nothing (tested).
+  `DeckUIDB.hideBagBar` (off; tested in game 2026-10-09) parks Blizzard's `BagsBar` (Edit Mode system)
+  under a hidden parent and gives it its old parent back when unticked; the overview's click
+  still reaches the parked backpack button.
   Movable "Server info", "Gold", "Bag overview".
 - **Auction prices** (`DeckUI/auction.lua`, `DeckUIDB.ahScan` on, "Loot and merchant" page;
   not yet tested in game; owner's wish 2026-10-08: know prices on the road). On

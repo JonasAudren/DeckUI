@@ -220,6 +220,28 @@ end)
 -------------------------------------------------------------------
 local pendingBags = false
 
+-- Blizzard's bag buttons at the bottom right (DeckUIDB.hideBagBar, off by
+-- default; owner's wish 2026-10-09, with the overview they were twice
+-- there). BagsBar is an Edit Mode system: Edit Mode re-applies its points,
+-- never its parent, so it is parked under a hidden parent like the buff
+-- frames and given back its own parent when unticked. The overview's
+-- click still reaches the backpack button there - Click() does not ask
+-- whether a button is visible.
+local hiddenParent = CreateFrame("Frame")
+hiddenParent:Hide()
+local bagBarParent
+
+local function SetBagBarHidden(hide)
+    local bar = _G.BagsBar
+    if not bar then return end
+    if hide and bar:GetParent() ~= hiddenParent then
+        bagBarParent = bar:GetParent()
+        bar:SetParent(hiddenParent)
+    elseif not hide and bar:GetParent() == hiddenParent then
+        bar:SetParent(bagBarParent or UIParent)
+    end
+end
+
 function D.ApplyInfoBars()
     server:SetShown(DeckUIDB.infoServer and true or false)
     gold:SetShown(DeckUIDB.infoGold and true or false)
@@ -236,6 +258,7 @@ function D.ApplyInfoBars()
         print("DeckUI: Blizzard's backpack button was not found - the bag overview cannot open the bags.")
     end
     bags:SetShown(DeckUIDB.infoBags and true or false)
+    SetBagBarHidden(DeckUIDB.hideBagBar and true or false)
 end
 
 local ev = CreateFrame("Frame")
