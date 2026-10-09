@@ -504,6 +504,7 @@ local DEFAULTS = {
     softTargetName = false,  -- the interact target's name under its icon (softtarget.lua)
     softTargetCast = true,   -- and a ring that fills while you cast on it
     targetArrow   = false,   -- FFXIV's arrow over the target's nameplate (targetarrow.lua)
+    xivPlates     = false,   -- enemy nameplates as FFXIV draws them (nameplates.lua)
     talkingHead   = false,   -- the talking head as a subtitle (talkinghead.lua)
     talkingHeadInstances = true, -- its text in instances too (off: the voice only)
     infoServer    = false,   -- FFXIV's server info: realm, mail, latency, time (infobars.lua)

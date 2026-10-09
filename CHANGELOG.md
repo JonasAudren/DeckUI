@@ -50,6 +50,9 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   bag showing used and free slots, which opens your bags on a click. All
   off until you tick them, gone again when you untick them, and movable.
   Blizzard's bag buttons can be hidden there too.
+- **Enemy nameplates, FFXIV style** - over each enemy just its level,
+  marker and name with a thin red health bar under it. Tick "Enemy
+  nameplates like Final Fantasy XIV" on the Overview page.
 - **Target arrow, FFXIV style** - an arrowhead bobbing over your
   target's nameplate, red for enemies and green for friends. Tick "Arrow
   over your target" on the Overview page.

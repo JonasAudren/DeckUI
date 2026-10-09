@@ -548,6 +548,8 @@ panel:AddTab("General", {
             "Fills around the icon while you cast or gather. The game does not say which object a cast is for, so it shows for any cast while a name is up.")
         f:Checkbox("Arrow over your target", db, "targetArrow", function() D.ApplyTargetArrow() end,
             "Final Fantasy XIV's marker: an arrowhead bobbing over your target's nameplate - red for an enemy, green for a friend, gold when the game does not say. It needs the target's nameplate, so it shows only where nameplates do. /deck targetarrow shows what it sees.")
+        f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
+            "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
         f:Checkbox("Talking head as a subtitle", db, "talkingHead", function() D.ApplyTalkingHead() end,
             "Blizzard's talking head box with its portrait becomes a line of text on a dark band: the speaker in gold, what is said in white. The voice plays as before. An open world map covers it. Move it with Move below.")
         f:Checkbox("Its text in instances too", db, "talkingHeadInstances", function() end,
@@ -714,6 +716,8 @@ SlashCmdList.DECKUI = function(msg)
         D.PrintLayout()
     elseif msg == "ah" then
         D.PrintAuction()
+    elseif msg == "plates" then
+        D.PlatesDebug()
     elseif msg == "targetarrow" then
         D.TargetArrowDebug()
     elseif msg == "softtarget" then

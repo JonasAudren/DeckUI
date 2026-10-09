@@ -21,6 +21,7 @@ merchant.lua
 loot.lua
 softtarget.lua
 targetarrow.lua
+nameplates.lua
 talkinghead.lua
 infobars.lua
 mainmenu.lua

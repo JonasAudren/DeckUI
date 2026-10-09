@@ -166,6 +166,15 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   as outline, an additive gradient as shine, a Translation animation bobbing it. Red when
   `UnitCanAttack`, green when `UnitIsFriend`, gold when either is secret. Updated 30 ms after
   PLAYER_TARGET_CHANGED / NAME_PLATE_UNIT_ADDED/REMOVED / UNIT_FACTION; `/deck targetarrow`.
+- **Enemy nameplates, FFXIV style** (`DeckUI/nameplates.lua`, `DeckUIDB.xivPlates`, Overview,
+  off, live; tested in game 2026-10-09; owner's FFXIV screenshot the same day). On
+  NAME_PLATE_UNIT_ADDED a pooled frame of ours on UIParent is anchored to the plate's CENTER:
+  level ("??" for -1), raid marker, name, a thin red bar (tapped grey) - all values straight into
+  SetText / StatusBar. Only for units we may attack (a secret answer counts as yes). Blizzard's
+  `plate.UnitFrame` is **faded, not hidden or re-parented**: alpha 0 held by a per-frame SetAlpha
+  post-hook (hooked once, kept in our own table), alpha 1 again on NAME_PLATE_UNIT_REMOVED and
+  when switched off - the plate still takes clicks and the engine still places it. Plates
+  GetNamePlateForUnit does not hand out keep Blizzard's look. `/deck plates`.
 - **Talking head as a subtitle** (`DeckUI/talkinghead.lua`, `DeckUIDB.talkingHead` /
   `talkingHeadInstances`, Overview page, off by default; not yet tested in game; replaces
   Plumber's "Talking Head", 2026-10-08). Blizzard's `TalkingHeadFrame` only loses
