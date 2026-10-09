@@ -572,6 +572,46 @@ local function UpdateXP(line, bar, rested, level)
     rested:SetValue(math.min(max, cur + (GetXPExhaustion() or 0)))
 end
 
+-- FFXIV's progress bar (owner's choice 2026-10-09, instead of the bar under
+-- the player, DeckOrbsDB.xivCastCenter): in the middle of the screen, the
+-- spell's icon on the left, its name over a capsule, the time left large
+-- under it. oUF shows and hides the bar; icon and texts are its children,
+-- so they go with it. The time is oUF's duration binding - the engine
+-- writes it, no number passes through our code.
+local CAST_W = 220
+local function CenterCast()
+    local holder = CreateFrame("Frame", "DeckXIVCastBar", UIParent)
+    holder:SetSize(CAST_W + 44, 44)
+    holder.defaultPoint = { "CENTER", UIParent, "CENTER", 0, -170 }
+    holder:SetPoint(unpack(holder.defaultPoint))
+    D.MakeMovable(holder, "Cast bar", DeckOrbsDB)
+
+    local cast = PillBar(holder, CAST_W, 7)
+    cast:SetPoint("LEFT", holder, "LEFT", 44, 0)
+    cast:SetStatusBarColor(0.92, 0.5, 0.75)
+
+    local edge = cast:CreateTexture(nil, "BACKGROUND")
+    edge:SetSize(38, 38)
+    edge:SetPoint("RIGHT", cast, "LEFT", -5, 0)
+    edge:SetColorTexture(0, 0, 0, 0.9)
+    local icon = cast:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("TOPLEFT", edge, "TOPLEFT", 2, -2)
+    icon:SetPoint("BOTTOMRIGHT", edge, "BOTTOMRIGHT", -2, 2)
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    cast.Icon = icon
+
+    local name = Text(cast, 12)
+    name:SetPoint("BOTTOMLEFT", cast, "TOPLEFT", 2, 3)
+    name:SetWidth(CAST_W - 4)
+    name:SetTextColor(1, 0.9, 0.95)
+    cast.Text = name
+
+    local time = Text(cast, 20, "RIGHT")
+    time:SetPoint("TOPRIGHT", cast, "BOTTOMRIGHT", -2, -2)
+    cast.Time = time
+    return cast
+end
+
 local function BuildPlayerXIV(self, unit)
     local W = XIV_PLAYER_W
     local half = math.floor((W - 10) / 2)
@@ -624,14 +664,18 @@ local function BuildPlayerXIV(self, unit)
     LayoutPoints(runes, 6, W, anchor)
     self.Runes = runes
 
-    local cast = PillBar(self, W, 6)
-    cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -6)
-    cast:SetStatusBarColor(1, 0.85, 0.3)
-    local castText = Text(cast, 11)
-    castText:SetPoint("TOPLEFT", cast, "BOTTOMLEFT", 2, -2)
-    castText:SetWidth(W - 4)
-    cast.Text = castText
-    self.Castbar = cast
+    if DeckOrbsDB.xivCastCenter then
+        self.Castbar = CenterCast()
+    else
+        local cast = PillBar(self, W, 6)
+        cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -6)
+        cast:SetStatusBarColor(1, 0.85, 0.3)
+        local castText = Text(cast, 11)
+        castText:SetPoint("TOPLEFT", cast, "BOTTOMLEFT", 2, -2)
+        castText:SetWidth(W - 4)
+        cast.Text = castText
+        self.Castbar = cast
+    end
 
     if self.CreateAuras and not DeckOrbsDB.buffBar then
         local buffs = AuraRow(self, W, 22, "BOTTOMLEFT", "TOPLEFT", 4)
@@ -685,7 +729,7 @@ end
 
 -- target of target and pet: a name (and the pet's health) over a short capsule
 local function BuildSmallXIV(self, withHp)
-    self:SetSize(XIV_TOT_W, 26)
+    self:SetSize(XIV_TOT_W, 30)
     Clicks(self)
     local name = Text(self, 12)
     name:SetPoint("TOPLEFT", 2, 0)
@@ -697,11 +741,61 @@ local function BuildSmallXIV(self, withHp)
         self:Tag(name, "[raidcolor][name]")
     else
         name:SetWidth(XIV_TOT_W - 4)
-        self:Tag(name, "|cffaaaaaa»|r [raidcolor][name]")
+        self:Tag(name, "[raidcolor][name]")
+        -- FFXIV's double chevron between the target's bar and this one
+        local chevron = Text(self, 20, "CENTER")
+        chevron:SetPoint("RIGHT", self, "BOTTOMLEFT", -6, 7)
+        chevron:SetText("»")
+        chevron:SetTextColor(0.55, 0.8, 1)
     end
+    -- level with the target's bar (its centre 24 px down)
     local health = PillBar(self, XIV_TOT_W, 6)
-    health:SetPoint("TOPLEFT", 0, -17)
+    health:SetPoint("TOPLEFT", 0, -21)
     return health
+end
+
+-- focus: FFXIV's small "FOCUS" box - a label, level and name, a thin
+-- capsule, the cast under it
+local XIV_FOCUS_W = 220
+local function BuildFocusXIV(self, unit)
+    local W = XIV_FOCUS_W
+    self:SetSize(W, 32)
+    Clicks(self)
+    local label = Text(self, 9)
+    label:SetPoint("TOPLEFT", 2, 0)
+    label:SetTextColor(0.75, 0.75, 0.75)
+    label:SetText("FOCUS")
+    local hp = Text(self, 11, "RIGHT")
+    hp:SetPoint("TOPRIGHT", -2, -10)
+    self:Tag(hp, "[perhp]%")
+    local name = Text(self, 12)
+    name:SetPoint("TOPLEFT", 2, -10)
+    name:SetPoint("RIGHT", hp, "LEFT", -4, 0)
+    self:Tag(name, "[difficulty]Lv. [level]|r [raidcolor][name]")
+    local health = PillBar(self, W, 5)
+    health:SetPoint("TOPLEFT", 0, -26)
+    health.colorClass = true
+    health.colorReaction = true
+    health.colorTapped = true
+    health.colorDisconnected = true
+    self.Health = health
+    local cast = PillBar(self, W, 4)
+    cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -3)
+    cast:SetStatusBarColor(1, 0.55, 0.2)
+    local castText = Text(cast, 10)
+    castText:SetPoint("TOPLEFT", cast, "BOTTOMLEFT", 2, -2)
+    castText:SetWidth(W - 4)
+    cast.Text = castText
+    self.Castbar = cast
+end
+
+function ns.SpawnXIVFocus(factory)
+    factory:SetActiveStyle("DeckXIVFocus")
+    local focus = factory:Spawn("focus", "DeckXIVFocus")
+    focus.defaultPoint = { "TOPRIGHT", UIParent, "TOPRIGHT", -260, -140 }
+    focus:SetPoint(unpack(focus.defaultPoint))
+    D.MakeMovable(focus, "Focus (FF)", DeckOrbsDB)
+    return focus
 end
 
 local function BuildToTXIV(self, unit)
@@ -777,6 +871,7 @@ oUF:RegisterStyle("DeckXIVPlayer", BuildPlayerXIV)
 oUF:RegisterStyle("DeckXIVTarget", BuildTargetXIV)
 oUF:RegisterStyle("DeckXIVToT", BuildToTXIV)
 oUF:RegisterStyle("DeckXIVPet", BuildPetXIV)
+oUF:RegisterStyle("DeckXIVFocus", BuildFocusXIV)
 
 -- the oUF style for a part ("Player", "Target", "ToT", "Pet") in the style
 -- chosen; both Final Fantasy styles count as "ff" for everything else
@@ -825,7 +920,8 @@ function ns.SpawnFF(factory)
 
     factory:SetActiveStyle(ns.FFStyle("ToT"))
     local tot = factory:Spawn("targettarget", "DeckFFTargetTarget")
-    tot:SetPoint("TOPLEFT", target, "TOPRIGHT", 6, 0)
+    -- XIV: in the target's line, after the chevrons
+    tot:SetPoint("TOPLEFT", target, "TOPRIGHT", DeckOrbsDB.style == "ffxiv" and 30 or 6, 0)
 
     return player, target, tot
 end

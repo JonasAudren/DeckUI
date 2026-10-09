@@ -20,6 +20,7 @@ D.RegisterModule("Orbs", {
     build = function(c)
         loaded.style = loaded.style or DeckOrbsDB.style or "orbs"
         loaded.buff = loaded.buff or DeckOrbsDB.buffMaxDuration
+        if loaded.xivCast == nil then loaded.xivCast = DeckOrbsDB.xivCastCenter and true or false end
         local f = D.Flow(c)
         c.widgets = c.widgets or {}
 
@@ -45,6 +46,9 @@ D.RegisterModule("Orbs", {
               end })
         table.insert(c.widgets, Refreshing(hpBtn, HpLabel))
         table.insert(c.widgets, Refreshing(styleBtn, StyleLabel))
+        f:Checkbox("Final Fantasy XIV: your cast in the middle", db, "xivCastCenter", function(v)
+            D.NeedReload("orbs:xivCast", (v and true or false) ~= loaded.xivCast)
+        end, "In the Final Fantasy XIV style your cast shows in the middle of the screen - icon, spell name and the time left - instead of under your bar. Movable as \"Cast bar\". Needs a reload.")
 
         f:Gap(4)
         f:Label("On the frames")

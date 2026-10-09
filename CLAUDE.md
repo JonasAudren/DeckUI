@@ -406,7 +406,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   player): `DeckXIVExpBar`, movable "EXP bar", class/level/EXP over a thin bar (rested behind);
   Main/SecondaryStatusTrackingBarContainer parked under a hidden parent (Edit Mode systems, like
   the buff frames), so watched reputation/honour bars go with them. At the cap UnitXPMax is huge
-  ("0/100,000,000" at 90), so `GetMaxLevelForPlayerExpansion` decides "-/-". The round ends are
+  ("0/100,000,000" at 90), so `GetMaxLevelForPlayerExpansion` decides "-/-".
+  More of FFXIV's screen (2026-10-09, not yet tested): the **focus** is FFXIV's small "FOCUS"
+  box in this style (`DeckXIVFocus`, "Focus (FF)"), the **target's target** sits in the
+  target's line after a "»" chevron, and **`DeckOrbsDB.xivCastCenter`** (off, reload) moves your
+  cast to FFXIV's progress bar in the screen's middle (`CenterCast`, movable "Cast bar": icon,
+  name, capsule, time left from oUF's duration binding). The round ends are
   two masks, `textures/bar_cap_left|right.tga` (make-status-masks.py), square at each end and
   loaded with CLAMPTOWHITE so bars of any length keep round ends. Styles `DeckXIV*`; bosses keep
   the FF enemy list, positions are shared with "ff". `ns.IsFFStyle()` is what layout.lua asks,

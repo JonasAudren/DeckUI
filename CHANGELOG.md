@@ -36,7 +36,11 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   to the game than the "Final Fantasy" panels: rounded glossy bars without
   a box, HP and MP side by side with large numbers, and the target as one
   long bar with name and percent above it. Blizzard's experience bar
-  becomes FFXIV's too: class, level and EXP over a thin bar, movable. Pick it with the "Style" button on the Orbs page
+  becomes FFXIV's too: class, level and EXP over a thin bar, movable.
+  Your focus is FFXIV's small focus box, your target's target sits in
+  the target's line after a chevron, and your cast can move to the
+  middle of the screen with its icon and the time left ("your cast in
+  the middle" on the Orbs page). Pick it with the "Style" button on the Orbs page
   (reload needed).
 
 ## 1.6.0 (2026-10-08)

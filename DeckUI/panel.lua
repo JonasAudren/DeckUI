@@ -189,7 +189,7 @@ end
 
 -- the frames each page moves, by the key D.MakeMovable got
 D.PAGE_FRAMES = {
-    Orbs    = { "Player", "Target", "Focus", "Boss frames", "Player (FF)", "Target (FF)", "Boss frames (FF)", "Buffs", "EXP bar" },
+    Orbs    = { "Player", "Target", "Focus", "Boss frames", "Player (FF)", "Target (FF)", "Boss frames (FF)", "Buffs", "EXP bar", "Cast bar", "Focus (FF)" },
     Group   = { "Party" },
     Raid    = { "Raid" },
     Cross   = { "Cross Hotbar", "Leave vehicle", "Assist indicator" },

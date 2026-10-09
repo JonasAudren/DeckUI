@@ -32,6 +32,7 @@ ns.DEFAULTS = {
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
     showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
     style           = "orbs",      -- player/target: "orbs", "ff" or "ffxiv" (ffstyle.lua), /reload
+    xivCastCenter   = false,       -- "ffxiv" style: your cast in the screen's middle; /reload
     buffBar         = false,       -- own buff bar in FF style (buffs.lua), replaces Blizzard's; /reload
     -- raid grid (raid.lua, Raid tab); sizes and arrangement are per device
     raidColor       = "ff",        -- health bar: "ff" (FF green) | "class"
@@ -611,12 +612,17 @@ oUF:Factory(function(self)
         D.MakeMovable(target, "Target", DeckOrbsDB)
     end
 
-    self:SetActiveStyle("DeckOrbsMedium")
-
-    local focus = self:Spawn("focus", "DeckOrbsFocus")
-    focus.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", 0, 320 }
-    focus:SetPoint(unpack(focus.defaultPoint))
-    D.MakeMovable(focus, "Focus", DeckOrbsDB)
+    -- focus: an orb, or FFXIV's small focus box in the "ffxiv" style
+    local focus
+    if DeckOrbsDB.style == "ffxiv" then
+        focus = ns.SpawnXIVFocus(self)
+    else
+        self:SetActiveStyle("DeckOrbsMedium")
+        focus = self:Spawn("focus", "DeckOrbsFocus")
+        focus.defaultPoint = { "BOTTOM", UIParent, "BOTTOM", 0, 320 }
+        focus:SetPoint(unpack(focus.defaultPoint))
+        D.MakeMovable(focus, "Focus", DeckOrbsDB)
+    end
 
     self:SetActiveStyle("DeckOrbsSmall")
 
