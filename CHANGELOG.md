@@ -50,6 +50,10 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   bag showing used and free slots, which opens your bags on a click. All
   off until you tick them, gone again when you untick them, and movable.
   Blizzard's bag buttons can be hidden there too.
+- **Main menu as round buttons, FFXIV style** - the game's menu buttons
+  as a row of round buttons with a gold ring that lights up when a button
+  has news; they open what Blizzard's do. Tick "Main menu as round
+  buttons" on the Overview page.
 - **Enemy list, FFXIV style** - the enemies fighting you or your group,
   one row each: a square that turns red while it targets you, its raid
   marker, name and health, your current target lit. Tick "Enemy list" on

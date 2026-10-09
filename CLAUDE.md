@@ -183,6 +183,16 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   under a hidden parent and gives it its old parent back when unticked; the overview's click
   still reaches the parked backpack button.
   Movable "Server info", "Gold", "Bag overview".
+- **Main menu as FFXIV's round buttons** (`DeckUI/mainmenu.lua`, `DeckUIDB.mainMenu`, off,
+  undone by unticking; tested in game 2026-10-09, then made 24 px with 1 px gaps). A row of
+  round buttons (disc, gold ring, Blizzard's `UI-HUD-MicroMenu-<textureName>-Up` atlas masked
+  round, the player's portrait on the character button), each a `SecureActionButtonTemplate`
+  of type "click" on Blizzard's micro button - Blizzard's code opens the windows. Enabled
+  state, the alert flash (`FlashBorder` shown -> bright ring) and which buttons exist are read
+  twice a second. **Blizzard's `MicroMenu` is faded, never parked** (SetAlpha post-hook, mouse
+  off down the tree, like the override bar): Blizzard reparents it into the vehicle bar and to
+  full-screen frames (`MicroMenuBar_SetFullScreenFrame`), so no parent of ours would hold.
+  Secure buttons: shown, hidden and laid out only out of combat. Movable "Main menu".
 - **Auction prices** (`DeckUI/auction.lua`, `DeckUIDB.ahScan` on, "Loot and merchant" page;
   not yet tested in game; owner's wish 2026-10-08: know prices on the road). On
   AUCTION_HOUSE_SHOW, at most every 15 minutes (`ahLastScan`), `C_AuctionHouse.ReplicateItems()`

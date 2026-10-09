@@ -202,7 +202,7 @@ D.PAGE_FRAMES = {
     Nav     = { "Compass", "Navigation target" },
     Week    = { "Week", "Week button" },
     Loot    = { "Loot", "Loot list" },
-    General = { "Talking head", "Server info", "Gold", "Bag overview" },
+    General = { "Talking head", "Server info", "Gold", "Bag overview", "Main menu" },
 }
 
 -- What "Defaults" clears on each page: the SavedVariables table by name,
@@ -566,6 +566,8 @@ panel:AddTab("General", {
             "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
         f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,
             "FFXIV's inventory overview: a block of dots per bag, bright for a used slot, dark for a free one, the free slots as a number. A click opens your bags. In combat it appears or goes once the fight ends.")
+        f:Checkbox("Main menu as round buttons", db, "mainMenu", function() D.ApplyMainMenu() end,
+            "Final Fantasy XIV's main menu: the game's menu buttons (character, talents, group finder, game menu, ...) as a row of round buttons with a gold ring, which turns bright while a button has news. They open what Blizzard's open; Blizzard's own row goes out of sight. In combat it switches once the fight ends.")
         f:Checkbox("Hide Blizzard's bag buttons", db, "hideBagBar", function() D.ApplyInfoBars() end,
             "The backpack and bag slots at the bottom right go out of sight - the bag overview above takes their place. Your bag key still opens the bags; untick to have them back.")
 

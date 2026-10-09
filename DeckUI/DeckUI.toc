@@ -22,6 +22,7 @@ loot.lua
 softtarget.lua
 talkinghead.lua
 infobars.lua
+mainmenu.lua
 auction.lua
 auctionstyle.lua
 minimap.lua

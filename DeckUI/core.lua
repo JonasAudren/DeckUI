@@ -509,6 +509,7 @@ local DEFAULTS = {
     infoGold      = false,   -- the gold you carry, with a coin
     infoBags      = false,   -- a block of dots per bag, used and free slots
     hideBagBar    = false,   -- Blizzard's bag buttons out of sight (infobars.lua)
+    mainMenu      = false,   -- the micro menu as FFXIV's round buttons (mainmenu.lua)
     ahScan        = true,    -- scan the auction house when it opens, every 15 min (auction.lua)
     ahStyle       = false,   -- the auction house window in DeckUI's look (auctionstyle.lua)
 }
