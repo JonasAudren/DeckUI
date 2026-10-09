@@ -8,81 +8,89 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
-## 1.6.1
+## 1.7.0
 
-- **The Steam Deck sets itself up.** After playing on the PC you no
+The Final Fantasy XIV update: much of FFXIV's screen as options to tick,
+and the Steam Deck no longer needs setting up again after the PC. Apart
+from the Deck's self-setup, every new part is off until you switch it on.
+
+**Steam Deck**
+
+The self-setup, the ability menu and the new action bars are still being
+tested on the Steam Deck - tell us if something does not work for you.
+
+- **The Steam Deck sets itself up (still being tested).** After playing on the PC you no
   longer have to press "Set up gamepad" and "Default bindings" again:
   the game shares those settings between your devices, so the PC used to
   take them away. DeckUI now puts the gamepad settings back by itself
   whenever they change, and gives the controller buttons you have not
   bound yourself their default keys for the session, without writing them
   into your key bindings. Both are on by default, on the Cross page.
-- **Action bars in Final Fantasy's look** - Action Bars 3 to 8 can be
-  DeckUI's own: square slots with rounded corners like FFXIV's hotbars,
-  your key in the corner, empty slots as dark squares, one row, one
-  column or anything between, size per device. Your keys keep working
-  as before. Tick them on the new "Action bars" page.
-- **Ability menu on B (Steam Deck)** - tap B and the first seven slots
-  of Action Bar 4 appear; the D-pad and Y, A, X use one - your mounts,
-  toys or anything else you put on that bar - and B again closes it. On
-  the Deck the bar itself is hidden, on the PC it stays a normal bar. Tick
-  "Ability menu on B" on the Cross page.
+- **Ability menu on B (still being tested)** - tap B and the first seven slots of Action Bar 4
+  appear; the D-pad and Y, A, X use one - your mounts, toys or anything
+  else you put on that bar - and B again closes it. On the Deck the bar
+  itself is hidden, on the PC it stays a normal bar. Tick "Ability menu
+  on B" on the Cross page.
 - **Quick menu: your own choice** - each of the eight buttons can open
   what you pick on the Cross page: map, bags, quest log, character,
   talents, spellbook, professions, group finder, adventure guide,
   collections, mounts, achievements, guild, friends, calendar, the week
   overview or the game menu. Tested on the Steam Deck now.
-- **A third style for player and target: Final Fantasy XIV** - closer
-  to the game than the "Final Fantasy" panels: rounded glossy bars without
-  a box, HP and MP side by side with large numbers, and the target as one
-  long bar with name and percent above it. Blizzard's experience bar
-  becomes FFXIV's too: class, level and EXP over a thin bar, movable -
-  at the level cap it shows the reputation you watch.
-  Your focus is FFXIV's small focus box, your target's target sits in
-  the target's line after a chevron, and your cast can move to the
-  middle of the screen with its icon and the time left ("your cast in
-  the middle" on the Orbs page). Pick the style with the "Style" button
-  on the Orbs page (reload needed).
-- **Server info, gold and a bag overview, FFXIV style** - three small
-  displays you can tick on the Overview page: your realm with frame
-  rate, addon CPU share, memory, latency, waiting mail and the time
-  (the busiest addons on mouse-over; each value can be switched off); the gold you carry; and a block of dots per
-  bag showing used and free slots, which opens your bags on a click. All
-  off until you tick them, gone again when you untick them, and movable.
-  Blizzard's bag buttons can be hidden there too.
+
+**Final Fantasy XIV's look**
+
+- **A third style for player and target: Final Fantasy XIV** - rounded
+  glossy bars without a box, HP and MP side by side with large numbers,
+  the target as one long bar with name and percent above it and its own
+  target beside it after a chevron, and the focus as FFXIV's small focus
+  box. Blizzard's experience bar becomes FFXIV's too: class, level and
+  EXP over a thin bar - at the level cap the reputation you watch. Your
+  cast can move to the middle of the screen with its icon and the time
+  left. Pick it with the "Style" button on the Orbs page (reload needed).
+- **Action bars (still being tested)** - Action Bars 3 to 8 can be DeckUI's own: square slots
+  with rounded corners like FFXIV's hotbars, your key in the corner, one
+  row, one column or anything between, size per device. Your keys keep
+  working as before. Tick them on the new "Action bars" page.
+- **Enemy nameplates** - over each enemy just its level, marker and name
+  with a thin red health bar under it. And an **arrow over your target**,
+  bobbing, red for enemies and green for friends. Both on the Overview
+  page.
+- **Enemy list** - the enemies fighting you or your group, one row each:
+  a square that turns red while it targets you, its raid marker, name and
+  health, your current target lit. On the Orbs page; it needs enemy
+  nameplates switched on, and it is for reading - a click does not target.
+- **Scenario guide** - a small banner at the top left with the current
+  expansion's campaign quest, or, while the story waits, the next step
+  and what it needs. A click follows it with a waypoint; a right click
+  picks another campaign. On the Quests page.
+- **Quest tracker as FFXIV's task list** - no box, everything
+  right-aligned, the objectives in light blue with an arrow and a tick
+  once done. On the Quests page.
+- **Round minimap** - a round map in a gold ring with N, E, S and W
+  (they turn with you when the game rotates the minimap), the zone above
+  it, clock and coordinates below. On the Map page.
+- **Main menu as round buttons** - the game's menu buttons as a row of
+  round buttons with a gold ring that lights up when a button has news.
+  On the Overview page.
+- **Server info, gold and a bag overview** - your realm with frame rate,
+  addon CPU share, memory, latency, waiting mail and the time (the busiest
+  addons on mouse-over, each value can be switched off); the gold you
+  carry; and a block of dots per bag for used and free slots, which opens
+  your bags on a click. Blizzard's bag buttons can be hidden too. All on
+  the Overview page, movable.
+
+**Finding your way**
+
 - **Waypoints and routes** - as many waypoints as you like: Ctrl-click
   the world map or type /way 45.2 67.8 name. They show as numbered pins on
-  the world map and the minimap and in a list (/way list, or the Nav
-  page) where you pick, rename or remove them. Reaching one moves on to
-  the nearest, or with Route on to the next in order - for farming and
-  gathering rounds. Compass and beacon follow along; the compass shows the
-  other points as numbered dots, and a click on it opens the list.
-- **Scenario guide, FFXIV style** - a small banner at the top left with
-  the campaign quest you are on, or, while the story waits, the next step
-  and what it needs. A click follows the quest or sets a waypoint where
-  the next one starts. Tick it on the Quests page.
-- **Enemy nameplates, FFXIV style** - over each enemy just its level,
-  marker and name with a thin red health bar under it. Tick "Enemy
-  nameplates like Final Fantasy XIV" on the Overview page.
-- **Target arrow, FFXIV style** - an arrowhead bobbing over your
-  target's nameplate, red for enemies and green for friends. Tick "Arrow
-  over your target" on the Overview page.
-- **Round minimap, FFXIV style** - optional on the Map page: a round map
-  in a gold ring with N, E, S and W (they turn with you when the game
-  rotates the minimap), the zone above it, clock and coordinates below.
-- **Main menu as round buttons, FFXIV style** - the game's menu buttons
-  as a row of round buttons with a gold ring that lights up when a button
-  has news; they open what Blizzard's do. Tick "Main menu as round
-  buttons" on the Overview page.
-- **Enemy list, FFXIV style** - the enemies fighting you or your group,
-  one row each: a square that turns red while it targets you, its raid
-  marker, name and health, your current target lit. Tick "Enemy list" on
-  the Orbs page; it needs enemy nameplates switched on. It is for
-  reading - a click does not target.
-- **Quest tracker as FFXIV's task list** - optional: no box, everything
-  right-aligned, the objectives in light blue with an arrow and a tick
-  once done. Tick it on the Quests page.
-- **Tooltip: reputation and ensembles** - items and currencies that give
+  the world map, the minimap and the compass, and in a list (/way list, a
+  click on the compass, or the Nav page) where you pick, rename or remove
+  them. Reaching one moves on to the nearest, or with Route on to the next
+  in order - for farming and gathering rounds.
+
+**Tooltip**
+
+- **Reputation and ensembles** - items and currencies that give
   reputation show the faction and your standing with it, and transmog
   ensembles how much of the set you have collected already. Both can be
   switched off on the Tooltip page.
