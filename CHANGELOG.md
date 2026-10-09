@@ -40,8 +40,13 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   Your focus is FFXIV's small focus box, your target's target sits in
   the target's line after a chevron, and your cast can move to the
   middle of the screen with its icon and the time left ("your cast in
-  the middle" on the Orbs page). Pick it with the "Style" button on the Orbs page
-  (reload needed).
+  the middle" on the Orbs page). Pick the style with the "Style" button
+  on the Orbs page (reload needed).
+- **Server info, gold and a bag overview, FFXIV style** - three small
+  displays you can tick on the Overview page: your realm with latency,
+  waiting mail and the time; the gold you carry; and a block of dots per
+  bag showing used and free slots, which opens your bags on a click. All
+  off until you tick them, gone again when you untick them, and movable.
 
 ## 1.6.0 (2026-10-08)
 

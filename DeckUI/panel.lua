@@ -202,7 +202,7 @@ D.PAGE_FRAMES = {
     Nav     = { "Compass", "Navigation target" },
     Week    = { "Week", "Week button" },
     Loot    = { "Loot", "Loot list" },
-    General = { "Talking head" },
+    General = { "Talking head", "Server info", "Gold", "Bag overview" },
 }
 
 -- What "Defaults" clears on each page: the SavedVariables table by name,
@@ -550,6 +550,12 @@ panel:AddTab("General", {
             "Blizzard's talking head box with its portrait becomes a line of text on a dark band: the speaker in gold, what is said in white. The voice plays as before. An open world map covers it. Move it with Move below.")
         f:Checkbox("Its text in instances too", db, "talkingHeadInstances", function() end,
             "Off: in dungeons and raids you only hear the voice.")
+        f:Checkbox("Server info", db, "infoServer", function() D.ApplyInfoBars() end,
+            "Final Fantasy XIV's line at the top right: your realm, a letter when mail waits, your latency and the time. Move it with Move below.")
+        f:Checkbox("Gold", db, "infoGold", function() D.ApplyInfoBars() end,
+            "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
+        f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,
+            "FFXIV's inventory overview: a block of dots per bag, bright for a used slot, dark for a free one, the free slots as a number. A click opens your bags. In combat it appears or goes once the fight ends.")
 
         f:Gap(8)
         -- the error collector (errors.lua), with how many it holds

@@ -166,6 +166,15 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   `C_TalkingHead.GetCurrentLineInfo`, play the voice with `PlaySound(vo, "Talking Head")` as
   Blizzard's frame did, and show name and text on a dark band (strata MEDIUM, under the world
   map), movable "Talking head" (the Overview page's Move). Name/text may be secret: SetText only.
+- **Server info, gold, bag overview** (`DeckUI/infobars.lua`, `DeckUIDB.infoServer` / `infoGold` /
+  `infoBags`, Overview page, all off by default, undone by unticking - hidden, events and ticker
+  stopped; tested in game 2026-10-09; owner's FFXIV screenshots the same day). Realm, mail letter,
+  latency and local time (1 s ticker only while shown); gold only with a coin; one block of dots
+  per bag (0-5, reagent bag tinted), free count above. The bag overview's click is a
+  `SecureActionButtonTemplate` of type "click" on `MainMenuBarBackpackButton` - our Lua never
+  calls ToggleAllBags (bank taint, see Bags) - so it shows/hides and resizes only out of combat.
+  It is registered for AnyUp *and* AnyDown: with AnyUp alone a click did nothing (tested).
+  Movable "Server info", "Gold", "Bag overview".
 - **Auction prices** (`DeckUI/auction.lua`, `DeckUIDB.ahScan` on, "Loot and merchant" page;
   not yet tested in game; owner's wish 2026-10-08: know prices on the road). On
   AUCTION_HOUSE_SHOW, at most every 15 minutes (`ahLastScan`), `C_AuctionHouse.ReplicateItems()`

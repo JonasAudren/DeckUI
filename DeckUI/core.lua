@@ -505,6 +505,9 @@ local DEFAULTS = {
     softTargetCast = true,   -- and a ring that fills while you cast on it
     talkingHead   = false,   -- the talking head as a subtitle (talkinghead.lua)
     talkingHeadInstances = true, -- its text in instances too (off: the voice only)
+    infoServer    = false,   -- FFXIV's server info: realm, mail, latency, time (infobars.lua)
+    infoGold      = false,   -- the gold you carry, with a coin
+    infoBags      = false,   -- a block of dots per bag, used and free slots
     ahScan        = true,    -- scan the auction house when it opens, every 15 min (auction.lua)
     ahStyle       = false,   -- the auction house window in DeckUI's look (auctionstyle.lua)
 }

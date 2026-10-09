@@ -20,6 +20,7 @@ merchant.lua
 loot.lua
 softtarget.lua
 talkinghead.lua
+infobars.lua
 auction.lua
 auctionstyle.lua
 minimap.lua
