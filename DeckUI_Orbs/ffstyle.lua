@@ -528,6 +528,7 @@ local function PillBar(parent, width, height)
     bar.edge, bar.track = edge, track
     return bar
 end
+ns.PillBar = PillBar   -- the enemy list (enemies.lua) wears it too
 
 -- FFXIV's MP is pink; other resources keep their colours
 local function PinkMana(element, unit)

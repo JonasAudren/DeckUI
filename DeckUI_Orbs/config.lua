@@ -83,6 +83,10 @@ D.RegisterModule("Orbs", {
             D.NeedReload("orbs:buffPerRow", v ~= loaded.buffPerRow)
         end, "Buffs per row, up to two rows; debuffs: eight on the left.")
 
+        f:Label("Enemy list")
+        f:Checkbox("Enemy list", db, "enemyList", ns.SetEnemyList,
+            "Final Fantasy XIV's list of the enemies fighting you or your group: a square that turns red while one targets you, its marker, name and health; your target lit. For reading - a click does not target. Built from the nameplates, so enemy nameplates must be on. Move it with Move below; /orbs enemies shows what it sees.")
+
         f:Label("Focus and bosses")
         f:Checkbox("Focus frame", db, "showFocus", ns.SetFocusShown)
         f:Checkbox("Boss frames (hide Blizzard's)", db, "showBoss", ns.SetBossShown)

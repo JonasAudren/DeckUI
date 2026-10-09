@@ -169,7 +169,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 - **Server info, gold, bag overview** (`DeckUI/infobars.lua`, `DeckUIDB.infoServer` / `infoGold` /
   `infoBags`, Overview page, all off by default, undone by unticking - hidden, events and ticker
   stopped; tested in game 2026-10-09; owner's FFXIV screenshots the same day). Realm, mail letter,
-  latency and local time (1 s ticker only while shown); gold only with a coin; one block of dots
+  latency and local time (1 s ticker only while shown), plus FPS, "CPU" and memory (owner's
+  wish the same day): the game has no machine CPU, so CPU is the addons' share of the frame
+  from `C_AddOnProfiler` (Overall / Application metric, RecentAverageTime; "CPU -" without
+  it), memory is `collectgarbage("count")`; the tooltip lists the top five addons of each
+  (`UpdateAddOnMemoryUsage` only there); gold only with a coin; one block of dots
   per bag (0-5, reagent bag tinted), free count above. The bag overview's click is a
   `SecureActionButtonTemplate` of type "click" on `MainMenuBarBackpackButton` - our Lua never
   calls ToggleAllBags (bank taint, see Bags) - so it shows/hides and resizes only out of combat.
@@ -428,6 +432,18 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   loaded with CLAMPTOWHITE so bars of any length keep round ends. Styles `DeckXIV*`; bosses keep
   the FF enemy list, positions are shared with "ff". `ns.IsFFStyle()` is what layout.lua asks,
   `ns.FFStyle(part)` names the oUF style.
+- **Enemy list** (`DeckUI_Orbs/enemies.lua`, `DeckOrbsDB.enemyList`, off by default, no reload;
+  tested in game 2026-10-09; owner's FFXIV screenshot 2026-10-09). FFXIV's list of the enemies
+  fighting you or your group, from the nameplate units (enemy nameplates must be on), polled
+  every 0.15 s while on, in the order they joined, up to eight rows: aggro square (red by
+  `SetAlphaFromBoolean(UnitIsUnit(unitTarget, "player"))`), raid marker when plain, name and
+  health straight into SetText / StatusBar (`ns.PillBar` from ffstyle.lua), your target lit by
+  a secret boolean too (one frame: warm band, gold frame, ">" pointer - a faint band was too
+  weak to see; PLAYER_TARGET_CHANGED updates at once). **Read-only on purpose**: targeting needs a secure unit button, whose
+  unit cannot change in combat. The filter (`Engaged`: attackable, not dead, on the threat table
+  of player/party1-4; in a raid UnitAffectingCombat) treats a **secret** answer as "show it".
+  Movable "Enemy list", sample rows while unlocked; `/orbs enemies` prints each nameplate
+  unit's answers (plain or secret).
 - **Buff bar** (`DeckUI_Orbs/buffs.lua`, `DeckOrbsDB.buffBar`, off by default, needs a /reload;
   tested in game 2026-10-08, the combat switch included; owner's wish the same day - Blizzard's buffs grew too long in combat and
   ran into the minimap on the Deck). An oUF frame for "player" with two aura containers laid

@@ -59,17 +59,45 @@ local mail = server:CreateTexture(nil, "OVERLAY")
 mail:SetSize(14, 14)
 mail:SetTexture("Interface\\Minimap\\Tracking\\Mailbox")
 
+local GREEN, YELLOW, RED = "|cff66ff66", "|cffffd24d", "|cffff5555"
+
 local function LatencyColour(ms)
-    if ms < 100 then return "|cff66ff66" elseif ms < 250 then return "|cffffd24d" end
-    return "|cffff5555"
+    if ms < 100 then return GREEN elseif ms < 250 then return YELLOW end
+    return RED
+end
+
+local function FpsColour(fps)
+    if fps >= 50 then return GREEN elseif fps >= 30 then return YELLOW end
+    return RED
+end
+
+-- Frame rate, CPU and memory (owner's wish 2026-10-09). The game has no
+-- answer for the machine's CPU; what it measures is the time addons take
+-- each frame (C_AddOnProfiler, 11.1+), shown as a share of the whole
+-- frame. Memory is the UI's Lua memory, collectgarbage("count") - cheap,
+-- unlike UpdateAddOnMemoryUsage, which only runs for the tooltip.
+local RECENT = Enum.AddOnProfilerMetric and Enum.AddOnProfilerMetric.RecentAverageTime
+
+local function AddonShare()
+    if not (C_AddOnProfiler and RECENT) then return nil end
+    local ok, addons, app = pcall(function()
+        return C_AddOnProfiler.GetOverallMetric(RECENT), C_AddOnProfiler.GetApplicationMetric(RECENT)
+    end)
+    if not ok or type(addons) ~= "number" then return nil end
+    if type(app) == "number" and app > 0 then return addons / app * 100, addons end
+    return nil, addons
 end
 
 local function UpdateServer()
     local _, _, home, world = GetNetStats()
     local ms = math.max(home or 0, world or 0)
+    local fps = GetFramerate() or 0
+    local share, addonMs = AddonShare()
+    local cpu = share and ("CPU %.0f%%"):format(share) or addonMs and ("CPU %.1f ms"):format(addonMs) or "CPU -"
+    local mem = collectgarbage("count") / 1024
     local hasMail = HasNewMail()
-    serverText:SetText(("%s    %s%d ms|r    %s"):format(GetRealmName() or "",
-        LatencyColour(ms), ms, date("%H:%M")))
+    serverText:SetText(("%s    %s%d fps|r    %s    MEM %.0f MB    %s%d ms|r    %s"):format(
+        GetRealmName() or "", FpsColour(fps), fps, cpu, mem, LatencyColour(ms), ms, date("%H:%M")))
     mail:ClearAllPoints()
     mail:SetPoint("RIGHT", serverText, "LEFT", -6, 0)
     mail:SetShown(hasMail and true or false)
@@ -87,6 +115,21 @@ server:SetScript("OnHide", function()
     serverTicker = nil
 end)
 server:EnableMouse(true)
+
+-- the five addons that take the most, by a value per addon name
+local function Top(value)
+    local all = {}
+    for i = 1, C_AddOns.GetNumAddOns() do
+        if C_AddOns.IsAddOnLoaded(i) then
+            local name = C_AddOns.GetAddOnInfo(i)
+            local v = value(i, name)
+            if type(v) == "number" and v > 0 then all[#all + 1] = { name = name, v = v } end
+        end
+    end
+    table.sort(all, function(a, b) return a.v > b.v end)
+    return all
+end
+
 Tooltip(server, function(tip)
     local _, _, home, world = GetNetStats()
     tip:AddLine(GetRealmName() or "")
@@ -94,6 +137,31 @@ Tooltip(server, function(tip)
     local h, m = GetGameTime()
     tip:AddDoubleLine("Realm time", ("%02d:%02d"):format(h, m), 1, 1, 1, 1, 1, 1)
     if HasNewMail() then tip:AddLine("Mail is waiting.", 1, 0.82, 0) end
+
+    local share, addonMs = AddonShare()
+    if addonMs then
+        tip:AddLine(" ")
+        tip:AddDoubleLine("Addons per frame", ("%.2f ms%s"):format(addonMs,
+            share and (" (%.0f%% of the frame)"):format(share) or ""), 1, 0.82, 0, 1, 1, 1)
+        local cpu = Top(function(_, name)
+            local ok, v = pcall(C_AddOnProfiler.GetAddOnMetric, name, RECENT)
+            return ok and v or nil
+        end)
+        for i = 1, math.min(5, #cpu) do
+            tip:AddDoubleLine("  " .. cpu[i].name, ("%.2f ms"):format(cpu[i].v), 1, 1, 1, 1, 1, 1)
+        end
+    else
+        tip:AddLine(" ")
+        tip:AddLine("CPU: this client does not measure addon time.", 0.6, 0.6, 0.6)
+    end
+
+    UpdateAddOnMemoryUsage()
+    local memory = Top(function(i) return GetAddOnMemoryUsage(i) end)
+    tip:AddLine(" ")
+    tip:AddDoubleLine("UI memory", ("%.1f MB"):format(collectgarbage("count") / 1024), 1, 0.82, 0, 1, 1, 1)
+    for i = 1, math.min(5, #memory) do
+        tip:AddDoubleLine("  " .. memory[i].name, ("%.1f MB"):format(memory[i].v / 1024), 1, 1, 1, 1, 1, 1)
+    end
 end)
 
 -------------------------------------------------------------------

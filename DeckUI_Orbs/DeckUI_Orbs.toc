@@ -18,4 +18,5 @@ ffstyle.lua
 party.lua
 raid.lua
 buffs.lua
+enemies.lua
 config.lua

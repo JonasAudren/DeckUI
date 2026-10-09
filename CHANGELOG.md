@@ -43,11 +43,17 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
   the middle" on the Orbs page). Pick the style with the "Style" button
   on the Orbs page (reload needed).
 - **Server info, gold and a bag overview, FFXIV style** - three small
-  displays you can tick on the Overview page: your realm with latency,
-  waiting mail and the time; the gold you carry; and a block of dots per
+  displays you can tick on the Overview page: your realm with frame
+  rate, addon CPU share, memory, latency, waiting mail and the time
+  (the busiest addons on mouse-over); the gold you carry; and a block of dots per
   bag showing used and free slots, which opens your bags on a click. All
   off until you tick them, gone again when you untick them, and movable.
   Blizzard's bag buttons can be hidden there too.
+- **Enemy list, FFXIV style** - the enemies fighting you or your group,
+  one row each: a square that turns red while it targets you, its raid
+  marker, name and health, your current target lit. Tick "Enemy list" on
+  the Orbs page; it needs enemy nameplates switched on. It is for
+  reading - a click does not target.
 
 ## 1.6.0 (2026-10-08)
 

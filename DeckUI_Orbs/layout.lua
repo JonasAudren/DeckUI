@@ -32,6 +32,7 @@ ns.DEFAULTS = {
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
     showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
     style           = "orbs",      -- player/target: "orbs", "ff" or "ffxiv" (ffstyle.lua), /reload
+    enemyList       = false,       -- FFXIV's enemy list from the nameplate units (enemies.lua)
     xivCastCenter   = false,       -- "ffxiv" style: your cast in the screen's middle; /reload
     buffBar         = false,       -- own buff bar in FF style (buffs.lua), replaces Blizzard's; /reload
     -- raid grid (raid.lua, Raid tab); sizes and arrangement are per device
@@ -687,6 +688,9 @@ SlashCmdList.DECKORBS = function(msg)
         ns.SetRaidTest(not ns.raidTest)
     elseif msg == "boss" then
         ns.SetBossTest(not ns.bossTestOn)
+    elseif msg == "enemies" then
+        -- the enemy list's filter, unit by unit (enemies.lua)
+        ns.EnemyDebug()
     elseif msg == "bosses" then
         -- what the boss frames see: the units, our frames, Blizzard's
         print(("DeckUI Orbs bosses: style %s, show %s, frames %d, holder %s"):format(
