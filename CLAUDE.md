@@ -1,12 +1,13 @@
 # DeckUI – project notes for Claude Code
 
 World of Warcraft addon suite (Lua) for the **Steam Deck and PC**, written by Gottlieb
-as a learning project. Retail client, currently **Midnight (Interface 120100)** - verified in game with
-`/deck build`, which compares the running client against our `.toc`. That number also
+as a learning project. Retail client, currently **Midnight 12.1.5 (Interface 120105)** - verified in game with
+`/deck build` on 2026-10-20, which compares the running client against our `.toc`. That number also
 picks the CurseForge game version on upload, so it is the one place to change at a patch
-(`bump-version.ps1 <version> -Interface <new>`). Beware the PTR: 12.1.5 exists as
-`wowxptr` while live is 12.1.0, and filing a release under it hides the addon from
-everyone who plays.
+(`bump-version.ps1 <version> -Interface <new>`; 1.7.1 did exactly that for 12.1.5, after the
+live UI source was diffed against 12.1.0 and nothing DeckUI uses had moved). Beware the PTR:
+a patch exists as `wowxptr` before it goes live, and filing a release under it hides the
+addon from everyone who plays.
 The owner tests everything in-game himself; Claude Code cannot run WoW.
 
 ## Layout

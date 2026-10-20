@@ -8,6 +8,12 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 1.7.1
+
+- **Updated for patch 12.1.5.** DeckUI now loads without "out of date" on
+  the current patch. Nothing else changes - the game's interface code was
+  checked against everything DeckUI uses, and none of it moved.
+
 ## 1.7.0
 
 The Final Fantasy XIV update: much of FFXIV's screen as options to tick,

@@ -1,8 +1,8 @@
-## Interface: 120100
+## Interface: 120105
 ## Title: DeckUI Bags
 ## Notes: DeckUI module: bags, character bank and warband bank in one grid each
 ## Author: Gottlieb
-## Version: 1.7.0
+## Version: 1.7.1
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
 ## X-Website: https://github.com/JonasAudren/DeckUI
 ## X-Curse-Project-ID: 1699742
