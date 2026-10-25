@@ -1,0 +1,9 @@
+## Interface: 120105
+## Title: DeckUI Probe
+## Notes: Asks this client which Blizzard names DeckUI uses exist. Changes nothing.
+## Author: Gottlieb (prepared by Claude Code)
+## Version: 1
+## SavedVariables: DeckUIProbeDB
+
+names.lua
+probe.lua

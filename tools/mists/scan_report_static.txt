@@ -1,0 +1,162 @@
+## DeckUI/actionbars.lua
+   api: C_PetJournal.PickupPet*, C_SpellBook.GetNumSpellBookSkillLines, C_SpellBook.GetSpellBookItemInfo*, C_SpellBook.GetSpellBookSkillLineInfo*, C_SpellBook.PickupSpellBookItem, C_ToyBox.PickupToyBoxItem*
+   global: ACTIVE_PLAYER_SPECIALIZATION_CHANGED
+## DeckUI/auction.lua
+   global: Reading
+## DeckUI/core.lua
+   cvar: synchronizeBindings
+## DeckUI/editmode.lua
+   global: ACTIVE_PLAYER_SPECIALIZATION_CHANGED
+## DeckUI/errors.lua
+   global: Locals
+## DeckUI/infobars.lua
+   global: Mailbox
+## DeckUI/loot.lua
+   api: C_Item.IsDressableItemByID
+## DeckUI/merchant.lua
+   api: C_MerchantFrame.GetNumJunkItems, C_MerchantFrame.IsSellAllJunkEnabled, C_MerchantFrame.SellAllJunkItems
+   global: MERCHANT_CLOSED, MERCHANT_SHOW
+## DeckUI/panel.lua
+   global: Applies, Great, Journey, Over, Pages, Talking, Waypoint
+## DeckUI/reputation.lua
+   api: C_MajorFactions.GetMajorFactionData*, C_MajorFactions.HasMaximumRenown, C_Reputation.GetFactionDataByID
+## DeckUI/softtarget.lua
+   cvar: SoftTargetInteract
+## DeckUI/talkinghead.lua
+   api: C_TalkingHead.GetCurrentLineInfo
+   event: TALKINGHEAD_CLOSE, TALKINGHEAD_REQUESTED*
+   global: TALKINGHEAD_CLOSE, Talking
+## DeckUI_Bags/bags.lua
+   api: C_Container.SortBags
+   global: ContainerFrameCombinedBags, INVTYPE_NON_EQUIP_IGNORE, IsAnyBagOpen
+## DeckUI_Bags/bank.lua
+   api: C_Bank.AutoDepositItemsIntoBank, C_Bank.CanDepositMoney, C_Bank.CanPurchaseBankTab, C_Bank.CanUseBank, C_Bank.CanViewBank, C_Bank.CanWithdrawMoney, C_Bank.CloseBankFrame, C_Bank.DepositMoney, C_Bank.DoesBankTypeSupportAutoDeposit, C_Bank.DoesBankTypeSupportMoneyTransfer, C_Bank.FetchBankLockedReason, C_Bank.FetchDepositedMoney*, C_Bank.FetchNumPurchasedBankTabs, C_Bank.FetchPurchasedBankTabData, C_Bank.IsItemAllowedInBankType*, C_Bank.WithdrawMoney, C_Container.SortBank
+   global: ACCOUNT_BANK_DEPOSIT_ALL_NO_REFUND_CONFIRM, ACCOUNT_BANK_DEPOSIT_BUTTON_LABEL, ACCOUNT_BANK_PANEL_TITLE, BAG_CLEANUP_ACCOUNT_BANK, BAG_CLEANUP_BANK, BANK, BANK_CONFIRM_CLEANUP_PROMPT, BANK_DEPOSIT_MONEY_BUTTON_LABEL, BANK_LOCKED_REASON_BANK_CONVERSION_FAILED, BANK_LOCKED_REASON_BANK_DISABLED, BANK_LOCKED_REASON_NO_ACCOUNT_INVENTORY_LOCK, BANK_MONEY_DEPOSIT, BANK_MONEY_DEPOSIT_PROMPT, BANK_MONEY_WITHDRAW, BANK_MONEY_WITHDRAW_PROMPT, BANK_WITHDRAW_MONEY_BUTTON_LABEL, BankPanelPurchaseButtonScriptTemplate, CHARACTER_BANK_DEPOSIT_BUTTON_LABEL, Warband
+   template: BankPanelPurchaseButtonScriptTemplate
+   cvar: bankAutoDepositReagents, bankConfirmTabCleanUp
+## DeckUI_Bags/core.lua
+   api: C_CurrencyInfo.GetBackpackCurrencyInfo
+   event: ACCOUNT_MONEY*, BANK_TABS_CHANGED, BANK_TAB_SETTINGS_UPDATED, PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED
+   global: BAG_CONTAINER_UPDATE, BANK_TABS_CHANGED, BANK_TAB_SETTINGS_UPDATED, INVTYPE_NON_EQUIP_IGNORE, ItemSlotBackgroundCombinedBagsTemplate
+## DeckUI_Cross/config.lua
+   global: Keeps, Turns
+## DeckUI_Cross/core.lua
+   global: AssistedCombatHighlightFrame
+## DeckUI_Cross/input.lua
+   global: ActionButton1, Bind, MultiBarBottomLeftButton1
+   cvar: GamePadEmulateAlt, GamePadEmulateCtrl, GamePadEmulateShift, GamePadEnable
+## DeckUI_Cross/libs/LibActionButton-1.0/LibActionButton-1.0.lua
+   api: C_LevelLink.IsActionLocked*, C_Spell.GetSpellLossOfControlCooldown*, C_SpellBook.IsAutoAttackSpellBookItem
+   global: GetMacroSpell, GetSpellCount, IsUsableSpell
+   atlas: !UI-HUD-ActionBar-IconFrame-FlyoutMid
+## DeckUI_Cross/libs/LibActionButton-1.0/LibButtonGlow-1.0/LibButtonGlow-1.0.lua
+   global: OuterGlow
+## DeckUI_Cross/stance.lua
+   global: StanceButton1
+## DeckUI_Map/minimap.lua
+   global: AddonCompartmentFrame, ExpansionLandingPageMinimapButton, GetPlayerFacing, MiniMapIndicatorFrame_UpdatePosition
+## DeckUI_Map/worldmap.lua
+   global: EventsFrame
+   cvar: mapFade, worldMapShowCursorCoords, worldMapShowPlayerCoords
+## DeckUI_Nav/beacon.lua
+   api: C_Navigation.GetFrame, C_Navigation.GetTargetState, C_Navigation.HasValidScreenPosition, C_Navigation.WasClampedToScreen, C_SuperTrack.GetHighestPrioritySuperTrackingType, C_SuperTrack.IsSuperTrackingAnything
+   event: NAVIGATION_FRAME_CREATED, NAVIGATION_FRAME_DESTROYED, SUPER_TRACKING_CHANGED*
+   enum: NavigationState.Disabled, NavigationState.InRange, NavigationState.Invalid, NavigationState.Occluded, SuperTrackingType.Content, SuperTrackingType.Corpse, SuperTrackingType.Quest, SuperTrackingType.UserWaypoint
+   global: MapPin, NAVIGATION_FRAME_CREATED, NAVIGATION_FRAME_DESTROYED, SuperTrackedFrame, Tombstone, Waypoint
+   atlas: Navigation-Tracked-Arrow
+## DeckUI_Nav/compass.lua
+   api: C_Navigation.GetDistance, C_SuperTrack.IsSuperTrackingAnything, C_VignetteInfo.GetVignetteInfo*, C_VignetteInfo.GetVignettePosition*, C_VignetteInfo.GetVignettes*
+   event: SUPER_TRACKING_CHANGED*
+   global: IN_GAME_NAVIGATION_RANGE
+   atlas: Navigation-Tracked-Arrow, Navigation-Tracked-Icon
+## DeckUI_Nav/config.lua
+   global: Waypoint
+## DeckUI_Nav/core.lua
+   api: C_Map.CanSetUserWaypointOnMap, C_Map.GetMapWorldSize, C_Map.GetUserWaypointPositionForMap, C_Navigation.GetDistance, C_Navigation.GetNextWaypointForMap, C_QuestLog.GetDistanceSqToQuest, C_QuestLog.GetNextWaypointForMap, C_QuestLog.GetNumQuestWatches*, C_QuestLog.GetNumWorldQuestWatches, C_QuestLog.GetQuestIDForQuestWatchIndex, C_QuestLog.GetQuestIDForWorldQuestWatchIndex, C_QuestLog.GetTitleForQuestID*, C_SuperTrack.GetHighestPrioritySuperTrackingType, C_SuperTrack.GetSuperTrackedItemName, C_SuperTrack.GetSuperTrackedQuestID*, C_SuperTrack.GetSuperTrackedVignette, C_SuperTrack.IsSuperTrackingAnything, C_SuperTrack.IsSuperTrackingCorpse, C_SuperTrack.IsSuperTrackingUserWaypoint*, C_SuperTrack.SetSuperTrackedQuestID, C_VignetteInfo.GetVignettePosition*
+   global: Corpse, GetPlayerFacing, Waypoint
+## DeckUI_Nav/waypoints.lua
+   api: C_Map.CanSetUserWaypointOnMap, C_Map.ClearUserWaypoint*, C_Map.GetUserWaypoint, C_Map.SetUserWaypoint*, C_SuperTrack.SetSuperTrackedUserWaypoint*
+   event: USER_WAYPOINT_UPDATED
+   global: USER_WAYPOINT_UPDATED, Waypoint
+## DeckUI_Orbs/ffstyle.lua
+   event: MAJOR_FACTION_RENOWN_LEVEL_CHANGED
+   global: MAJOR_FACTION_RENOWN_LEVEL_CHANGED
+## DeckUI_Orbs/libs/oUF/blizzard.lua
+   global: ArenaEnemyMatchFramesContainer
+## DeckUI_Orbs/libs/oUF/colors.lua
+   enum: SelectionType.Dead, SelectionType.Friend, SelectionType.Friendly, SelectionType.Hostile, SelectionType.Neutral, SelectionType.Party, SelectionType.PartyPvP, SelectionType.PartyPvPInBattleground, SelectionType.PlayerExtended, SelectionType.PlayerSimple, SelectionType.RecentAlly, SelectionType.Unfriendly
+   atlas: UI-HUD-UnitFrame-Player-PortraitOn-Bar-
+## DeckUI_Orbs/libs/oUF/elements/auras.lua
+   enum: CustomAuraButtonDispelTypeStealableFilter.Stealable, CustomAuraButtonDispelTypeTextureStyle.Border, CustomAuraButtonDispelTypeTextureStyle.Icon, CustomAuraButtonDispelTypeTextureStyle.PreserveAsset
+   global: AuraContainerSortDirection, AuraContainerSortMethod, CustomAuraContainerAuraProcessingPolicy, CustomAuraContainerTemplate
+## DeckUI_Orbs/libs/oUF/elements/classpower.lua
+   api: C_ClassTalents.GetActiveConfigID
+   global: ESSENCE, GetUnitChargedPowerPoints, PlayerVehicleHasComboPoints, UNIT_POWER_POINT_CHARGE
+## DeckUI_Orbs/libs/oUF/elements/combatindicator.lua
+   global: CombatIcon
+## DeckUI_Orbs/libs/oUF/elements/pvpindicator.lua
+   api: C_PvP.GetHonorRewardInfo*
+   global: UnitIsMercenary
+## DeckUI_Orbs/libs/oUF/elements/range.lua
+   global: Range
+## DeckUI_Orbs/libs/oUF/elements/threatindicator.lua
+   global: RAIDFRAME
+## DeckUI_Orbs/libs/oUF/enums.lua
+   enum: SelectionType
+## DeckUI_Orbs/libs/oUF/ouf.lua
+   global: IsElementEnabled
+## DeckUI_Orbs/libs/oUF/private.lua
+   enum: SelectionType
+   global: UnitSelectionType
+## DeckUI_Quests/config.lua
+   global: Journey, Tracker
+## DeckUI_Quests/core.lua
+   global: QuestObjectiveFindGroupButtonTemplate, ScenarioObjectiveTrackerFindGroupButtonTemplate
+## DeckUI_Quests/delves.lua
+   api: C_DelvesUI.GetDelvesFactionForSeason, C_MajorFactions.GetMajorFactionData*, C_MajorFactions.GetMajorFactionRenownInfo, C_PlayerChoice.GetCurrentPlayerChoiceInfo, C_PlayerChoice.OnUIClosed, C_PlayerChoice.SendPlayerChoiceResponse
+   event: PLAYER_CHOICE_UPDATE
+   global: Journey, PLAYER_CHOICE_UPDATE
+## DeckUI_Quests/guide.lua
+   api: C_CampaignInfo.GetAvailableCampaigns, C_CampaignInfo.GetCampaignChapterInfo, C_CampaignInfo.GetCampaignInfo, C_CampaignInfo.GetChapterIDs, C_CampaignInfo.GetCurrentChapterID, C_CampaignInfo.GetFailureReason, C_CampaignInfo.GetState, C_Map.CanSetUserWaypointOnMap, C_Map.SetUserWaypoint*, C_QuestLine.GetQuestLineInfo*, C_QuestLog.GetInfo, C_QuestLog.GetNextWaypoint, C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetTitleForQuestID*, C_SuperTrack.SetSuperTrackedQuestID, C_SuperTrack.SetSuperTrackedUserWaypoint*
+   enum: CampaignState, CampaignState.InProgress, CampaignState.Stalled
+   global: QUEST_REMOVED
+## DeckUI_Quests/hunt.lua
+   global: AdventureMap_QuestOfferPinTemplate, Blizzard_GarrisonUI, CovenantMissionFrame, ReputationStar
+## DeckUI_Quests/quests.lua
+   api: C_QuestInfoSystem.GetQuestClassification, C_QuestLog.AbandonQuest, C_QuestLog.GetAbandonQuestItems, C_QuestLog.GetActivePreyQuest*, C_QuestLog.GetInfo, C_QuestLog.GetLogIndexForQuestID*, C_QuestLog.GetNumQuestWatches*, C_QuestLog.GetQuestIDForQuestWatchIndex, C_QuestLog.GetSelectedQuest, C_QuestLog.GetTitleForQuestID*, C_QuestLog.IsComplete*, C_QuestLog.IsFailed*, C_QuestLog.IsPushableQuest, C_QuestLog.RemoveQuestWatch, C_QuestLog.SetAbandonQuest, C_QuestLog.SetSelectedQuest, C_SuperTrack.GetSuperTrackedQuestID*, C_SuperTrack.SetSuperTrackedQuestID
+   event: SUPER_TRACKING_CHANGED*
+   global: GetQuestProgressBarPercent, IsQuestSequenced, QUEST_REMOVED, STOP_SUPER_TRACK_QUEST, SUPER_TRACK_QUEST
+## DeckUI_Quests/scenario.lua
+   api: C_ChallengeMode.GetActiveKeystoneInfo*, C_ChallengeMode.GetAffixInfo*, C_ChallengeMode.GetDeathCount, C_LFGList.CanCreateScenarioGroup, C_Scenario.GetBonusSteps, C_Scenario.GetInfo*, C_Scenario.GetStepInfo*, C_Scenario.GetSupersededObjectives, C_Scenario.ShouldShowCriteria
+   event: ACTIVE_DELVE_DATA_UPDATE
+   global: ACTIVE_DELVE_DATA_UPDATE, CHALLENGE_MODE_DEATH_COUNT_UPDATED, CHALLENGE_MODE_START, SCENARIO_BONUS_VISIBILITY_UPDATE, SCENARIO_CRITERIA_SHOW_STATE_UPDATE, SCENARIO_SPELL_UPDATE, Treasure
+## DeckUI_Quests/tracking.lua
+   api: C_ContentTracking.GetCollectableSourceTypes, C_ContentTracking.GetCurrentTrackingTarget, C_ContentTracking.GetObjectiveText, C_ContentTracking.GetTitle, C_ContentTracking.GetTrackedIDs, C_ContentTracking.GetWaypointText, C_ContentTracking.IsTracking*, C_ContentTracking.StopTracking, C_PerksActivities.GetPerksActivityInfo, C_PerksActivities.GetTrackedPerksActivities, C_PerksActivities.RemoveTrackedPerksActivity, C_SuperTrack.GetSuperTrackedContent, C_SuperTrack.SetSuperTrackedContent, C_TradeSkillUI.GetRecipeSchematic, C_TradeSkillUI.GetRecipesTracked, C_TradeSkillUI.SetRecipeTracked
+   event: CONTENT_TRACKING_IS_ENABLED_UPDATE, CONTENT_TRACKING_LIST_UPDATE, CONTENT_TRACKING_UPDATE, PERKS_ACTIVITIES_TRACKED_LIST_CHANGED, PERKS_ACTIVITIES_TRACKED_UPDATED, PERKS_ACTIVITY_COMPLETED, SUPER_TRACKING_CHANGED*, TRACKABLE_INFO_UPDATE, TRACKED_RECIPE_UPDATE, TRACKING_TARGET_INFO_UPDATE
+   global: CONTENT_TRACKING_IS_ENABLED_UPDATE, CONTENT_TRACKING_RETRIEVING_INFO, CONTENT_TRACKING_UPDATE, HOUSE_DECOR_ADDED_TO_CHEST, INITIATIVE_TASKS_TRACKED_LIST_CHANGED, INITIATIVE_TASKS_TRACKED_UPDATED, NEIGHBORHOOD_INITIATIVE_UPDATED, PERKS_ACTIVITIES_TRACKED_LIST_CHANGED, PERKS_ACTIVITIES_TRACKED_UPDATED, PERKS_ACTIVITY_COMPLETED, RECIPEWATCHTOGGLE, SUPER_TRACK_QUEST, TRACKABLE_INFO_UPDATE, TRACKED_RECIPE_UPDATE, TRACKING_TARGET_INFO_UPDATE, TRANSMOG_COLLECTION_SOURCE_ADDED
+## DeckUI_Quests/world.lua
+   api: C_QuestLog.GetLogIndexForQuestID*, C_QuestLog.GetNumWorldQuestWatches, C_QuestLog.GetQuestIDForWorldQuestWatchIndex, C_QuestLog.GetQuestTagInfo, C_QuestLog.GetQuestWatchType, C_QuestLog.IsQuestBounty, C_QuestLog.IsWorldQuest, C_QuestLog.RemoveWorldQuestWatch, C_SuperTrack.GetSuperTrackedQuestID*, C_SuperTrack.SetSuperTrackedQuestID
+   event: SUPER_TRACKING_PATH_UPDATED
+   global: GetQuestObjectiveInfo, GetQuestProgressBarPercent, GetTaskInfo, GetTasksTable, STOP_SUPER_TRACK_QUEST, SUPER_TRACKING_PATH_UPDATED, SUPER_TRACK_QUEST
+## DeckUI_Spec/core.lua
+   api: C_SpecializationInfo.SetSpecialization
+## DeckUI_Tooltip/extras.lua
+   api: C_CurrencyInfo.GetFactionGrantedByCurrency*, C_Item.GetItemLearnTransmogSet, C_ProfSpecs.GetConfigIDForSkillLine, C_ProfSpecs.GetSpecTabIDsForSkillLine, C_ProfSpecs.GetSpendCurrencyForPath, C_ProfSpecs.GetTabInfo, C_QuestLog.GetTitleForQuestID*, C_QuestLog.ReadyForTurnIn, C_TooltipInfo.GetHyperlink*, C_TradeSkillUI.GetAllProfessionTradeSkillLines, C_TradeSkillUI.GetProfessionInfoBySkillLineID, C_Transmog.GetAllSetAppearancesByID
+   global: TRANSMOG_COLLECTION_SOURCE_ADDED
+## DeckUI_Tooltip/lines.lua
+   api: C_PaperDollInfo.GetInspectItemLevel
+## DeckUI_Week/config.lua
+   global: Great
+## DeckUI_Week/core.lua
+   api: C_MajorFactions.GetMajorFactionData*, C_MajorFactions.GetMajorFactionIDs, C_PerksActivities.GetPerksActivitiesInfo, C_QuestLog.GetActivePreyQuest*, C_QuestLog.GetInfo, C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetTitleForQuestID*, C_WeeklyRewards.GetActivities, C_WeeklyRewards.GetExampleRewardItemHyperlinks, C_WeeklyRewards.HasAvailableRewards*
+   event: MAJOR_FACTION_RENOWN_LEVEL_CHANGED, WEEKLY_REWARDS_UPDATE*
+   enum: WeeklyRewardChestThresholdType
+   global: BOSS_KILL, MAJOR_FACTION_RENOWN_LEVEL_CHANGED
+## DeckUI_Week/data.lua
+   global: Assault, Lost, Research
+## DeckUI_Week/record.lua
+   api: C_QuestLog.GetAllCompletedQuestIDs, C_QuestLog.GetTitleForQuestID*
+   global: Bounty
+## DeckUI_Week/window.lua
+   api: C_QuestLog.GetTitleForQuestID*
+   global: Bounty, Great, Knowledge
