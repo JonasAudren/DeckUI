@@ -29,9 +29,15 @@ Talking Head, Schadensmesser, Taschen sortieren). Und zwei technische Brocken:
 eine gemeinsame Zip für Retail und MoP. Reihenfolge nach Nutzen fürs Deck: erst Grundgerüst + Cross + Orbs (spielbar),
 dann Taschen/Tooltip/Karte, zuletzt Quests/Nav/Week (die am meisten neu brauchen).
 
-**Erster Schritt (10 Minuten von dir):** das vorbereitete Prüf-Addon `DeckUI_Probe` einmal im MoP-Client laufen lassen
-(Abschnitt 3). Die Classic-Doku ist unvollständig – erst der Client selbst beantwortet, welche alten Funktionen da sind.
-Danach passe ich diesen Plan an die echten Antworten an.
+**Erster Schritt erledigt (25.10.2026):** Das Prüf-Addon `DeckUI_Probe` lief im MoP-Client (Paladin Stufe 1,
+enUS, Everlook) fehlerfrei. Es bestätigt die statische Analyse fast vollständig; die Abweichungen stehen in
+Abschnitt 3a und sind unten eingearbeitet. Die wichtigsten:
+- Den **Kampfassistenten gibt es in MoP** (`C_AssistedCombat`, `IsAssistedCombatAction`), `assist.lua` bleibt drin.
+- Die **Spec-Funktionen gibt es nur im Namensraum** (`C_SpecializationInfo.*`). Die globalen `GetSpecialization`,
+  `GetSpecializationInfo` und `SetActiveSpecGroup` sind nil.
+- `ACTIVE_PLAYER_SPECIALIZATION_CHANGED` **existiert** in MoP. Kein Event-Tausch nötig.
+- **Keine Raritäten auf dem Kompass**: `C_VignetteInfo` fehlt.
+- **Koordinaten-CVars fehlen** auf Welt- und Minikarte.
 
 ---
 
@@ -129,12 +135,13 @@ bereitstellt, die wir nutzen:
 
 ### 2.8 Was weiter gilt
 Alle Regeln aus CLAUDE.md gelten auch für MoP (Taint, `D.Dialog` statt StaticPopup, nie Felder auf Blizzard-Frames,
-geheime Werte nie rechnen – MoP hat die API, vermutlich inaktiv, die Probe sagt es). **IDs nur aus Spieldaten**:
+geheime Werte nie rechnen – MoP hat `issecretvalue`; laut Probe war `UnitHealth` außerhalb des Kampfs nicht geheim, im
+Kampf noch ungetestet). **IDs nur aus Spieldaten**:
 `check-game-data.py` bekommt `--branch wow_classic`, `repdata.lua` wird für MoP neu erzeugt.
 
 ---
 
-## 3. Schritt 0 – das Prüf-Addon (vorbereitet, noch nicht installiert)
+## 3. Schritt 0 – das Prüf-Addon (gelaufen am 25.10.2026, Ergebnis in 3a)
 
 `tools/mists/DeckUI_Probe/` – ändert nichts am Spiel, fragt nur den Client:
 - alle 291 APIs, ~1.420 globalen Namen (inkl. ~120 alter Funktionen, die der MoP-Port voraussichtlich braucht:
@@ -154,34 +161,113 @@ geheime Werte nie rechnen – MoP hat die API, vermutlich inaktiv, die Probe sag
 4. Am besten einmal mit Ziel (ein Gegner) und einmal im Gamepad-Modus; Klasse egal, Druide/Hexer/Priester/DK geben
    zusätzlich Ressourcen-Werte.
 
-**Auswertung (ich):** `python -I tools/mists/readprobe.py <scratch>` liest
+**Auswertung (ich):** `python tools/mists/readprobe.py <scratch>` liest
 `_classic_\WTF\Account\*\SavedVariables\DeckUI_Probe.lua` und listet pro DeckUI-Datei, was wirklich fehlt.
-Danach aktualisiere ich Abschnitt 4 und markiere jede „Probe“-Frage als beantwortet.
+Der Leser lädt die Datei mit Lua (lupa), weil der Client ohne Einrückung und mit CRLF schreibt.
+Ohne `-I` aufrufen, sonst fehlt lupa aus den Benutzerpaketen. `mopscan.json` muss im Scratch-Ordner liegen.
+
+### 3a. Ergebnis der Probe (25.10.2026)
+
+Client 5.5.4 (70579), Interface 50504, Projekt 19. Gelaufen mit Paladin Stufe 1, ohne Ziel und ohne Gamepad.
+Ohne Fehler, alle Abschnitte gefüllt.
+
+**Bestätigt vorhanden** (Auswahl dessen, was der Plan voraussetzt):
+- **Aktionsleisten**: `ActionButton1`, `MultiBarBottomLeftButton1`, `StanceButton1`, `MainMenuBarVehicleLeaveButton`,
+  `OverrideActionBar`, `MicroMenu`. Seiten-Indizes Override 18, Fahrzeug 16, Temp-Form 17 wie Retail.
+  Alle `ACTIONBUTTON*`- und `MULTIACTIONBAR1-7BUTTON*`-Befehle sowie `CAMERAZOOMIN/OUT` und `SHAPESHIFTBUTTON1`.
+- **Assistent**: `C_AssistedCombat.GetNextCastSpell/GetActionSpell`, `C_ActionBar.IsAssistedCombatAction` und die
+  Templates `ActionBarButtonAssistedCombat*`.
+- **Gamepad**: `C_GamePad`, CVars `GamePadEnable/EmulateShift/Ctrl/Alt/TapWindowMs`; dazu `synchronizeBindings`,
+  `SoftTargetInteract`, `SoftTargetIconGameObject`, `mapFade`, `miniWorldMap`, `rotateMinimap`.
+  MoPs Vorgabe für Strg ist `PADLSHOULDER`; `EnsureGamepad` setzt ohnehin unsere Werte.
+- **Engine-Technik**: `C_AddOnProfiler`, `C_EditMode` (`GetLayouts`, `SetActiveLayout`),
+  `UnitCastingDuration/ChannelDuration`, `C_DurationUtil`, `C_CurveUtil`, `CreateUnitHealPredictionCalculator`,
+  `UnitHealthPercent`, `issecretvalue`, `TooltipDataProcessor`, `MenuUtil`, `EventUtil`.
+- **Auktionshaus**: modern (`ReplicateItems`, `REPLICATE_ITEM_LIST_UPDATE`,
+  `PLAYER_INTERACTION_MANAGER_FRAME_SHOW`, `IsSellItemValid`). Den Legacy-Client gibt es nicht.
+- **Alte Funktionen**:
+  - Questlog: `GetQuestLogTitle`, `GetQuestLogLeaderBoard`, `GetQuestLogIndexByID`, `IsQuestWatched`,
+    `AddQuestWatch/RemoveQuestWatch`, `GetQuestLogSpecialItemInfo`, `C_QuestLog.GetQuestObjectives`,
+    `C_QuestLog.GetQuestsOnMap`, globales `SetSuperTrackedQuestID/GetSuperTrackedQuestID`, `WatchFrame`.
+  - Instanzen, Erfolge, Inspektion: `GetSavedInstanceInfo`, `GetAchievementCriteriaInfo`, `GetInspectSpecialization`.
+  - Klassenressourcen: `GetEclipseDirection`, `GetRuneType`.
+  - Zauberbuch, Bank, Gegenstände: `PickupSpellBookItem`, `GetSpellBookItemInfo`, `GetNumSpellTabs`, `PurchaseSlot`,
+    `GetBankSlotCost`, `IsDressableItem`, `RepairAllItems`, `C_Container.UseContainerItem`.
+  - Ruf: `GetFactionInfoByID`, `C_Reputation.GetWatchedFactionData`, `C_GossipInfo.GetFriendshipReputation`.
+  - Sammlungen und Szenarien: `C_ToyBox`, `C_PetJournal.PickupPet`, `C_MountJournal.Pickup`,
+    `C_EquipmentSet.PickupEquipmentSet`, `C_ScenarioInfo.GetCriteriaInfo(ByStep)`, `C_Scenario.GetInfo/GetStepInfo`,
+    `GetWorldElapsedTime`.
+- **Events**: `ACTIVE_PLAYER_SPECIALIZATION_CHANGED`, `ACTIVE_TALENT_GROUP_CHANGED`,
+  `PLAYER_SPECIALIZATION_CHANGED`, `PLAYER_SOFT_INTERACT_CHANGED`, `NAME_PLATE_UNIT_ADDED`, `EDIT_MODE_LAYOUTS_UPDATED`,
+  `GAME_PAD_ACTIVE_CHANGED`, `CVAR_UPDATE`, `UPDATE_BINDINGS`, `PLAYERBANKSLOTS_CHANGED`, `QUEST_WATCH_LIST_CHANGED`,
+  `SCENARIO_CRITERIA_UPDATE`, `CHALLENGE_MODE_START`.
+- **Werte**: Bank `BANK_CONTAINER` −1, 28 Plätze, 7 Banktaschen. Erweiterung 4, Stufenobergrenze 90.
+  `GetPlayerFacing` und `UnitPosition` liefern Werte in der offenen Welt, `C_Map.GetPlayerMapPosition` ebenso.
+  Der Tooltip-Lebensbalken ist ein StatusBar.
+
+**Bestätigt fehlend** (138 von 291 APIs, 24 von 180 Events, 28 von 111 Enums – deckt sich mit Abschnitt 4):
+- Retail-Namensräume: `C_Bank`, `C_CampaignInfo`, `C_ContentTracking`, `C_DelvesUI`, `C_MajorFactions`, `C_Navigation`,
+  `C_PerksActivities`, `C_PlayerChoice`, `C_ProfSpecs`, `C_SuperTrack`, `C_TalkingHead`, `C_WeeklyRewards`.
+- `C_VignetteInfo` – **neu ❌**, war ❓.
+- Moderne QuestLog-Funktionen: `C_QuestLog.GetInfo`, `GetNumQuestLogEntries`, `GetTitleForQuestID`, `IsComplete`,
+  `AbandonQuest`, `GetQuestWatchType` …
+- Weitere Einzelfunktionen:
+  - Behälter und Händler: `C_Container.SortBags/SortBank`, `C_MerchantFrame.*Junk*`.
+  - Karte und Inspektion: `C_Map.GetMapWorldSize`, alle User-Waypoint-Funktionen, `C_PaperDollInfo.GetInspectItemLevel`.
+  - Gegenstände und Tooltip: `C_Item.IsDressableItemByID`, `C_Item.GetItemLearnTransmogSet`, `C_TooltipInfo.GetHyperlink`.
+  - Ruf, Währung, Spec: `C_Reputation.GetFactionDataByID`, `C_CurrencyInfo.GetBackpackCurrencyInfo`,
+    `C_CurrencyInfo.GetFactionGrantedByCurrency`, `C_SpecializationInfo.SetSpecialization`, `C_ClassTalents`.
+  - M+, Berufe, Zauberbuch: `C_ChallengeMode.GetActiveKeystoneInfo/GetAffixInfo/GetDeathCount`, die Retail-Rezept-APIs
+    von `C_TradeSkillUI`, `C_SpellBook.*`.
+- **Globale Spec-Funktionen**: `GetSpecialization`, `GetSpecializationInfo`, `SetActiveSpecGroup` sind nil. Es gibt
+  nur `C_SpecializationInfo.GetSpecialization/GetSpecializationInfo/GetActiveSpecGroup/SetActiveSpecGroup`.
+- `IsAnyBagOpen`, `SortBags`, `GetWatchedFactionInfo`.
+- **Templates**: `CustomAuraContainerTemplate`, `BankPanelPurchaseButtonScriptTemplate`,
+  `QuestObjectiveFindGroupButtonTemplate`.
+- **Widget-Methode**: `SetRolesets`. Alle anderen Methoden, die die Probe nicht fand, stehen in der MoP-Doku; die
+  Probe hatte nur kein Widget dieser Art erzeugt (Slider, Minimap, Alpha-Animation, Model).
+- **Enums**: `SelectionType` (oUF colors/private), `NavigationState`, `SuperTrackingType`, `CampaignState`,
+  `CustomAuraButtonDispelType*`.
+- **CVars**: `worldMapShowPlayerCoords`, `worldMapShowCursorCoords`, `minimapShowPlayerCoords`, `coordsByTenths`,
+  `nameplateShowFriends`, `bankAutoDepositReagents`, `bankConfirmTabCleanUp`.
+- **Tastenbefehle**: `TOGGLECALENDAR`, `TOGGLEDUNGEONSANDRAIDS`, `TOGGLELFGPARENT`, `TOGGLEMOUNTJOURNAL`,
+  `TOGGLEPETJOURNAL`, `TOGGLEPVP`. `DECKUI_*` fehlten nur, weil DeckUI nicht installiert war.
+- **Atlanten**: `UI-HUD-MicroMenu-Character-Up` (aber `…-Questlog-Up` existiert), `Navigation-Tracked-*`.
+- **Mikromenü**: vorhanden sind Character, QuestLog, Guild, Achievement, Collections, EJ, Store, MainMenu.
+  Es fehlen `PlayerSpellsMicroButton`, `ProfessionMicroButton`, `LFDMicroButton`, `HousingMicroButton`.
+
+**Noch offen, weil Stufe 1 ohne Ziel und ohne Gamepad** (wird in den Phasen im Spiel getestet):
+- Dual-Spec (erst ab Stufe 30), MoP-Ressourcen anderer Klassen.
+- Geheime Werte im Kampf.
+- `plate.UnitFrame` und `SoftTargetFrame` an einer echten Plakette.
+- Gamepad aktiv.
+- `GetBackpackCurrencyInfo` (global, nicht abgefragt).
+- `AUCTION_HOUSE_SHOW`, Runen- und Eklipse-Events (nicht abgefragt).
 
 ---
 
 ## 4. Modul für Modul
 
-Legende: ✅ läuft weitgehend · 🔧 anpassen · 🆕 MoP-Fassung neu schreiben · ❌ entfällt in MoP · ❓ hängt an der Probe
+Legende: ✅ läuft weitgehend · 🔧 anpassen · 🆕 MoP-Fassung neu schreiben · ❌ entfällt in MoP · ❓ noch offen, wird im Spiel geprüft
 
 ### 4.1 Hub `DeckUI/`
 
 | Datei | MoP | Was zu tun ist |
 |---|---|---|
-| core.lua | 🔧 | `D.IsMists/IsRetail`, `D.FEATURES`, Modul-Liste je Flavor. CVar `synchronizeBindings` ❓ (Tasten pro Gerät) |
+| core.lua | 🔧 | `D.IsMists/IsRetail`, `D.FEATURES`, Modul-Liste je Flavor. CVar `synchronizeBindings` ✅ (Tasten pro Gerät). Globale `GetSpecialization/GetSpecializationInfo` fehlen → überall `C_SpecializationInfo.*` (core.lua nutzt sie schon) |
 | errors.lua, widgets.lua, panel.lua, minimap.lua | ✅ | Templates `OptionsSliderTemplate`, `UIPanelButtonTemplate`, `MoneyInputFrameTemplate` vorhanden. Panel: Optionen über `D.FEATURES` filtern |
-| reputation.lua | 🔧 | `C_MajorFactions`, `C_Reputation.GetFactionDataByID` fehlen. MoP: `C_Reputation.GetWatchedFactionData`/`IsFactionParagon` sind da (Paragon gibt es inhaltlich nicht), Ruf über `GetFactionInfoByID` ❓, Freundschaft (Pächter) über `C_GossipInfo.GetFriendshipReputation` ✅ |
-| actionbars.lua (Leisten pro Gerät) | 🔧 | Retail-`C_SpellBook.PickupSpellBookItem/GetSpellBookItemInfo/…` fehlen → MoP: alte `PickupSpellBookItem`, `GetSpellBookItemInfo`, `GetNumSpellTabs` ❓; `C_ToyBox`/`C_PetJournal.PickupPet` ❓; Assistent-Slot nur wenn es ihn gibt; Event `ACTIVE_PLAYER_SPECIALIZATION_CHANGED` fehlt → `PLAYER_SPECIALIZATION_CHANGED`/`ACTIVE_TALENT_GROUP_CHANGED` |
-| editmode.lua (Layout pro Gerät) | ✅❓ | MoP hat Edit Mode + `C_EditMode.GetLayouts/SetActiveLayout`. Event wie oben tauschen. Testen |
+| reputation.lua | 🔧 | `C_MajorFactions`, `C_Reputation.GetFactionDataByID` fehlen. MoP: `C_Reputation.GetWatchedFactionData`/`IsFactionParagon` sind da (Paragon gibt es inhaltlich nicht), Ruf über `GetFactionInfoByID` ✅ (`GetWatchedFactionInfo` fehlt – `GetWatchedFactionData` nehmen), Freundschaft (Pächter) über `C_GossipInfo.GetFriendshipReputation` ✅ |
+| actionbars.lua (Leisten pro Gerät) | 🔧 | Retail-`C_SpellBook.PickupSpellBookItem/GetSpellBookItemInfo/…` fehlen → MoP: alte `PickupSpellBookItem`, `GetSpellBookItemInfo`, `GetNumSpellTabs`, `GetSpellTabInfo` ✅; `C_ToyBox`, `C_PetJournal.PickupPet`, `C_MountJournal.Pickup`, `C_EquipmentSet` ✅; Assistent-Slot ✅ (gibt es). `ACTIVE_PLAYER_SPECIALIZATION_CHANGED` gibt es ✅; dazu `ACTIVE_TALENT_GROUP_CHANGED` für den Dual-Spec-Wechsel registrieren. Schlüssel `specID` → in MoP pro Spec-Gruppe prüfen |
+| editmode.lua (Layout pro Gerät) | ✅ | `C_EditMode.GetLayouts/SetActiveLayout`, `EDIT_MODE_LAYOUTS_UPDATED`, `EditModeManagerFrame` ✅ (Probe: 1 aktives von 3 Layouts). Im Spiel testen |
 | damagemeter.lua | ❌ | Blizzard_DamageMeter wird in MoP nicht geladen. Nicht in die MoP-Toc |
 | merchant.lua | 🔧 | `C_MerchantFrame.SellAllJunkItems/GetNumJunkItems` fehlen → MoP: Taschen durchgehen, graue Gegenstände per `C_Container.UseContainerItem` beim Händler (nicht im Kampf, gedrosselt, max. 12 pro Durchgang wie Blizzards Rückkauf-Grenze). Reparieren: `RepairAllItems`, `CanGuildBankRepair` vorhanden |
-| loot.lua | 🔧 | `C_Item.IsDressableItemByID` → `IsDressableItem` (vorhanden). Rest (`LOOT_READY`, `LootSlot`, `GetLootSlotInfo`, `LootFrame`) ✅ |
-| softtarget.lua | ❓ | Soft-Target gibt es (CVar `softTargetInteract` in MoP-Einstellungen). Ob der MoP-Plakette ein `SoftTargetFrame` hat → Probe |
-| targetarrow.lua, nameplates.lua | ✅❓ | `C_NamePlate`, `NamePlateUnitFrameMixin` vorhanden. Probe: `plate.UnitFrame` vorhanden? |
+| loot.lua | 🔧 | `C_Item.IsDressableItemByID` → `IsDressableItem` ✅. Rest (`LOOT_READY`, `LootSlot`, `GetLootSlotInfo`, `LootFrame`) ✅ |
+| softtarget.lua | ✅❓ | `PLAYER_SOFT_INTERACT_CHANGED`, CVars `SoftTargetInteract`/`SoftTargetIconGameObject` ✅. Ob die MoP-Plakette einen `SoftTargetFrame` hat, konnte die Probe ohne Plakette nicht sehen → Phase 4 im Spiel |
+| targetarrow.lua, nameplates.lua | ✅❓ | `C_NamePlate`, `NAME_PLATE_UNIT_ADDED` ✅. `plate.UnitFrame` → Phase 4 im Spiel (Probe lief ohne Ziel) |
 | talkinghead.lua | ❌ | MoP lädt keine Talking-Head-UI (`C_TalkingHead` fehlt; kam erst mit WoD) |
 | infobars.lua | ✅ | `BagsBar`, `MainMenuBarBackpackButton`, `C_AddOnProfiler` vorhanden. Mail-Symbol-Pfad prüfen |
-| mainmenu.lua | 🔧 | MoP-Knöpfe: Character, Spellbook, Talent, Achievement, QuestLog, Guild, LFG, PVP, Collections, EJ, Store, Help, MainMenu (+ Socials, WorldMap). Liste je Flavor; Atlanten `UI-HUD-MicroMenu-*` ❓ (sonst Blizzards Normal-Textur des Knopfs) |
-| auction.lua | ✅❓ | MoP lädt `Blizzard_AuctionHouseUI` (Classic-Variante), `C_AuctionHouse.ReplicateItems` dokumentiert, `AUCTION_HOUSE_SHOW` gibt es dort noch. Fallback „Legacy-Auktionshaus“ (`IsUsingLegacyAuctionClient`) ❓ |
+| mainmenu.lua | 🔧 | Laut Probe gibt es Character, QuestLog, Guild, Achievement, Collections, EJ, Store, MainMenu (+ laut Code Spellbook, Talent, LFG, PVP, Help, Socials). Es fehlen `PlayerSpells`, `Profession`, `LFD`, `Housing` – der Code fragt ohnehin, welche Knöpfe existieren. Atlanten teils da (`…-Questlog-Up` ✅, `…-Character-Up` fehlt – dort zeigt DeckUI ohnehin das Porträt): pro Knopf auf `GetAtlasInfo` prüfen, sonst Blizzards Normal-Textur |
+| auction.lua | ✅ | Modernes Auktionshaus ✅ (`ReplicateItems`, `GetReplicateItemInfo`, `REPLICATE_ITEM_LIST_UPDATE`, `PLAYER_INTERACTION_MANAGER_FRAME_SHOW`); kein Legacy-Client. Start über den OnShow-Hook wie in Retail |
 | auctionstyle.lua | 🔧 | Classic-Variante des Fensters hat teils andere Bausteine → im Spiel prüfen, nur Texturen anpassen |
 
 ### 4.2 Orbs `DeckUI_Orbs/`
@@ -190,8 +276,8 @@ Legende: ✅ läuft weitgehend · 🔧 anpassen · 🆕 MoP-Fassung neu schreibe
 |---|---|---|
 | oUF-Kern | 🔧 | 4× `SetRolesets` absichern (`if obj.SetRolesets`), `UnitSelectionType`/`Enum.SelectionType` absichern (colors.lua, private.lua), `ArenaEnemyMatchFramesContainer` in blizzard.lua absichern, `C_ClassTalents` in classpower.lua absichern. Patches markieren (`-- DeckUI: MoP`) |
 | Auren (alle Stile) | 🆕 | Aura-Container-Ersatz `auras_mists.lua` (2.6.1) |
-| Castbar | ✅❓ | 14er Castbar nutzt `UnitCastingDuration`, `SetTimerDuration`, `C_DurationUtil.CreateDurationTextBinding` – in MoP-Doku vorhanden. Probe bestätigt |
-| Health/Power/Tags | ✅ | `UnitHealthPercent`, `AbbreviateNumbers` vorhanden |
+| Castbar | ✅ | `UnitCastingDuration/ChannelDuration`, `C_DurationUtil` von der Probe bestätigt |
+| Health/Power/Tags | ✅ | `UnitHealthPercent`, `AbbreviateNumbers`, `CreateUnitHealPredictionCalculator`, `C_CurveUtil` vorhanden |
 | Klassenressourcen | 🆕 | MoP-eigene Typen: **Schattenkugeln** (Priester, `Enum.PowerType.ShadowOrbs`=28), **Brennende Glut** (Zerstörung, 14, mit Teilfüllung), **Dämonischer Furor** (Dämonologie, 15, ein Balken), **Eklipse** (Gleichgewicht, `GetEclipseDirection`, Balken −100…100), **Chi** (12), **Heilige Kraft** (9), **Seelensplitter** (7), **Runen mit Typ** (`GetRuneType`: Blut/Frost/Unheilig/Tod), **Stagger** (Braumeister). Kleines eigenes Element `DeckClassPowerMists` für Glut/Furor/Eklipse; Kugeln/Chi/HK/Splitter über oUF-ClassPower-Zuordnung |
 | Stile Orbs/FF/XIV | 🔧 | XIV-EXP-Leiste: `MainStatusTrackingBarContainer` gibt es in MoP ✅; Ruf am Max-Level über MoP-Ruf (4.1 reputation). Max-Level 90 (wie Midnight, Zufall). `MAJOR_FACTION_RENOWN_LEVEL_CHANGED` weglassen |
 | Gruppe/Raid | 🔧 | `SecureGroupHeaderTemplate`, `CompactRaidFrameManager`, `PartyFrame` vorhanden. Raid-Dispel-Rahmen ohne `AddDispelTypeTexture` → eigene Farbe aus `dispelName`. Rollen `UnitGroupRolesAssigned` ✅ |
@@ -203,33 +289,37 @@ Legende: ✅ läuft weitgehend · 🔧 anpassen · 🆕 MoP-Fassung neu schreibe
 | Teil | MoP | Was zu tun ist |
 |---|---|---|
 | Kreuze, Seitenwechsel | ✅ | `MainActionBar`, `ActionButton1-12`, `MultiBarBottomLeftButton*`, `C_ActionBar.Get*BarIndex` identisch. MoP-Haltungen (Krieger 3 Haltungen, Druidenformen, Schurken-Verstohlenheit, Schattenform) laufen über `[bonusbar:1-4]` wie heute |
-| Bindungen auf native Befehle | ✅ | `ACTIONBUTTON*`, `MULTIACTIONBAR*BUTTON*` identisch (Probe bestätigt die Liste) |
-| Gamepad-Selbsteinrichtung | ✅❓ | `C_GamePad` vollständig, Controller-Modus in den MoP-Einstellungen. CVars `GamePadEnable/EmulateShift/Ctrl/Alt` → Probe |
+| Bindungen auf native Befehle | ✅ | `ACTIONBUTTON*`, `MULTIACTIONBAR1-7BUTTON*`, `SHAPESHIFTBUTTON*`, `CAMERAZOOMIN/OUT` von der Probe bestätigt |
+| Gamepad-Selbsteinrichtung | ✅ | `C_GamePad` und CVars `GamePadEnable/EmulateShift/Ctrl/Alt` ✅, Events `GAME_PAD_*`, `CVAR_UPDATE`, `UPDATE_BINDINGS` ✅. MoP-Vorgabe Strg = LB – `EnsureGamepad` überschreibt sie |
 | Überschreib-/Fahrzeugleiste, Aussteigen | ✅ | `OverrideActionBar`, `MainMenuBarVehicleLeaveButton` vorhanden |
-| Haltungsleiste | 🔧 | `StanceBar` + `StanceButtonTemplate` vorhanden; Knopfnamen `StanceButton1…` per Probe bestätigen |
+| Haltungsleiste | ✅ | `StanceBar`, `StanceButton1` (Probe) vorhanden |
 | Leisten 3–8 | ✅ | `MultiBar5-7` existieren auch in MoP |
-| Fähigkeiten-Menü auf B, Schnellmenü RB | ✅❓ | Schnellmenü-Befehle je Flavor: `TOGGLETALENTS`, `TOGGLESPELLBOOK`, `TOGGLELFGPARENT`/`TOGGLEGROUPFINDER`, `TOGGLEPVP`, `TOGGLEPETJOURNAL`… → Probe meldet, welche es gibt; unbekannte graut der Code heute schon aus |
-| Assistent-Anzeige (assist.lua) | ❓ | `C_AssistedCombat` steht in der MoP-Doku – ob er dort funktioniert, sagt die Probe. Wenn nicht: Datei nicht in die MoP-Toc |
+| Fähigkeiten-Menü auf B, Schnellmenü RB | ✅ | In MoP fehlen `TOGGLECALENDAR`, `TOGGLEDUNGEONSANDRAIDS`, `TOGGLELFGPARENT`, `TOGGLEMOUNTJOURNAL`, `TOGGLEPETJOURNAL`, `TOGGLEPVP`; die übrigen aus `QUICK_COMMANDS` gibt es. Unbekannte graut der Code schon aus. `QUICK_DEFAULTS` prüfen, damit kein Standardplatz leer bleibt |
+| Assistent-Anzeige (assist.lua) | ✅❓ | Probe: `C_AssistedCombat.GetNextCastSpell/GetActionSpell` und `IsAssistedCombatAction` vorhanden. Bleibt in der MoP-Toc; ob der Assistent im Spiel Vorschläge macht, testet Phase 2 |
 | ConsolePort-Warnung | ✅ | bleibt |
 
 ### 4.4 Spec `DeckUI_Spec/` – 🆕
 MoP hat **Spezialisierungen und Dual-Spec** (zwei Talentgruppen). Statt „eine von 3–4 Specs anklicken“:
 - zwei runde Knöpfe = die beiden Gruppen (Icon der jeweiligen Spec), Klick aktiviert die Gruppe
-  (`SetActiveSpecGroup`, 5 s Zauber, nicht im Kampf), goldener Ring auf der aktiven
+  (`C_SpecializationInfo.SetActiveSpecGroup`, 5 s Zauber, nicht im Kampf), goldener Ring auf der aktiven
 - Spec *innerhalb* einer Gruppe ändern: wie in MoP über das Talentfenster (`SetSpecialization` ist Blizzards Pfad)
-- Events: `ACTIVE_TALENT_GROUP_CHANGED`, `PLAYER_SPECIALIZATION_CHANGED`
-- `C_SpecializationInfo.SetSpecialization` fehlt in MoP → nicht benutzen
+- Events: `ACTIVE_TALENT_GROUP_CHANGED`, `PLAYER_SPECIALIZATION_CHANGED` ✅
+- **Probe:** Die globalen `GetSpecialization`, `GetSpecializationInfo`, `SetActiveSpecGroup`, `GetActiveSpecGroup` sind
+  nil, ebenso `C_SpecializationInfo.SetSpecialization`. Es gibt nur
+  `C_SpecializationInfo.GetSpecialization/GetSpecializationInfo/GetActiveSpecGroup/SetActiveSpecGroup`, und
+  `GetNumSpecGroups` gibt es global. Der Retail-Code in `DeckUI_Spec/core.lua` ruft die globalen Fassungen auf und
+  braucht deshalb ohnehin die neue MoP-Datei
 
 ### 4.5 Taschen `DeckUI_Bags/`
 
 | Teil | MoP | Was zu tun ist |
 |---|---|---|
-| Fenster, Kategorien, Suche, Gold, Währungen | ✅🔧 | Kategorie-Logik bleibt. `C_CurrencyInfo.GetBackpackCurrencyInfo` fehlt → `GetBackpackCurrencyInfo` ❓ |
+| Fenster, Kategorien, Suche, Gold, Währungen | ✅🔧 | Kategorie-Logik bleibt. `C_CurrencyInfo.GetBackpackCurrencyInfo` fehlt (Probe) → globales `GetBackpackCurrencyInfo` ❓ (nicht abgefragt; in Phase 5 mit `/dump` prüfen) |
 | Gegenstandsknöpfe | 🔧 | MoP-`ContainerFrameItemButtonTemplate` hat **keinen Mixin**: Tasche kommt aus `GetParent():GetID()` – unser Holder-Rahmen mit `SetID(bag)` passt schon. Statt `b:SetBagID/UpdateExtended/UpdateQuestItem/UpdateNewItem/SetMatchesSearch` die globalen Classic-Helfer (`SetItemButtonTexture/Count/Desaturated/Quality`, `ContainerFrame_UpdateCooldown`, Quest-Textur `$parentIconQuestTexture`) → `core_mists.lua` mit `ns.UpdateButton` |
-| Offen/zu folgen | 🔧 | `IsAnyBagOpen` fehlt → eigene Prüfung über `IsBagOpen(0..4)` |
-| Sortieren | ❌ | MoP hat kein `C_Container.SortBags/SortBank` (kam mit WoD). Knopf ausblenden (eigenes Sortieren wäre ein eigenes Projekt) |
-| Bank | 🆕 | Alte Bank: `BANK_CONTAINER` (−1), 28 Plätze + 7 Banktaschen, Taschenplätze kaufen (`PurchaseSlot`, `GetBankSlotCost`), `BankFrame` (Mists/BankFrame.xml), Events `BANKFRAME_OPENED/CLOSED`, `PLAYERBANKSLOTS_CHANGED`. Keine Kriegsmeute-Bank, keine Reagenzienbank, keine Tabs → `bank_mists.lua` |
-| Alte-Erweiterung-Filter, Auktions-Filter | 🔧 | Auktions-Filter: `C_AuctionHouse.IsSellItemValid` nutzt MoPs Auktionshaus selbst → ✅❓; Alt-Filter nutzlos (alles ist „alt“) → ausblenden |
+| Offen/zu folgen | 🔧 | `IsAnyBagOpen` fehlt (Probe) → eigene Prüfung über `IsBagOpen(0..4)` ✅ |
+| Sortieren | ❌ | MoP hat kein `C_Container.SortBags/SortBank` und kein `SortBags` (Probe). Knopf ausblenden (eigenes Sortieren wäre ein eigenes Projekt) |
+| Bank | 🆕 | Alte Bank (Probe: −1 / 28 / 7, `PurchaseSlot`, `GetBankSlotCost`, `BankItemButtonGenericTemplate`, `PLAYERBANKSLOTS_CHANGED` ✅): `BANK_CONTAINER` (−1), 28 Plätze + 7 Banktaschen, Taschenplätze kaufen (`PurchaseSlot`, `GetBankSlotCost`), `BankFrame` (Mists/BankFrame.xml), Events `BANKFRAME_OPENED/CLOSED`, `PLAYERBANKSLOTS_CHANGED`. Keine Kriegsmeute-Bank, keine Reagenzienbank, keine Tabs → `bank_mists.lua` |
+| Alte-Erweiterung-Filter, Auktions-Filter | 🔧 | Auktions-Filter: `C_AuctionHouse.IsSellItemValid` ✅ (Probe); Alt-Filter nutzlos (alles ist „alt“) → ausblenden |
 | Verfolgte Gegenstände, AH-Wert | ✅ | |
 
 ### 4.6 Quests `DeckUI_Quests/`
@@ -239,25 +329,27 @@ MoP hat **Spezialisierungen und Dual-Spec** (zwei Talentgruppen). Statt „eine 
 | Blizzards Tracker abschalten | 🆕 | MoP nutzt **`WatchFrame`** (Wrath-Stil), nicht ObjectiveTracker. Abschalten = Ereignisse ab + verstecken (Taint-Regeln wie heute: nichts in Blizzards Listen schreiben) |
 | Quests | 🆕 | Alte Questlog-API (`GetNumQuestLogEntries`, `GetQuestLogTitle`, `GetQuestLogLeaderBoard`, `IsQuestWatched`, `GetQuestLogSpecialItemInfo` für Quest-Gegenstände) – Rendering/Layout/sichere Knöpfe bleiben gleich, nur das Daten-Sammeln ist neu (`quests_mists.lua`) |
 | Erfolge | 🔧 | `GetTrackedAchievements`, `GetAchievementCriteriaInfo` |
-| Szenario | 🔧 | MoP **hat** Szenarien: `C_Scenario.GetInfo/GetStepInfo` (von MoP-Code benutzt), Kriterien über `C_Scenario.GetCriteriaInfo` ❓ |
-| Herausforderungsmodus | 🆕 | MoP-Dungeon-Zeitläufe mit Gold/Silber/Bronze: `GetWorldElapsedTime`, `C_ChallengeMode.GetChallengeModeMapTimes/GetActiveChallengeMapID` |
+| Szenario | ✅🔧 | MoP **hat** Szenarien: `C_Scenario.GetInfo/GetStepInfo` und `C_ScenarioInfo.GetCriteriaInfo/GetCriteriaInfoByStep` ✅ – genau das, was scenario.lua heute nutzt. Retail-Teile (Tiefen-Kopf, Widgets, `C_ChallengeMode.GetActiveKeystoneInfo/GetDeathCount` fehlen) absichern |
+| Herausforderungsmodus | 🆕 | MoP-Dungeon-Zeitläufe mit Gold/Silber/Bronze: `GetWorldElapsedTime` ✅, `C_ChallengeMode.GetActiveChallengeMapID/GetMapUIInfo` ✅, `GetChallengeModeMapTimes` (Doku), `CHALLENGE_MODE_START` ✅ |
 | Kampagne, Weltquests, Bonusziele, Inhaltsverfolgung, Reisetagebuch, Initiativen, Rezepte, Tiefen, Jagd, Szenarioführer | ❌ | gibt es in MoP nicht (Dateien world.lua, tracking.lua-Teile, delves.lua, hunt.lua, guide.lua nicht in die MoP-Toc) |
-| Klick = verfolgen | 🔧 | statt `C_SuperTrack`: MoP-Quest-POI-Verfolgung über `SetSuperTrackedQuestID` (global) ❓ – sonst Klick öffnet nichts und markiert die Quest nur |
+| Klick = verfolgen | 🔧 | statt `C_SuperTrack`: globales `SetSuperTrackedQuestID/GetSuperTrackedQuestID` ✅ (Probe) – Klick verfolgt die Quest wie heute |
+| Quests | 🔧 | Probe: `GetQuestLogTitle`, `GetQuestLogLeaderBoard`, `GetQuestLogIndexByID`, `IsQuestWatched`, `AddQuestWatch/RemoveQuestWatch`, `GetQuestLogSpecialItemInfo`, `C_QuestLog.GetQuestObjectives`, `QUEST_WATCH_LIST_CHANGED` ✅; `C_QuestLog.GetInfo/GetTitleForQuestID/IsComplete/AbandonQuest` fehlen |
 
 ### 4.7 Karte `DeckUI_Map/`
 
 | Teil | MoP | Was zu tun ist |
 |---|---|---|
 | Minikarte eckig/rund | 🔧 | `MinimapCluster`, `MinimapBackdrop`, `MinimapCompassTexture`, `MiniMapMailFrame`, `MiniMapInstanceDifficulty`, `MiniMapChallengeMode`, `MinimapZoomIn/Out`, `GameTimeFrame` vorhanden; `AddonCompartmentFrame`, `ExpansionLandingPageMinimapButton`, `MiniMapIndicatorFrame_UpdatePosition` fehlen → PIECES-Liste je Flavor. Edit Mode kennt auch in MoP das System „Minimap“ |
-| Weltkarte | 🔧 | `WorldMapFrame` mit `BorderFrame`, `ScrollContainer`, `MaximizeMinimizeFrame`, `NavBar_CheckLength` vorhanden; im Spiel prüfen, welche Teile wir umfärben. Koordinaten-CVars (`worldMapShowPlayerCoords`, `mapFade`) ❓; MoP hat CVar `minimapShowPlayerCoords`/`coordsByTenths` |
+| Weltkarte | 🔧 | `WorldMapFrame` mit `BorderFrame`, `ScrollContainer`, `MaximizeMinimizeFrame`, `NavBar_CheckLength` vorhanden; im Spiel prüfen, welche Teile wir umfärben. Probe: `mapFade`, `miniWorldMap`, `rotateMinimap` ✅; **`worldMapShowPlayerCoords`, `worldMapShowCursorCoords`, `minimapShowPlayerCoords`, `coordsByTenths` fehlen** → diese Kästchen in MoP ausblenden, Koordinaten auf der Minikarte zeigen wir ohnehin selbst |
 | Questlog daneben | 🔧 | MoP hat `QuestMapFrame` (Wrath-Stil) *und* `QuestLogFrame` – welches das Spiel zeigt, entscheidet `miniWorldMap`/`questLogOpen`; testen |
 
 ### 4.8 Tooltip `DeckUI_Tooltip/`
 
 | Teil | MoP | Was zu tun ist |
 |---|---|---|
-| Aussehen, Anker, Zeilen | ✅ | `TooltipDataProcessor`, `GameTooltip_SetDefaultAnchor`, `SharedTooltip_SetBackdropStyle` vorhanden. Lebensbalken `GameTooltipStatusBar` ❓ (Classic-Name) |
-| Spec/Itemlevel anderer Spieler | 🔧 | `C_PaperDollInfo.GetInspectItemLevel` fehlt → Spec über `GetInspectSpecialization`, Itemlevel selbst aus den Inspektions-Gegenständen berechnen (oder nur Spec zeigen) |
+| Aussehen, Anker, Zeilen | ✅ | `TooltipDataProcessor`, `GameTooltip_SetDefaultAnchor`, `SharedTooltip_SetBackdropStyle` vorhanden. Lebensbalken: `GameTooltip.StatusBar` ist ein StatusBar ✅ (Probe). Name von `GameTooltipStatusBar` im Spiel prüfen |
+| Quest-Gegenstand (extras.lua) | 🔧 | `QuestDescription` liest die Questbeschreibung über `C_TooltipInfo.GetHyperlink` – fehlt in MoP (Probe). In MoP die Beschreibung weglassen (nur „Startet eine Quest“ zeigen), Abfrage mit `if C_TooltipInfo and C_TooltipInfo.GetHyperlink` absichern |
+| Spec/Itemlevel anderer Spieler | 🔧 | `C_PaperDollInfo.GetInspectItemLevel` fehlt → Spec über `GetInspectSpecialization` ✅, Itemlevel selbst aus den Inspektions-Gegenständen berechnen (oder nur Spec zeigen) |
 | Quest-Gegenstand, AH-Preis | ✅ | |
 | Ruf-Gegenstände | 🔧 | `repdata_mists.lua` aus wago `wow_classic` neu erzeugen; Ruf über MoP-Ruf (4.1) |
 | Berufswissen, Schlüssel der Tiefen-Truhe, Ensembles | ❌ | gibt es in MoP nicht |
@@ -268,7 +360,7 @@ Routen), keine Nutzer-Wegpunkte (`C_Map.SetUserWaypoint`, `USER_WAYPOINT_UPDATED
 
 | Teil | MoP | Was zu tun ist |
 |---|---|---|
-| Kompass (Himmelsrichtungen, Gruppe, Raritäten) | 🔧 | `GetPlayerFacing` ❓, `C_Map.GetPlayerMapPosition` vorhanden, `C_VignetteInfo` undokumentiert, aber von MoPs eigenem (geladenem) Kartencode benutzt ❓. Meter ohne `GetMapWorldSize`: über `C_Map.GetWorldPosFromMapPos` (vorhanden) zwei Ecken der Karte → Größe in Metern (so macht es HereBeDragons) |
+| Kompass (Himmelsrichtungen, Gruppe) | 🔧 | `GetPlayerFacing`, `UnitPosition`, `C_Map.GetPlayerMapPosition`, `C_Map.GetWorldPosFromMapPos` ✅ (Probe, offene Welt). **Raritäten ❌**: `C_VignetteInfo` fehlt laut Probe → die Vignetten-Schleife in compass.lua und der Vignetten-Zweig in Nav/core.lua nur in Retail. Meter ohne `GetMapWorldSize`: über `C_Map.GetWorldPosFromMapPos` (vorhanden) zwei Ecken der Karte → Größe in Metern (so macht es HereBeDragons) |
 | Ziel-Anzeige (Name, Pfeil, Distanz, Ankunft) | 🆕 | Ziel ist **unser** aktiver Wegpunkt oder die verfolgte Quest (Quest-POI aus `C_QuestLog.GetQuestsOnMap`); Distanz selbst gerechnet |
 | Leuchtfeuer in der Welt | ❌ | ohne `C_Navigation.GetFrame` keine Bildschirmposition → entfällt |
 | Wegpunktliste/Routen | 🔧 | Liste, Nadeln, Kompass-Punkte, Routen bleiben. Neu: **eigener Strg+Klick-Handler** auf der Weltkarte (`ScrollContainer`-HookScript), Ankunft nur noch über eigene Distanz |
@@ -277,7 +369,7 @@ Routen), keine Nutzer-Wegpunkte (`C_Map.SetUserWaypoint`, `USER_WAYPOINT_UPDATED
 ### 4.10 Week `DeckUI_Week/` – 🆕 eigene MoP-Woche
 Gleiche Tabelle/Fenster, neue Datenbasis (`data_mists.lua`, `collect_mists.lua`):
 - **Schlachtzüge**: Sperren (Mogu'shan, Herz der Angst, Terrasse, Thron des Donners, Schlacht um Orgrimmar) inkl.
-  **LFR-Flügel** – `GetSavedInstanceInfo` ❓
+  **LFR-Flügel** – `GetSavedInstanceInfo`/`GetNumSavedInstances` ✅
 - **Weltbosse** (Galleon, Sha des Zorns, Nalak, Oondasta, Erhabene, Ordos) – wöchentliche Quest-Flags
   (IDs per `/week record` + wago bestätigen)
 - **Wochen-Obergrenzen**: Tapferkeit (396), Eroberung (390) aus `C_CurrencyInfo.GetCurrencyInfo` (Wochenwerte)
@@ -302,7 +394,8 @@ Gleiche Tabelle/Fenster, neue Datenbasis (`data_mists.lua`, `collect_mists.lua`)
 | `DeckUI_Tooltip/repdata.lua` | durch `repdata_mists.lua` ersetzt |
 | Tooltip-Extras Berufswissen/Tiefen-Truhe/Ensembles | Inhalte gibt es nicht |
 | Taschen sortieren, Alt-Erweiterungs-Filter | API fehlt bzw. sinnlos |
-| `DeckUI_Cross/assist.lua` | nur falls die Probe keinen Assistenten findet |
+| Kompass-Raritäten (`C_VignetteInfo`) | API fehlt (Probe) |
+| Karten-Koordinaten-Kästchen (CVars) | CVars fehlen (Probe) |
 | Retail-Events `ACTIVE_PLAYER_SPECIALIZATION_CHANGED`, `MAJOR_FACTION_RENOWN_LEVEL_CHANGED`, `ACCOUNT_MONEY`, `BANK_TAB*`, `CONTENT_TRACKING*`, `PERKS_*`, `NAVIGATION_FRAME_*`, `SUPER_TRACKING_PATH_UPDATED`, `USER_WAYPOINT_UPDATED`, `TALKINGHEAD_*`, `PLAYER_CHOICE_UPDATE` | MoP kennt sie nicht – ein `RegisterEvent` darauf wirft einen Fehler. In gemeinsamem Code nur über eine Hilfsfunktion `D.RegisterEventIfKnown(frame, event)` |
 
 Nichts davon wird aus Retail gelöscht – es steht nur nicht in den MoP-Tocs.
@@ -331,7 +424,7 @@ Nichts davon wird aus Retail gelöscht – es steht nur nicht in den MoP-Tocs.
 
 | Phase | Inhalt | Fertig, wenn … |
 |---|---|---|
-| **0** | Probe laufen lassen, Plan aktualisieren | Auswertung liegt vor, ❓ beantwortet |
+| **0** ✅ | Probe laufen lassen, Plan aktualisieren | erledigt 25.10.2026 (Abschnitt 3a); Rest-❓ werden in den Phasen im Spiel geklärt |
 | **1** | Flavor-Gerüst, `_Mists.toc` (zunächst nur Hub + Cross), Release-Skripte, Junctions | MoP lädt DeckUI ohne Lua-Fehler, Einstellungsfenster öffnet, `/deck build` zeigt 50504 |
 | **2** | Cross komplett (Kreuze, Gamepad, Haltungen, Leisten 3–8, Menüs) | Auf dem Deck in MoP spielbar: LT/RT+Tasten zaubern, Gedrückt-halten wiederholt, Fahrzeuge |
 | **3** | Orbs: oUF-Patches, Aura-Ersatz, Ressourcen, alle Stile, Gruppe/Raid | Spieler/Ziel/Fokus/Gruppe/Raid ohne Fehler, Auren sichtbar, jede MoP-Klasse zeigt ihre Ressource |
@@ -358,10 +451,11 @@ released werden (Module, die noch nicht portiert sind, fehlen in der MoP-Toc ein
 9. Gegenprobe Retail: alles wie vorher (die Retail-Toc darf sich nur um `D.IsMists`-Zweige ändern).
 
 ## 9. Risiken und offene Fragen
-- **Probe-Ergebnis** entscheidet bei: Gamepad-CVars, alten Quest-/Ruf-/Instanz-Funktionen, `GetPlayerFacing`,
-  Tooltip-Lebensbalken, Haltungsknopf-Namen, Schnellmenü-Befehlen, Assistent, geheimen Werten.
-- **Geheime Werte in MoP**: API vorhanden, vermutlich nie aktiv. Unser Code verträgt beides; falls aktiv, gelten die
-  Retail-Regeln 1:1.
+- **Probe beantwortet** (3a): Gamepad-CVars, alte Quest-, Ruf- und Instanz-Funktionen, `GetPlayerFacing`,
+  Haltungsknöpfe, Schnellmenü-Befehle und Assistent-API. Offen sind nur Dinge, die eine Stufe-1-Figur ohne Ziel nicht
+  zeigt: Dual-Spec, Ressourcen, Plaketten, geheime Werte im Kampf.
+- **Geheime Werte in MoP**: API vorhanden, `UnitHealth` außerhalb des Kampfs nicht geheim. Unser Code verträgt beides;
+  falls im Kampf aktiv, gelten die Retail-Regeln 1:1.
 - **CurseForge**: führt es „5.5.4“ als Spielversion für dieses Projekt? → Workflow-Probelauf.
 - **MoP-Patches**: Classic-Inhaltsphasen ändern IDs/Inhalte (5.5.4 ≈ Inhalt von 5.4, Zeitlose Insel/Schlacht um
   Orgrimmar). `check-game-data.py --branch wow_classic` bei jeder Phase laufen lassen.

@@ -12,12 +12,22 @@ if not files:
     sys.exit("no DeckUI_Probe.lua under " + WTF)
 src = open(max(files, key=os.path.getmtime), encoding="utf-8", errors="ignore").read()
 
-# the saved file is nested tables of ["key"] = "value"; read section by section
+# the saved file is Lua; load it in an empty environment (lupa) - the client's layout
+# (indentation, line ends) differs from anything a regex would assume
+from lupa import LuaRuntime
+lua = LuaRuntime()
+db = lua.execute("local src = ...; local env = {}; assert(load(src, 'probe', 't', env))(); return env.DeckUIProbeDB", src)
+
+def plain(v):
+    if lua.eval("type")(v) == "table":
+        return {str(k): plain(x) for k, x in v.items()}
+    return v if isinstance(v, (int, float, bool)) else str(v)
+
 def section(name):
-    m = re.search(r'\["' + name + r'"\] = \{(.*?)\n\t\},', src, re.S)
-    if not m:
+    t = db[name] if db is not None else None
+    if t is None:
         return {}
-    return dict(re.findall(r'\["([^"]+)"\] = "?([^"\n]*?)"?,\n', m.group(1) + "\n"))
+    return {k: (v if isinstance(v, dict) else str(v)) for k, v in plain(t).items()}
 
 res = {k: section(k) for k in ("meta", "errors", "api", "globals", "events", "enums", "cvars", "atlases",
                                "templates", "methods", "bindings", "values", "cnamespaces")}
