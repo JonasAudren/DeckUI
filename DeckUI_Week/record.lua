@@ -26,17 +26,30 @@ local INTERVAL, KEEP = 2, 200
 
 local seen, count, ticker
 
--- what data.lua says about a quest ID, or nil
+-- every completed quest ID; Mists has only the old call, a table keyed by ID
+local function CompletedIDs()
+    if C_QuestLog.GetAllCompletedQuestIDs then return C_QuestLog.GetAllCompletedQuestIDs() end
+    local ids = {}
+    for id in pairs(GetQuestsCompleted() or {}) do ids[#ids + 1] = id end
+    return ids
+end
+
+local QuestTitle = C_QuestLog.GetTitleForQuestID or C_QuestLog.GetQuestInfo or function() end
+
+-- what data.lua (data_mists.lua) says about a quest ID, or nil
 local function Known(id)
-    if ns.PREY[id] then return "prey hunt (" .. ns.PREY[id] .. ")" end
-    if id == ns.DELVES.weeklyQuest then return "delve weekly" end
-    if id == ns.DELVES.bountyQuest then return "Trovehunter's Bounty" end
+    if ns.PREY and ns.PREY[id] then return "prey hunt (" .. ns.PREY[id] .. ")" end
+    if ns.DELVES and id == ns.DELVES.weeklyQuest then return "delve weekly" end
+    if ns.DELVES and id == ns.DELVES.bountyQuest then return "Trovehunter's Bounty" end
+    for _, b in ipairs(ns.WORLD_BOSSES or {}) do
+        if b.quest == id then return "world boss: " .. b.name end
+    end
     for _, w in ipairs(ns.WEEKLIES) do
         for _, q in ipairs(w.ids) do
             if q == id then return "weekly: " .. w.name end
         end
     end
-    for skill, sources in pairs(ns.PROFESSIONS) do
+    for skill, sources in pairs(ns.PROFESSIONS or {}) do
         for _, s in ipairs(sources) do
             for _, q in ipairs(s.ids) do
                 if q == id then
@@ -50,7 +63,7 @@ local function Known(id)
 end
 
 local function Found(id)
-    local title = C_QuestLog.GetTitleForQuestID(id)
+    local title = QuestTitle(id)
     local known = Known(id)
     local entry = {
         id = id, time = time(), zone = GetZoneText() or "",
@@ -65,7 +78,7 @@ local function Found(id)
 end
 
 local function Check()
-    local ids = C_QuestLog.GetAllCompletedQuestIDs()
+    local ids = CompletedIDs()
     if not ids or #ids == count then return end
     count = #ids
     for _, id in ipairs(ids) do
@@ -82,7 +95,7 @@ local function Start()
         return
     end
     seen = {}
-    local ids = C_QuestLog.GetAllCompletedQuestIDs() or {}
+    local ids = CompletedIDs() or {}
     for _, id in ipairs(ids) do seen[id] = true end
     count = #ids
     ticker = C_Timer.NewTicker(INTERVAL, Check)

@@ -93,6 +93,7 @@ local function Locks()
     end)
     return locks
 end
+ns.Locks = Locks
 
 local function Keystone()
     local key = {}
@@ -145,6 +146,7 @@ local function Currency(id)
         max = (not seasonal) and (c.maxQuantity or 0) > 0 and c.maxQuantity or nil,
     }
 end
+ns.Currency = Currency
 
 local function Season()
     local id = C_MythicPlus.GetCurrentSeason and C_MythicPlus.GetCurrentSeason()
@@ -167,6 +169,7 @@ local function Currencies()
 end
 
 local Done = C_QuestLog.IsQuestFlaggedCompleted
+ns.Done = Done
 
 local function Delves()
     local data = ns.DELVES
@@ -243,6 +246,7 @@ local function Weeklies()
     end
     return done
 end
+ns.Weeklies = Weeklies
 
 local function TravelersLog()
     local info = C_PerksActivities and C_PerksActivities.GetPerksActivitiesInfo and C_PerksActivities.GetPerksActivitiesInfo()
@@ -260,9 +264,17 @@ end
 -------------------------------------------------------------------
 -- The snapshot of this character
 -------------------------------------------------------------------
+-- what this game version collects; Mists has its own (collect_mists.lua)
+local RETAIL = {
+    vault = Vault, locks = Locks, keystone = Keystone, renown = Renown, travelers = TravelersLog,
+    crests = Crests, currencies = Currencies, delves = Delves, prey = Prey, profs = Professions,
+    weekliesDone = Weeklies,
+}
+
 local function Snapshot()
     if not DeckWeekDB then return end
-    LearnWeeklies()
+    local learn = ns.LearnWeeklies or LearnWeeklies
+    learn()
     local _, class = UnitClass("player")
     local _, ilvl = GetAverageItemLevel()
     local snap = {
@@ -272,11 +284,7 @@ local function Snapshot()
         resetAt = time() + (C_DateAndTime.GetSecondsUntilWeeklyReset() or 0),
     }
     -- each part on its own: one that fails leaves the others standing
-    for key, collect in pairs({
-        vault = Vault, locks = Locks, keystone = Keystone, renown = Renown, travelers = TravelersLog,
-        crests = Crests, currencies = Currencies, delves = Delves, prey = Prey, profs = Professions,
-        weekliesDone = Weeklies,
-    }) do
+    for key, collect in pairs(ns.COLLECTORS or RETAIL) do
         local ok, result = pcall(collect)
         snap[key] = ok and result or nil
     end

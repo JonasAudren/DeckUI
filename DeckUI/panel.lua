@@ -432,6 +432,9 @@ D.MODULE_DESCRIPTIONS = {
     Nav     = "A compass bar, the navigation target with distance and arrival time, and /way waypoints.",
     Week    = "The week at a glance for all your characters: Great Vault, keystone, hunts, delves, profession knowledge, weekly quests.",
 }
+if D.IsMists then
+    D.MODULE_DESCRIPTIONS.Week = "The week at a glance for all your characters: raid lockouts, valor and conquest, world bosses, challenge modes, weekly quests."
+end
 
 local function ModuleLoaded(key)
     return C_AddOns.IsAddOnLoaded(D.MODULE_ADDONS[key])

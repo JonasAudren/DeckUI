@@ -20,8 +20,9 @@ local GREEN, GREY, ORANGE, RED = "|cff33ff33", "|cff888888", "|cffff9933", "|cff
 local SQUARE = "|TInterface\\Buttons\\WHITE8x8:9:9:0:0:8:8:0:8:0:8:%d:%d:%d|t"
 local PAD = 6
 
--- the table's columns: key, heading, width, explanation on mouse-over
-local COLS = {
+-- the table's columns: key, heading, width, explanation on mouse-over.
+-- Mists brings its own (view_mists.lua); name first, weekly quests last.
+local COLS = ns.COLS or {
     { key = "name",   title = "Character", w = 150 },
     { key = "ilvl",   title = "ilvl",      w = 38, tip = "Average item level (equipped)." },
     { key = "raid",   title = "Raid",      w = 54, tip = "Great Vault: raid row." },
@@ -230,6 +231,25 @@ function Column:Heading(text)
     return r
 end
 
+-- currencies with their weekly or season cap
+function Column:Currencies(heading, list, stale)
+    if not list or #list == 0 then return end
+    self:Heading(heading)
+    for _, c in ipairs(list) do
+        local right = BreakUpLargeNumbers(c.quantity or 0)
+        if c.weekMax then
+            local earned = stale and 0 or (c.weekEarned or 0)
+            right = right .. ("  %sweek %d/%d|r"):format(earned >= c.weekMax and GREEN or GREY, earned, c.weekMax)
+        elseif c.seasonMax then
+            local color = (c.seasonEarned or 0) >= c.seasonMax and GREEN or GREY
+            right = right .. ("  %sseason %d/%d|r"):format(color, c.seasonEarned or 0, c.seasonMax)
+        elseif c.max then
+            right = right .. ("  %s/ %d|r"):format(GREY, c.max)
+        end
+        self:Line(ns.Fmt.Icon(c.icon) .. (c.name or "?"), right)
+    end
+end
+
 -------------------------------------------------------------------
 -- Formatting
 -------------------------------------------------------------------
@@ -262,6 +282,15 @@ local function Count(n, max)
     return ("%s%d/%d|r"):format(color, n, max)
 end
 
+-- a quest's title in the client's language, when the client has it
+local QuestTitle = C_QuestLog.GetTitleForQuestID or C_QuestLog.GetQuestInfo or function() end
+
+-- for Mists' columns and details (view_mists.lua)
+ns.Fmt = {
+    GREEN = GREEN, GREY = GREY, ORANGE = ORANGE, RED = RED,
+    Square = Square, Icon = Icon, Count = Count, Duration = Duration, QuestTitle = QuestTitle,
+}
+
 -- three slots of one vault row: squares, and the slots' state
 local function VaultSlots(snap, stale, kind)
     local slots = not stale and snap.vault and snap.vault[kind] or nil
@@ -287,7 +316,7 @@ local KIND_NAMES = { treatise = "Treatise", quest = "Weekly quest", treasure = "
 local function QuestList()
     local list = {}
     for _, w in ipairs(ns.WEEKLIES) do
-        local name = #w.ids == 1 and C_QuestLog.GetTitleForQuestID(w.ids[1]) or w.name
+        local name = #w.ids == 1 and QuestTitle(w.ids[1]) or w.name
         list[#list + 1] = { key = w.ids[1], name = name }
     end
     local learned = {}
@@ -303,10 +332,8 @@ end
 local expanded = {}       -- character key -> unfolded
 local showHidden = false  -- hidden weekly quests listed (greyed) this session
 
-local function FillRow(r, key, snap, stale, live)
-    local c = r.cells
-    c.name:SetText(ClassName(snap) .. (live and (GREEN .. " •|r") or ""))
-    c.ilvl:SetText(snap.ilvl or "")
+-- retail's cells between item level and weekly quests
+local function RetailCells(c, snap, stale)
     for _, kind in ipairs({ "raid", "mplus", "world" }) do
         c[kind]:SetText((VaultSlots(snap, stale, kind)))
     end
@@ -328,6 +355,14 @@ local function FillRow(r, key, snap, stale, live)
         points, max = points + (stale and 0 or p.points), max + p.max
     end
     c.prof:SetText(max > 0 and Count(points, max) or (GREY .. "-|r"))
+end
+
+local function FillRow(r, key, snap, stale, live)
+    local c = r.cells
+    c.name:SetText(ClassName(snap) .. (live and (GREEN .. " •|r") or ""))
+    c.ilvl:SetText(snap.ilvl or "")
+    local cells = ns.FillCells or RetailCells
+    cells(c, snap, stale)
 
     local done, total = 0, 0
     for _, q in ipairs(QuestList()) do
@@ -360,12 +395,8 @@ end
 -------------------------------------------------------------------
 -- The details of one character, in two columns
 -------------------------------------------------------------------
-local function Details(snap, stale, live, y)
-    local half = math.floor((CW - 3 * PAD) / 2)
-    local L = NewColumn(PAD, half, y)
-    local R = NewColumn(2 * PAD + half, half, y)
-
-    -- left: vault, mythic+, lockouts, weekly quests
+-- retail's left column above the lockouts: vault and mythic+
+local function RetailTop(L, snap, stale)
     L:Heading("Great Vault")
     for _, kind in ipairs({ "raid", "mplus", "world" }) do
         local squares, progress, top, ilvls = VaultSlots(snap, stale, kind)
@@ -382,6 +413,71 @@ local function Details(snap, stale, live, y)
     L:Line("Keystone", key.level and ("+%d %s"):format(key.level, key.map or "") or (GREY .. "none|r"))
     L:Line("Runs this week", stale and (GREY .. "0|r")
         or ("%d%s"):format(key.runs or 0, (key.best or 0) > 0 and ("  (best +%d)"):format(key.best) or ""))
+end
+
+-- retail's right column: delves, prey, knowledge, crests, currencies, renown
+local function RetailRight(R, snap, stale, live)
+    R:Heading("Delves")
+    local delves = snap.delves
+    if delves then
+        local name = QuestTitle(ns.DELVES.weeklyQuest) or ns.DELVES.weeklyName
+        R:Line(name, (not stale and delves.weekly) and (GREEN .. "done|r") or "open")
+        R:Line("Trovehunter's Bounty", (not stale and delves.bountyUsed) and (GREEN .. "used|r")
+            or delves.bounty > 0 and ("%d in the bags"):format(delves.bounty) or (GREY .. "none|r"))
+        R:Line("Restored Coffer Keys", delves.keys)
+    else
+        R:Line(GREY .. "Not seen since the update - log this character in.|r")
+    end
+
+    R:Heading("Prey")
+    local prey = snap.prey
+    for _, d in ipairs(PREY_NAMES) do
+        R:Line(d[2], Count(not stale and prey and prey.done[d[1]] or 0, ns.PREY_CAP))
+    end
+    if live and prey and prey.active then
+        R:Line("Active hunt", type(prey.active) == "string" and prey.active or "yes")
+    end
+
+    if snap.profs and #snap.profs > 0 then
+        R:Heading("Profession knowledge")
+        for _, p in ipairs(snap.profs) do
+            R:Line(Icon(p.icon) .. (p.name or "?"), Count(stale and 0 or p.points, p.max))
+            for _, kind in ipairs({ "treatise", "quest", "treasure" }) do
+                local part = p.parts and p.parts[kind]
+                if part and part.max > 0 then
+                    R:Line(GREY .. "    " .. KIND_NAMES[kind] .. "|r", Count(stale and 0 or part.points, part.max))
+                end
+            end
+        end
+    end
+
+    R:Currencies("Crests", snap.crests, stale)
+    R:Currencies("Currencies", snap.currencies, stale)
+
+    if snap.renown and #snap.renown > 0 then
+        R:Heading("Renown")
+        for _, f in ipairs(snap.renown) do
+            local maxed = f.max and f.level >= f.max
+            R:Line(f.name, maxed and (GREEN .. ("%d|r"):format(f.level))
+                or ("%d / %d"):format(f.level, f.max or 0))
+        end
+    end
+
+    local log = snap.travelers
+    if log and log.max > 0 then
+        R:Heading("Traveler's Log")
+        R:Line(log.month or "", Count(log.points, log.max))
+    end
+end
+
+local function Details(snap, stale, live, y)
+    local half = math.floor((CW - 3 * PAD) / 2)
+    local L = NewColumn(PAD, half, y)
+    local R = NewColumn(2 * PAD + half, half, y)
+
+    -- left: (retail: vault, mythic+), lockouts, weekly quests
+    local top = ns.DetailsTop or RetailTop
+    top(L, snap, stale)
 
     local locks = {}
     for _, l in ipairs(snap.locks or {}) do
@@ -429,75 +525,9 @@ local function Details(snap, stale, live, y)
         end)
     end
 
-    -- right: delves, prey, knowledge, crests, currencies, renown
-    R:Heading("Delves")
-    local delves = snap.delves
-    if delves then
-        local name = C_QuestLog.GetTitleForQuestID(ns.DELVES.weeklyQuest) or ns.DELVES.weeklyName
-        R:Line(name, (not stale and delves.weekly) and (GREEN .. "done|r") or "open")
-        R:Line("Trovehunter's Bounty", (not stale and delves.bountyUsed) and (GREEN .. "used|r")
-            or delves.bounty > 0 and ("%d in the bags"):format(delves.bounty) or (GREY .. "none|r"))
-        R:Line("Restored Coffer Keys", delves.keys)
-    else
-        R:Line(GREY .. "Not seen since the update - log this character in.|r")
-    end
-
-    R:Heading("Prey")
-    local prey = snap.prey
-    for _, d in ipairs(PREY_NAMES) do
-        R:Line(d[2], Count(not stale and prey and prey.done[d[1]] or 0, ns.PREY_CAP))
-    end
-    if live and prey and prey.active then
-        R:Line("Active hunt", type(prey.active) == "string" and prey.active or "yes")
-    end
-
-    if snap.profs and #snap.profs > 0 then
-        R:Heading("Profession knowledge")
-        for _, p in ipairs(snap.profs) do
-            R:Line(Icon(p.icon) .. (p.name or "?"), Count(stale and 0 or p.points, p.max))
-            for _, kind in ipairs({ "treatise", "quest", "treasure" }) do
-                local part = p.parts and p.parts[kind]
-                if part and part.max > 0 then
-                    R:Line(GREY .. "    " .. KIND_NAMES[kind] .. "|r", Count(stale and 0 or part.points, part.max))
-                end
-            end
-        end
-    end
-
-    local function Currencies(heading, list)
-        if not list or #list == 0 then return end
-        R:Heading(heading)
-        for _, c in ipairs(list) do
-            local right = BreakUpLargeNumbers(c.quantity or 0)
-            if c.weekMax then
-                local earned = stale and 0 or (c.weekEarned or 0)
-                right = right .. ("  %sweek %d/%d|r"):format(earned >= c.weekMax and GREEN or GREY, earned, c.weekMax)
-            elseif c.seasonMax then
-                local color = (c.seasonEarned or 0) >= c.seasonMax and GREEN or GREY
-                right = right .. ("  %sseason %d/%d|r"):format(color, c.seasonEarned or 0, c.seasonMax)
-            elseif c.max then
-                right = right .. ("  %s/ %d|r"):format(GREY, c.max)
-            end
-            R:Line(Icon(c.icon) .. (c.name or "?"), right)
-        end
-    end
-    Currencies("Crests", snap.crests)
-    Currencies("Currencies", snap.currencies)
-
-    if snap.renown and #snap.renown > 0 then
-        R:Heading("Renown")
-        for _, f in ipairs(snap.renown) do
-            local maxed = f.max and f.level >= f.max
-            R:Line(f.name, maxed and (GREEN .. ("%d|r"):format(f.level))
-                or ("%d / %d"):format(f.level, f.max or 0))
-        end
-    end
-
-    local log = snap.travelers
-    if log and log.max > 0 then
-        R:Heading("Traveler's Log")
-        R:Line(log.month or "", Count(log.points, log.max))
-    end
+    -- right: what the week holds besides
+    local right = ns.DetailsRight or RetailRight
+    right(R, snap, stale, live)
 
     return math.min(L.y, R.y)
 end
@@ -641,7 +671,9 @@ end)
 button:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
     GameTooltip:SetText("This week")
-    GameTooltip:AddLine(("Great Vault: %d of 9 slots unlocked"):format(UnlockedSlots()), 1, 1, 1)
+    if not D.IsMists then
+        GameTooltip:AddLine(("Great Vault: %d of 9 slots unlocked"):format(UnlockedSlots()), 1, 1, 1)
+    end
     GameTooltip:AddLine("Reset in " .. Duration(C_DateAndTime.GetSecondsUntilWeeklyReset()), 0.7, 0.7, 0.7)
     GameTooltip:AddLine("Click: open the week overview", 0.7, 0.7, 0.7)
     GameTooltip:AddLine("Drag: move it", 0.7, 0.7, 0.7)

@@ -60,8 +60,9 @@ D.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 -- The modules ported to Mists so far, one phase of the port at a time.
 -- The others have no _Mists.toc: the client would fall back to the retail
 -- one and run retail code, so they are not offered at all.
-D.MISTS_MODULES = { Cross = true, Orbs = true, Spec = true, Bags = true, Tooltip = true, Map = true, Quests = true, Nav = true }
+D.MISTS_MODULES = { Cross = true, Orbs = true, Spec = true, Bags = true, Tooltip = true, Map = true, Quests = true, Nav = true, Week = true }
 if D.IsMists then
+    D.MODULE_TITLES.Week = "Week (lockouts, valor, weeklies)"
     for i = #D.MODULE_ORDER, 1, -1 do
         if not D.MISTS_MODULES[D.MODULE_ORDER[i]] then table.remove(D.MODULE_ORDER, i) end
     end
