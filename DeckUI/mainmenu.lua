@@ -55,16 +55,8 @@ bar:Hide()
 
 local buttons = {}
 
-local function Build(name)
-    local blizzard = _G[name]
-    local b = CreateFrame("Button", nil, bar, "SecureActionButtonTemplate")
-    b:SetSize(SIZE, SIZE)
-    -- down and up: the template acts on the one ActionButtonUseKeyDown names
-    b:RegisterForClicks("AnyUp", "AnyDown")
-    b:SetAttribute("type", "click")
-    b:SetAttribute("clickbutton", blizzard)
-    b.blizzard = blizzard
-
+-- the round look every button shares: gold ring, dark disc, masked icon
+local function Dress(b)
     local mask = D.RoundMask(b)
     local ring = b:CreateTexture(nil, "BACKGROUND", nil, -8)
     ring:SetSize(SIZE + 4, SIZE + 4)
@@ -89,6 +81,18 @@ local function Build(name)
     hover:SetTexture(D.DISC)
     hover:SetVertexColor(1, 1, 1, 0.15)
     hover:SetBlendMode("ADD")
+end
+
+local function Build(name)
+    local blizzard = _G[name]
+    local b = CreateFrame("Button", nil, bar, "SecureActionButtonTemplate")
+    b:SetSize(SIZE, SIZE)
+    -- down and up: the template acts on the one ActionButtonUseKeyDown names
+    b:RegisterForClicks("AnyUp", "AnyDown")
+    b:SetAttribute("type", "click")
+    b:SetAttribute("clickbutton", blizzard)
+    b.blizzard = blizzard
+    Dress(b)
 
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -103,8 +107,40 @@ local function Build(name)
     return b
 end
 
+-- The week overview as one more bubble (owner's wish, 2026-10-26), last in
+-- the row where the game menu button was. Our own window, so a plain
+-- button calls DeckUI's toggle - no Blizzard frame involved, no secure
+-- click needed, works in combat. Shown while the Week module is loaded
+-- (D.weekToggle exists then); the module's own round button stays a
+-- choice of its own on the Week page.
+local function BuildWeek()
+    local b = CreateFrame("Button", nil, bar)
+    b:SetSize(SIZE, SIZE)
+    b:RegisterForClicks("LeftButtonUp")
+    Dress(b)
+    b.icon:SetTexture("Interface\\Icons\\INV_Misc_Note_02")
+    b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    b.icon:SetSize(SIZE - 4, SIZE - 4)
+    b.week = true
+    b:SetScript("OnClick", function() D.ToggleWeek() end)
+    b:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("This week", 1, 1, 1)
+        GameTooltip:AddLine("The week overview for all your characters", 0.8, 0.8, 0.8)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", GameTooltip_Hide)
+    return b
+end
+
+local function Available(b)
+    if b.week then return D.weekToggle ~= nil end
+    return b.blizzard:IsShown()
+end
+
 -- icon, enabled state and Blizzard's alert flash, read off its button
 local function Paint(b)
+    if b.week then return end
     local blizzard = b.blizzard
     local enabled = blizzard:IsEnabled()
     if blizzard == CharacterMicroButton then
@@ -143,7 +179,7 @@ local function Layout()
     local x = 0
     for _, b in ipairs(buttons) do
         b:ClearAllPoints()
-        if b.blizzard:IsShown() then
+        if Available(b) then
             b:SetPoint("LEFT", bar, "LEFT", x, 0)
             b:Show()
             x = x + SIZE + GAP
@@ -208,6 +244,7 @@ function D.ApplyMainMenu()
         for _, name in ipairs(BUTTONS) do
             if _G[name] then buttons[#buttons + 1] = Build(name) end
         end
+        buttons[#buttons + 1] = BuildWeek()
     end
     if on then
         for _, b in ipairs(buttons) do Paint(b) end
