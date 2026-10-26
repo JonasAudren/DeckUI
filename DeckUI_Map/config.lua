@@ -35,8 +35,11 @@ D.RegisterModule("Map", {
             "Tracking, calendar, the addon list and the zoom buttons appear while the mouse is over the minimap.")
 
         f:Label("World map")
-        f:Slider("Size (this device)", 0.5, 1.4, 0.05, pct, device, "worldMapScale",
-            Store("worldMapScale", ns.ApplyWorldMapScale))
+        -- Mists' map cannot be scaled (worldmap.lua, ApplyWorldMapScale)
+        if not D.IsMists then
+            f:Slider("Size (this device)", 0.5, 1.4, 0.05, pct, device, "worldMapScale",
+                Store("worldMapScale", ns.ApplyWorldMapScale))
+        end
         f:Checkbox("Open without the quest log", db, "questLogClosed", function() end)
         -- part of the restyle, which Mists' map does not get (worldmap.lua)
         if not D.IsMists then

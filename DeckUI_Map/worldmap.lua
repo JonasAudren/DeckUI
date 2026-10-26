@@ -24,7 +24,12 @@ local D = DeckUI
 -- protected frame either.
 -------------------------------------------------------------------
 function ns.ApplyWorldMapScale()
-    if not WorldMapFrame then return end
+    -- Not in Mists: its map canvas takes the raw cursor position
+    -- (MapCanvasScrollControllerMixin:GetCursorPosition, 5.5.4 - retail
+    -- divides by the effective scale), so on a scaled map the zone
+    -- highlight and every click sat beside the mouse (owner, 2026-10-26).
+    -- Its windowed map is small already.
+    if not WorldMapFrame or D.IsMists then return end
     WorldMapFrame:SetScale(ns.DeviceDB().worldMapScale)
     -- An open map is re-placed the next time it opens. Calling the panel
     -- manager's UpdateUIPanelPositions from here would run it tainted - the
