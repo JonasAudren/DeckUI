@@ -12,8 +12,10 @@ local D = DeckUI
 --
 -- Where Blizzard sets the look:
 --  - every bar: DamageMeterEntryMixin:UpdateStyle (on creation, on a
---    style change) sets the background atlas; a post-hook turns the bar
---    flat, the background dark, hides the shadow edge and swaps the font.
+--    style change) sets the background atlas; afterwards we turn the bar
+--    flat, the background dark, hide the shadow edge and swap the font -
+--    when the ScrollBox reports the bar set up, and after the window's
+--    setters that restyle its bars (no hook on the bar, see Watch below).
 --    Its opacity stays Blizzard's (the "background opacity" setting sets
 --    the alpha of the very textures we recolour);
 --  - every window: DamageMeterSessionWindowMixin:SetStyle (on creation
@@ -84,29 +86,53 @@ local function StyleWindow(window)
     end
 end
 
+-- A bar is restyled after Blizzard has set it up, without a hook on the
+-- bar itself: the first version post-hooked DamageMeterEntryMixin.
+-- UpdateStyle, and on 12.1.5 that hook failed inside its own wrapper,
+-- "attempt to call a nil value" with no line of ours on the stack, every
+-- time Edit Mode laid the meter out (owner, 2026-10-26). Instead the
+-- ScrollBox tells us each bar it has set up (OnInitializedFrame, after
+-- Blizzard's own acquire callback ran UpdateStyle), and a window's setters
+-- that restyle its bars (style, icons, bar height, text size, colours,
+-- opacity) are followed by a pass over that window.
+local watched = {}   -- scroll box -> true once we listen to it
+
+local function Watch(scrollBox)
+    if not scrollBox or watched[scrollBox] or not scrollBox.RegisterCallback then return end
+    watched[scrollBox] = true
+    scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnInitializedFrame, function(_, frame)
+        StyleEntry(frame)
+    end, watched)
+    if scrollBox.ForEachFrame then scrollBox:ForEachFrame(StyleEntry) end
+end
+
+local function StyleWholeWindow(window)
+    if not Enabled() then return end
+    StyleWindow(window)
+    if window.GetScrollBox then Watch(window:GetScrollBox()) end
+    if window.ForEachEntryFrame then window:ForEachEntryFrame(StyleEntry) end
+    local container = window.MinimizeContainer
+    if container and container.LocalPlayerEntry then StyleEntry(container.LocalPlayerEntry) end
+    local source = container and container.SourceWindow
+    if source then Watch(source.ScrollBox) end
+end
+
 local function StyleExisting()
     if not (DamageMeter and DamageMeter.ForEachSessionWindow) then return end
-    DamageMeter:ForEachSessionWindow(function(window)
-        StyleWindow(window)
-        if window.ForEachEntryFrame then window:ForEachEntryFrame(StyleEntry) end
-        local container = window.MinimizeContainer
-        if container and container.LocalPlayerEntry then StyleEntry(container.LocalPlayerEntry) end
-        local source = container and container.SourceWindow
-        if source and source.ScrollBox and source.ScrollBox.ForEachFrame then
-            source.ScrollBox:ForEachFrame(StyleEntry)
-        end
-    end)
+    DamageMeter:ForEachSessionWindow(StyleWholeWindow)
 end
+
+local WINDOW_SETTERS = { "SetStyle", "SetShowBarIcons", "SetBarHeight", "SetTextScale",
+    "SetUseClassColor", "SetBackgroundAlpha" }
 
 local hooked = false
 local function Hook()
     if hooked then return end
     hooked = true
-    if DamageMeterEntryMixin and DamageMeterEntryMixin.UpdateStyle then
-        hooksecurefunc(DamageMeterEntryMixin, "UpdateStyle", StyleEntry)
-    end
-    if DamageMeterSessionWindowMixin and DamageMeterSessionWindowMixin.SetStyle then
-        hooksecurefunc(DamageMeterSessionWindowMixin, "SetStyle", StyleWindow)
+    local mixin = DamageMeterSessionWindowMixin
+    if not mixin then return end
+    for _, name in ipairs(WINDOW_SETTERS) do
+        if mixin[name] then hooksecurefunc(mixin, name, StyleWholeWindow) end
     end
 end
 
