@@ -31,6 +31,7 @@ local QUEST_ITEM_CLASS = Enum.ItemClass and Enum.ItemClass.Questitem or 12
 -- the quest's description: the line Blizzard's quest link tooltip shows
 -- under the title (the fourth once the quest is taken, else the third)
 local function QuestDescription(questID)
+    if not (C_TooltipInfo and C_TooltipInfo.GetHyperlink) then return end   -- Mists: none
     local data = C_TooltipInfo.GetHyperlink(("quest:%d"):format(questID))
     local line = data and data.lines and data.lines[C_QuestLog.IsOnQuest(questID) and 4 or 3]
     local text = line and line.leftText
@@ -47,12 +48,17 @@ local function QuestItemLines(tooltip, itemID)
     local questID = quest and quest.questID
     if not questID then return end
 
-    local title = C_QuestLog.GetTitleForQuestID(questID)
-    if not title then return end
+    -- Mists has neither GetTitleForQuestID nor ReadyForTurnIn: the quest's
+    -- own name from C_QuestLog.GetQuestInfo, and IsQuestComplete
+    local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
+        or C_QuestLog.GetQuestInfo and C_QuestLog.GetQuestInfo(questID)
+    if not title or title == "" then return end
+    local ready = C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID)
+        or not C_QuestLog.ReadyForTurnIn and IsQuestComplete and IsQuestComplete(questID)
     tooltip:AddLine(" ")
     tooltip:AddLine(title, GOLD[1], GOLD[2], GOLD[3], true)
     if C_QuestLog.IsOnQuest(questID) then
-        if C_QuestLog.ReadyForTurnIn(questID) then
+        if ready then
             tooltip:AddLine(QUEST_WATCH_QUEST_READY or "Ready for turn-in", GREEN[1], GREEN[2], GREEN[3], true)
         else
             tooltip:AddLine(QUEST_TOOLTIP_ACTIVE or "You are on this quest", GREEN[1], GREEN[2], GREEN[3], true)
@@ -106,6 +112,7 @@ local function Unspent(profIndex)
 end
 
 local function KnowledgeLine(tooltip, spellID)
+    if not C_ProfSpecs then return end   -- Mists: no profession specializations
     local spellName = C_Spell.GetSpellName(spellID)
     if not spellName then return end
     local prof1, prof2 = GetProfessions()

@@ -45,16 +45,31 @@ local function Holder(grid, bag)
     return h
 end
 
+-- Mists of Pandaria Classic (MISTS_PLAN.md, phase 5): its
+-- ContainerFrameItemButtonTemplate is the old one - a Button without a
+-- mixin, which reads its bag from the parent's ID (our holder) and is
+-- filled by the global SetItemButton* helpers (Classic/ContainerFrame_
+-- Shared.lua, 5.5.4). Its click handler reads no field of ours, so using an
+-- item stays untainted there as well.
+local MISTS = D.IsMists
+
 local function NewButton(grid, bag)
     count = count + 1
     -- Named, because the template names some of its textures after the
     -- button ($parentIconQuestTexture) and an unnamed parent would make
     -- them all share one global name.
-    local b = CreateFrame("ItemButton", "DeckBagsItem" .. count, Holder(grid, bag),
+    local b = CreateFrame(MISTS and "Button" or "ItemButton", "DeckBagsItem" .. count, Holder(grid, bag),
         "ContainerFrameItemButtonTemplate")
     -- Blizzard adds this background only inside its combined bag window;
-    -- without it an empty slot is a hole in the grid.
-    b.ItemSlotBackground = b:CreateTexture(nil, "BACKGROUND", "ItemSlotBackgroundCombinedBagsTemplate", -6)
+    -- without it an empty slot is a hole in the grid. Mists has no such
+    -- template: the old empty-slot art.
+    if MISTS then
+        b.ItemSlotBackground = b:CreateTexture(nil, "BACKGROUND", nil, -6)
+        b.ItemSlotBackground:SetTexture("Interface\\Buttons\\UI-EmptySlot-Disabled")
+        b.ItemSlotBackground:SetTexCoord(0.2, 0.8, 0.2, 0.8)   -- the 37-px slot in a 64-px file
+    else
+        b.ItemSlotBackground = b:CreateTexture(nil, "BACKGROUND", "ItemSlotBackgroundCombinedBagsTemplate", -6)
+    end
     b.ItemSlotBackground:SetAllPoints(b)
 
     b.DeckLevel = b:CreateFontString(nil, "OVERLAY")
@@ -86,7 +101,7 @@ function ns.Button(grid, bag, slot)
     local b = grid.buttons[bag][slot]
     if not b then
         b = NewButton(grid, bag)
-        b:SetBagID(bag)
+        if b.SetBagID then b:SetBagID(bag) end   -- Mists: the holder's ID says it
         b:SetID(slot)
         grid.buttons[bag][slot] = b
     end
@@ -170,32 +185,79 @@ function ns.IsAuctionable(bag, slot)
     return ok and valid == true
 end
 
-function ns.UpdateButton(b)
-    local bag, slot = b:GetBagID(), b:GetID()
-    local info = C_Container.GetContainerItemInfo(bag, slot)
-    local texture = info and info.iconFileID
-    local quality = info and info.quality
+-- the bag a button belongs to: the attribute in retail, the holder in Mists
+local function BagOf(b)
+    if b.GetBagID then return b:GetBagID() end
+    return b:GetParent():GetID()
+end
 
-    ClearItemButtonOverlay(b)
-    b:SetHasItem(texture)
-    b:SetItemButtonTexture(texture)
-    SetItemButtonQuality(b, quality, info and info.hyperlink, false, info and info.isBound)
+-- Mists: the steps of its own ContainerFrame_Update and _UpdateQuestItem
+-- (Classic/ContainerFrame_Shared.lua, Mists/ContainerFrame.lua, 5.5.4).
+-- hasItem and readable are what its OnEnter reads for the cursor; its
+-- click reads neither.
+local function PaintMists(b, bag, slot, info, matches)
+    local texture = info and info.iconFileID
+    SetItemButtonTexture(b, texture)
+    SetItemButtonQuality(b, info and info.quality, info and info.itemID)
     SetItemButtonCount(b, info and info.stackCount)
     SetItemButtonDesaturated(b, info and info.isLocked)
 
-    b:UpdateExtended()
+    local questTexture = _G[b:GetName() .. "IconQuestTexture"]
     local quest = C_Container.GetContainerItemQuestInfo(bag, slot)
-    b:UpdateQuestItem(quest.isQuestItem, quest.questID, quest.isActive)
-    b:UpdateNewItem(quality)
-    b:UpdateItemContextMatching()
-    b.deckTexture = texture   -- for the cooldown-only pass
-    b:UpdateCooldown(texture)
-    b:SetReadable(info and info.isReadable)
+    if quest.questID and not quest.isActive then
+        questTexture:SetTexture(TEXTURE_ITEM_QUEST_BANG)
+        questTexture:Show()
+    elseif quest.questID or quest.isQuestItem then
+        questTexture:SetTexture(TEXTURE_ITEM_QUEST_BORDER)
+        questTexture:Show()
+    else
+        questTexture:Hide()
+    end
+    b.NewItemTexture:Hide()
+    b.BattlepayItemTexture:Hide()
+
+    b.deckTexture = texture
+    if texture then
+        ContainerFrame_UpdateCooldown(bag, b)
+        b.hasItem = 1
+    else
+        _G[b:GetName() .. "Cooldown"]:Hide()
+        b.hasItem = nil
+    end
+    b.readable = info and info.isReadable
+    b.searchOverlay:SetShown(not matches)
+end
+
+function ns.UpdateButton(b)
+    local bag, slot = BagOf(b), b:GetID()
+    local info = C_Container.GetContainerItemInfo(bag, slot)
+    local texture = info and info.iconFileID
+    local quality = info and info.quality
     -- Dimming is the search's own overlay, so both filters simply combine.
     local matches = not (info and info.isFiltered)
     if ns.oldOnly and info then matches = matches and ns.IsOld(info.itemID) end
     if ns.auctionOnly and info then matches = matches and ns.IsAuctionable(bag, slot) end
-    b:SetMatchesSearch(matches)
+
+    if MISTS then
+        PaintMists(b, bag, slot, info, matches)
+    else
+        ClearItemButtonOverlay(b)
+        b:SetHasItem(texture)
+        b:SetItemButtonTexture(texture)
+        SetItemButtonQuality(b, quality, info and info.hyperlink, false, info and info.isBound)
+        SetItemButtonCount(b, info and info.stackCount)
+        SetItemButtonDesaturated(b, info and info.isLocked)
+
+        b:UpdateExtended()
+        local quest = C_Container.GetContainerItemQuestInfo(bag, slot)
+        b:UpdateQuestItem(quest.isQuestItem, quest.questID, quest.isActive)
+        b:UpdateNewItem(quality)
+        b:UpdateItemContextMatching()
+        b.deckTexture = texture   -- for the cooldown-only pass
+        b:UpdateCooldown(texture)
+        b:SetReadable(info and info.isReadable)
+        b:SetMatchesSearch(matches)
+    end
 
     -- Blizzard marks junk only while a merchant is open. We mark it always:
     -- knowing what to sell before walking to the vendor is the point.
@@ -271,9 +333,16 @@ function ns.NewWindow(name, titleText, opts)
     sort:SetScript("OnLeave", GameTooltip_Hide)
     w.sort = sort
 
+    -- Mists has no bag sorting (C_Container.SortBags came with Warlords)
+    if not C_Container.SortBags then sort:Hide() end
+
     local old = CreateFrame("Button", nil, w)
     old:SetSize(24, 24)
-    old:SetPoint("RIGHT", sort, "LEFT", -4, 0)
+    if sort:IsShown() then
+        old:SetPoint("RIGHT", sort, "LEFT", -4, 0)
+    else
+        old:SetPoint("TOPRIGHT", -12, -32)
+    end
     old.icon = old:CreateTexture(nil, "ARTWORK")
     old.icon:SetAllPoints()
     old.icon:SetTexture("Interface\\Icons\\INV_Misc_PocketWatch_01")
@@ -480,7 +549,12 @@ end
 local function RefreshCooldowns(w)
     for _, bagButtons in pairs(w.grid.buttons) do
         for _, b in pairs(bagButtons) do
-            if b:IsShown() then b:UpdateCooldown(b.deckTexture) end
+            if not b:IsShown() then
+            elseif not MISTS then
+                b:UpdateCooldown(b.deckTexture)
+            elseif b.deckTexture then
+                ContainerFrame_UpdateCooldown(BagOf(b), b)
+            end
         end
     end
 end
@@ -561,7 +635,11 @@ for _, e in ipairs({
     "PLAYER_EQUIPMENT_CHANGED", "PLAYERBANKSLOTS_CHANGED", "PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED",
     "BAG_CONTAINER_UPDATE", "BANK_TABS_CHANGED", "BANK_TAB_SETTINGS_UPDATED",
     "ITEM_DATA_LOAD_RESULT",
-}) do ev:RegisterEvent(e) end
+}) do
+    -- Mists lacks the warband and bank tab events; registering one it does
+    -- not know is an error
+    if not C_EventUtils or C_EventUtils.IsEventValid(e) then ev:RegisterEvent(e) end
+end
 
 -- items actually moved; a window that sorts by content (the category view,
 -- w.relayoutOnMove) has to place them again. Not ITEM_LOCK_CHANGED: that
@@ -616,7 +694,14 @@ function ns.UpdateCurrencies(w)
             c:SetScript("OnLeave", GameTooltip_Hide)
             w.currencies[i] = c
         end
-        local info = C_CurrencyInfo.GetBackpackCurrencyInfo(i)
+        local info
+        if C_CurrencyInfo.GetBackpackCurrencyInfo then
+            info = C_CurrencyInfo.GetBackpackCurrencyInfo(i)
+        else
+            -- Mists: the old global (Cata/Blizzard_TokenUI.lua reads it so)
+            local name, quantity, icon, currencyID = GetBackpackCurrencyInfo(i)
+            info = name and { iconFileID = icon, quantity = quantity, currencyTypesID = currencyID }
+        end
         if info then
             c.icon:SetTexture(info.iconFileID)
             c.text:SetText(BreakUpLargeNumbers(info.quantity))

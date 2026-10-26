@@ -16,8 +16,10 @@ local D = DeckUI
 -- frame, whose bank type the bag buttons read on every right click.
 -------------------------------------------------------------------
 local BACKPACK = Enum.BagIndex.Backpack
-local REAGENT  = Enum.BagIndex.ReagentBag
 local NUM_BAGS = Constants.InventoryConstants.NumBagSlots   -- 4
+-- Mists has no reagent bag, and its container 5 is the first bank bag
+-- (ITEM_INVENTORY_BANK_BAG_OFFSET = 4 there) whatever the shared enum says
+local REAGENT  = not D.IsMists and Enum.BagIndex.ReagentBag or nil
 
 -- extraFooter: the tracked items row (items.lua)
 local window = ns.NewWindow("DeckBagsWindow", "Bags", { currencies = true, extraFooter = 24 })
@@ -248,6 +250,14 @@ local function ParkBlizzardFrames()
     end
 end
 
+-- Mists has no IsAnyBagOpen: its own IsBagOpen, asked for every bag we hold
+local IsAnyBagOpen = IsAnyBagOpen or function()
+    for _, bag in ipairs(HELD) do
+        if IsBagOpen(bag) then return true end
+    end
+    return false
+end
+
 local function Sync()
     local open = IsAnyBagOpen()
     if open and not window:IsShown() then
@@ -304,7 +314,7 @@ end
 function ns.PrintBags()
     print(("DeckUI Bags: Blizzard says open=%s, our window shown=%s"):format(
         tostring(IsAnyBagOpen()), tostring(window:IsShown())))
-    for bag = BACKPACK, REAGENT do
+    for bag = BACKPACK, REAGENT or NUM_BAGS do
         print(("  bag %d: %d slots, %d free"):format(bag,
             C_Container.GetContainerNumSlots(bag), C_Container.GetContainerNumFreeSlots(bag) or 0))
     end

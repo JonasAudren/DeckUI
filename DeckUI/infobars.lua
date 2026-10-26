@@ -237,6 +237,8 @@ end)
 -------------------------------------------------------------------
 local DOT, GAP, COLS, PAD, BLOCK_GAP = 3, 1, 6, 5, 5
 local BAGS = { 0, 1, 2, 3, 4, 5 }   -- backpack, four bags, the reagent bag
+-- Mists has no reagent bag, and its container 5 is the first bank bag
+if D.IsMists then BAGS[6] = nil end
 local USED = { 0.95, 0.85, 0.55, 1 }
 local USED_REAGENT = { 0.55, 0.85, 0.95, 1 }
 local FREE = { 0.22, 0.22, 0.22, 1 }

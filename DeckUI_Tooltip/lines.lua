@@ -86,6 +86,27 @@ local function PlayerInfo(unit)
     return nil
 end
 
+-- Mists has no C_PaperDollInfo: the average of the inspected gear, counted
+-- as the character pane does - sixteen slots (no shirt, no tabard), a
+-- two-handed weapon twice. An item whose data is not cached yet is missing
+-- from the sum; the next inspect five minutes later fills it in.
+local function InspectItemLevel(unit)
+    if C_PaperDollInfo then return C_PaperDollInfo.GetInspectItemLevel(unit) end
+    local total, mainHand = 0, nil
+    for slot = INVSLOT_FIRST_EQUIPPED or 1, INVSLOT_OFFHAND or 17 do
+        local link = slot ~= (INVSLOT_BODY or 4) and GetInventoryItemLink(unit, slot)
+        local level = link and C_Item.GetDetailedItemLevelInfo(link)
+        if level then
+            total = total + level
+            if slot == (INVSLOT_MAINHAND or 16) and select(4, C_Item.GetItemInfoInstant(link)) == "INVTYPE_2HWEAPON" then
+                mainHand = level
+            end
+        end
+    end
+    if mainHand and not GetInventoryItemLink(unit, INVSLOT_OFFHAND or 17) then total = total + mainHand end
+    return total > 0 and math.floor(total / 16 + 0.5) or nil
+end
+
 local inspectEvents = CreateFrame("Frame")
 inspectEvents:RegisterEvent("INSPECT_READY")
 inspectEvents:SetScript("OnEvent", function(_, _, guid)
@@ -97,7 +118,7 @@ inspectEvents:SetScript("OnEvent", function(_, _, guid)
     local unit = overIt and "mouseover" or UnitTokenFromGUID(guid)
     if unit then
         local specID = GetInspectSpecialization(unit)
-        local ilvl = C_PaperDollInfo.GetInspectItemLevel(unit)
+        local ilvl = InspectItemLevel(unit)
         inspected[guid] = {
             specID = Plain(specID) and specID or nil,
             ilvl = Plain(ilvl) and ilvl or nil,
