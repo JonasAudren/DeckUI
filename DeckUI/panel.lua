@@ -368,7 +368,15 @@ function panel:AddTab(key, def)
     self.contents[key] = content
 
     LayoutSidebar()
-    if self.current == key and self:IsShown() then self:ShowTab(key) end
+    -- A module switched on from its own page registers that page while it
+    -- loads, before its SavedVariables exist (they come with ADDON_LOADED,
+    -- after its files ran) - building the page now read a nil table
+    -- (2026-10-26). A frame later the module has set them up.
+    if self.current == key and self:IsShown() then
+        C_Timer.After(0, function()
+            if self.current == key and self:IsShown() then self:ShowTab(key) end
+        end)
+    end
 end
 
 function panel:ShowTab(key)
