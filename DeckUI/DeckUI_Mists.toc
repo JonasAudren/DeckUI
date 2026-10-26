@@ -9,10 +9,23 @@
 ## X-Category: Action Bars, Unit Frames
 ## SavedVariables: DeckUIDB
 
-# Mists of Pandaria Classic. Only the files that run there so far - the
-# port adds them phase by phase (MISTS_PLAN.md); the rest is retail's.
+# Mists of Pandaria Classic: retail's files without the two whose Blizzard
+# frames Mists does not have - damagemeter.lua and talkinghead.lua
+# (MISTS_PLAN.md). Differences inside a file ask D.IsMists.
 core.lua
 errors.lua
 widgets.lua
+reputation.lua
 panel.lua
+actionbars.lua
+editmode.lua
+merchant.lua
+loot.lua
+softtarget.lua
+targetarrow.lua
+nameplates.lua
+infobars.lua
+mainmenu.lua
+auction.lua
+auctionstyle.lua
 minimap.lua

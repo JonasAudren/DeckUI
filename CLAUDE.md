@@ -53,7 +53,7 @@ in Mists. A `_Mists.toc` lists only the files that run there; an option in the s
 file has loaded (`if D.ApplyX then`), and a debug command of a missing file says so. Code asks
 `D.IsMists` / `D.IsRetail`. `package.ps1` checks the `_Mists.toc` files on their own interface number,
 `bump-version.ps1 -MistsInterface` raises it; the upload still files under retail only until the port is
-done. In the classic client `DeckUI`, `DeckUI_Cross` and `DeckUI_Orbs` are junctions so far.
+done. In the classic client `DeckUI`, `DeckUI_Cross`, `DeckUI_Orbs` and `DeckUI_Spec` are junctions so far; the Mists hub loads every file but damagemeter.lua and talkinghead.lua, Spec runs `core_mists.lua` (talent groups).
 **oUF carries Mists patches**, each marked `-- DeckUI: Mists` (blizzard.lua: oUF 13's hide-and-park where
 `SetRolesets` is missing; ouf.lua, private.lua, elements/auras.lua, classpower.lua, runes.lua) - **redo them
 at every oUF update**. They hand over to two files only the Mists toc loads, before oUF:

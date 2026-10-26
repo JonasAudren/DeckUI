@@ -24,9 +24,21 @@ local function Result(name, standing, cur, max, colour)
              r = colour[1], g = colour[2], b = colour[3] }
 end
 
+-- Mists has no C_Reputation.GetFactionDataByID: the old GetFactionInfoByID
+-- (name, description, standing, bottom, top, value of the bar), read
+-- into the fields used below
+local function FactionData(factionID)
+    if C_Reputation.GetFactionDataByID then return C_Reputation.GetFactionDataByID(factionID) end
+    if not GetFactionInfoByID then return nil end
+    local name, _, standing, low, high, value = GetFactionInfoByID(factionID)
+    if not name then return nil end
+    return { name = name, reaction = standing, currentReactionThreshold = low,
+             nextReactionThreshold = high, currentStanding = value }
+end
+
 function D.FactionStatus(factionID)
-    if not factionID or not C_Reputation.GetFactionDataByID then return nil end
-    local data = C_Reputation.GetFactionDataByID(factionID)
+    if not factionID then return nil end
+    local data = FactionData(factionID)
     if not data or not data.name or data.name == "" then return nil end
     local name = data.name
 
@@ -38,7 +50,7 @@ function D.FactionStatus(factionID)
         end
     end
 
-    if C_Reputation.IsMajorFaction and C_Reputation.IsMajorFaction(factionID) then
+    if C_MajorFactions and C_Reputation.IsMajorFaction and C_Reputation.IsMajorFaction(factionID) then
         local major = C_MajorFactions.GetMajorFactionData(factionID)
         if major then
             local cur, max = major.renownReputationEarned or 0, major.renownLevelThreshold or 1

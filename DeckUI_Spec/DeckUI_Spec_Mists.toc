@@ -1,0 +1,16 @@
+## Interface: 50504
+## Title: DeckUI Spec
+## Notes: DeckUI module: one-click specialization switcher
+## Author: Gottlieb
+## Version: 1.7.1
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/JonasAudren/DeckUI
+## X-Curse-Project-ID: 1699742
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckSpecDB
+
+# Mists of Pandaria Classic: talent groups (dual spec) instead of specializations
+core_mists.lua
+config.lua

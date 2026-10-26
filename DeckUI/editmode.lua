@@ -156,6 +156,8 @@ ev:RegisterEvent("PLAYER_REGEN_ENABLED")
 -- choice is never taken for this device's
 ev:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
 ev:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", "player")
+-- Mists: a switch of the talent group (dual spec)
+if D.IsMists then ev:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED") end
 ev:SetScript("OnEvent", function(self, event, isLogin, isReload)
     if event == "PLAYER_ENTERING_WORLD" then
         if isLogin or isReload then Resync() end
@@ -168,7 +170,8 @@ ev:SetScript("OnEvent", function(self, event, isLogin, isReload)
         end)
     elseif event == "PLAYER_REGEN_ENABLED" then
         if pending then Sync() end
-    elseif event == "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_SPECIALIZATION_CHANGED" then
+    elseif event == "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_SPECIALIZATION_CHANGED"
+        or event == "ACTIVE_TALENT_GROUP_CHANGED" then
         Resync()
     end
 end)

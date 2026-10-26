@@ -9,7 +9,8 @@ D.RegisterModule("Spec", {
     build = function(c)
         local f = D.Flow(c)
         f:Label("Specialization switcher")
-        f:Checkbox("Show the spec bar", db, "showBar", ns.SetBarShown,
+        -- ns.HINT: Mists' bar switches talent groups instead (core_mists.lua)
+        f:Checkbox("Show the spec bar", db, "showBar", ns.SetBarShown, ns.HINT or
             "One round icon per specialization; click one to switch (not in combat). The active one has a gold ring. /spec toggles the bar, /deck unlock moves it.")
     end,
 })

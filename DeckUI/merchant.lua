@@ -46,8 +46,34 @@ local function Repair(quiet)
     end
 end
 
+-- Mists has no C_MerchantFrame.SellAllJunkItems: grey items are sold one
+-- by one with a right click's call, as the bag buttons do at a merchant.
+-- Twelve at most - the buyback tab's size, so each can still be bought back.
+-- Items without a sell price (quest leftovers) stay.
+local BUYBACK = 12
+local function SellJunkFromBags()
+    local sold = 0
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) do
+            local info = C_Container.GetContainerItemInfo(bag, slot)
+            if info and info.quality == Enum.ItemQuality.Poor and not info.hasNoValue and not info.isLocked then
+                C_Container.UseContainerItem(bag, slot)
+                sold = sold + 1
+                if sold >= BUYBACK then return sold end
+            end
+        end
+    end
+    return sold
+end
+
 local function SellJunk()
     if not DeckUIDB.autoSellJunk then return end
+    if not C_MerchantFrame.SellAllJunkItems then
+        local count = SellJunkFromBags()
+        if count == 0 then return end
+        print(("DeckUI: sold %d junk item%s."):format(count, count == 1 and "" or "s"))
+        return true
+    end
     if not C_MerchantFrame.IsSellAllJunkEnabled() then return end
     local count = C_MerchantFrame.GetNumJunkItems()
     if count <= 0 then return end

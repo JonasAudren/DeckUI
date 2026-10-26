@@ -28,6 +28,17 @@ local BUTTONS = {
     "GuildMicroButton", "LFDMicroButton", "CollectionsMicroButton",
     "EJMicroButton", "StoreMicroButton", "MainMenuMicroButton",
 }
+-- Mists' row, in the order of its own micro menu (Blizzard_MicroMenu,
+-- Classic/MainMenuBarMicroButtons.xml, 5.5.4)
+if D.IsMists then
+    BUTTONS = {
+        "CharacterMicroButton", "SpellbookMicroButton", "TalentMicroButton",
+        "AchievementMicroButton", "QuestLogMicroButton", "SocialsMicroButton",
+        "GuildMicroButton", "PVPMicroButton", "LFGMicroButton",
+        "CollectionsMicroButton", "EJMicroButton", "StoreMicroButton",
+        "MainMenuMicroButton", "HelpMicroButton",
+    }
+end
 local GOLD = { 0.85, 0.68, 0.3 }
 local ALERT = { 1, 0.9, 0.45 }
 
@@ -103,6 +114,18 @@ local function Paint(b)
             b.atlas = atlas
             b.icon:SetAtlas(atlas)
             b.icon:SetSize(SIZE + 4, (SIZE + 4) * 40 / 32)
+        end
+    else
+        -- Mists: the old micro buttons, a 32x64 file each
+        -- (Interface\Buttons\UI-MicroButton-<name>-Up) shown from 0.36 down;
+        -- the icon is the middle of that, cut round by our mask
+        local art = enabled and blizzard:GetNormalTexture() or blizzard:GetDisabledTexture()
+        local file = art and art:GetTexture()
+        if file and b.file ~= file then
+            b.file = file
+            b.icon:SetTexture(file)
+            b.icon:SetTexCoord(0.1, 0.9, 0.47, 0.9)
+            b.icon:SetSize(SIZE, SIZE)
         end
     end
     b.icon:SetDesaturated(not enabled)

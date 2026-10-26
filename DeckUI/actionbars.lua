@@ -136,6 +136,22 @@ local function PickupMount(id)
 end
 
 local function PickupFlyout(id)
+    if not C_SpellBook.GetNumSpellBookSkillLines then
+        -- Mists: the old spellbook functions, as its own spellbook frame
+        -- reads them (Classic/SpellBookFrame.lua, 5.5.4)
+        local book = BOOKTYPE_SPELL or "spell"
+        for tab = 1, GetNumSpellTabs() do
+            local _, _, offset, count = GetSpellTabInfo(tab)
+            for i = offset + 1, offset + count do
+                local kind, actionID = GetSpellBookItemInfo(i, book)
+                if kind == "FLYOUT" and actionID == id then
+                    PickupSpellBookItem(i, book)
+                    return
+                end
+            end
+        end
+        return
+    end
     local bank = Enum.SpellBookSpellBank.Player
     for line = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local info = C_SpellBook.GetSpellBookSkillLineInfo(line)
@@ -280,6 +296,9 @@ ev:RegisterEvent("PLAYER_REGEN_ENABLED")
 -- the spec itself, not every talent change (PLAYER_SPECIALIZATION_CHANGED
 -- fires for those too)
 ev:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
+-- Mists keeps the bars per talent group (dual spec); its UI says a switch
+-- with this event, not the one above
+if D.IsMists then ev:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED") end
 ev:SetScript("OnEvent", function(self, event, isLogin, isReload)
     if event == "PLAYER_ENTERING_WORLD" then
         -- login and /reload, not every loading screen
@@ -288,7 +307,7 @@ ev:SetScript("OnEvent", function(self, event, isLogin, isReload)
         ScheduleCopy()
     elseif event == "PLAYER_REGEN_ENABLED" then
         if pending then Sync() else ScheduleCopy() end
-    elseif event == "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" then
+    elseif event == "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" or event == "ACTIVE_TALENT_GROUP_CHANGED" then
         Resync()
     end
 end)
