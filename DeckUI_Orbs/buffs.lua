@@ -42,8 +42,11 @@ local buffs, buffKey
 -- cut the icon, the dark edge behind it and the cooldown swipe alike.
 local TEXTURES = "Interface\\AddOns\\DeckUI_Orbs\\textures\\"
 
-local function Style(element, button)
-    local shape = TEXTURES .. (element.shape == "down" and "status_down" or "status_up")
+-- The shape alone, for the buff bar and the target's status icons in the
+-- Final Fantasy styles (ffstyle.lua, owner's wish 2026-10-26): down = a
+-- debuff, its bottom falling to a point; otherwise a buff's roof.
+function ns.ShapeStatusIcon(button, down)
+    local shape = TEXTURES .. (down and "status_down" or "status_up")
     if button.Icon then
         button.Icon:SetTexCoord(0.12, 0.88, 0.06, 0.94)
         local mask = button:CreateMaskTexture()
@@ -58,11 +61,32 @@ local function Style(element, button)
     edge:SetTexture(shape)
     edge:SetVertexColor(0, 0, 0, 0.95)
     if button.Cooldown then
-        -- the time is written below the icon; no numbers on top of it
-        button.Cooldown:SetHideCountdownNumbers(true)
         button.Cooldown:SetDrawEdge(false)
         button.Cooldown:SetSwipeTexture(shape)
         button.Cooldown:SetSwipeColor(0, 0, 0, 0.45)
+    end
+end
+
+-- the dispel colour as a strip above the icon instead of a frame round it
+function ns.DispelStrip(button)
+    if not button.Border then return end
+    button.Border:ClearAllPoints()
+    button.Border:SetPoint("BOTTOMLEFT", button, "TOPLEFT", 0, 2)
+    button.Border:SetPoint("BOTTOMRIGHT", button, "TOPRIGHT", 0, 2)
+    button.Border:SetHeight(3)
+    -- Mists' stand-in (auras_mists.lua) draws the old debuff frame;
+    -- the strip wants plain colour
+    if D.IsMists then
+        button.Border:SetTexture("Interface\\Buttons\\WHITE8x8")
+        button.Border:SetTexCoord(0, 1, 0, 1)
+    end
+end
+
+local function Style(element, button)
+    ns.ShapeStatusIcon(button, element.shape == "down")
+    if button.Cooldown then
+        -- the time is written below the icon; no numbers on top of it
+        button.Cooldown:SetHideCountdownNumbers(true)
     end
     if button.Time then
         button.Time:SetFont(ns.FONT, 9, "OUTLINE")
@@ -74,19 +98,7 @@ local function Style(element, button)
         button.Count:ClearAllPoints()
         button.Count:SetPoint("BOTTOMRIGHT", 2, -1)
     end
-    -- the dispel colour as a strip above the icon instead of a frame round it
-    if button.Border then
-        button.Border:ClearAllPoints()
-        button.Border:SetPoint("BOTTOMLEFT", button, "TOPLEFT", 0, 2)
-        button.Border:SetPoint("BOTTOMRIGHT", button, "TOPRIGHT", 0, 2)
-        button.Border:SetHeight(3)
-        -- Mists' stand-in (auras_mists.lua) draws the old debuff frame;
-        -- the strip wants plain colour
-        if D.IsMists then
-            button.Border:SetTexture("Interface\\Buttons\\WHITE8x8")
-            button.Border:SetTexCoord(0, 1, 0, 1)
-        end
-    end
+    ns.DispelStrip(button)
 end
 
 -- anchor "TOPLEFT" grows right (debuffs), "TOPRIGHT" grows left (buffs)

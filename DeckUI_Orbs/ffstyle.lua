@@ -85,6 +85,18 @@ local function StyleAura(element, button)
     end
 end
 
+-- The target's status icons in FFXIV's shapes, like the buff bar's
+-- (owner's wish, 2026-10-26): a buff's top rises to a roof, a debuff's
+-- bottom falls to a point. One row holds both groups, so the shape is
+-- read off the group the button belongs to: debuff groups are the ones
+-- with showDebuffBorder (buffs.lua has the masks and the dispel strip).
+local function StyleTargetAura(element, button, options)
+    StyleAura(element, button)
+    local debuff = options and options.showDebuffBorder
+    if ns.ShapeStatusIcon then ns.ShapeStatusIcon(button, debuff) end
+    if debuff and ns.DispelStrip then ns.DispelStrip(button) end
+end
+
 local function AuraRow(self, width, size, point, relPoint, y)
     local count = math.floor(width / (size + 3))
     local auras = self:CreateAuras({
@@ -272,6 +284,7 @@ local function BuildTarget(self, unit)
     if self.CreateAuras then
         -- status icons under the cast: your debuffs (or all of them), then buffs
         local auras = AuraRow(self, TARGET_W, 22, "TOPLEFT", "BOTTOMLEFT", -28)
+        auras.PostCreateButton = StyleTargetAura
         local filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL"
         local key = auras:AddGroup(filter, { maxFrameCount = 8, showDebuffBorder = true })
         table.insert(ns.targetDebuffs, { container = auras, key = key })
@@ -735,6 +748,7 @@ local function BuildTargetXIV(self, unit)
 
     if self.CreateAuras then
         local auras = AuraRow(self, W, 22, "TOPLEFT", "BOTTOMLEFT", -28)
+        auras.PostCreateButton = StyleTargetAura
         local filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL"
         local key = auras:AddGroup(filter, { maxFrameCount = 8, showDebuffBorder = true })
         table.insert(ns.targetDebuffs, { container = auras, key = key })
