@@ -630,8 +630,15 @@ EventUtil.ContinueOnAddOnLoaded("DeckUI", function()
 
             f:Gap(8)
             f:Label("Loot")
-            f:Checkbox("Fast auto loot", db, "fastLoot", nothing,
-                "Takes everything the moment a corpse opens, without the loot window flickering up.")
+            -- it speeds up the game's auto loot, which is off by default in
+            -- Mists (owner pressed "take all" every time, 2026-10-26): ticking
+            -- it switches the game's option on too
+            f:Checkbox("Fast auto loot", db, "fastLoot", function(v)
+                if v and not GetCVarBool("autoLootDefault") then
+                    SetCVar("autoLootDefault", "1")
+                    print("DeckUI: the game's auto loot is on now (Options > Controls).")
+                end
+            end, "Takes everything the moment a corpse opens, without the loot window flickering up. Switches the game's own auto loot on as well; holding the auto loot key (Shift) loots by hand.")
             f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
                 "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
 
