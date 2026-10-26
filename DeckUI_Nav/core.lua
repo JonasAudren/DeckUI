@@ -45,6 +45,16 @@ function ns.Plain(...)
     return true
 end
 
+-- Blizzard's navigation - or Mists' stand-in for it (nav_mists.lua, loaded
+-- before this file there). Everything in Nav asks these, never the
+-- Blizzard tables by name: ns.ST is C_SuperTrack, ns.UW the user waypoint
+-- and map size functions of C_Map, ns.NAV C_Navigation.
+ns.ST  = ns.MistsSuperTrack or C_SuperTrack
+ns.UW  = ns.MistsUserWaypoint or C_Map
+ns.NAV = ns.MistsNavigation or C_Navigation
+ns.NavEvent = ns.MistsNavEvent or function(frame, event) frame:RegisterEvent(event) end
+ns.MapPoint = ns.MistsMapPoint or function(mapID, x, y) return UiMapPoint.CreateFromCoordinates(mapID, x, y) end
+
 -------------------------------------------------------------------
 -- Geometry
 -------------------------------------------------------------------
@@ -80,7 +90,7 @@ local sizes = {}
 local function MapSize(mapID)
     local s = sizes[mapID]
     if not s then
-        local w, h = C_Map.GetMapWorldSize(mapID)
+        local w, h = ns.UW.GetMapWorldSize(mapID)
         s = { (ns.Plain(w, h) and w) or 0, (ns.Plain(w, h) and h) or 0 }
         sizes[mapID] = s
     end
@@ -118,20 +128,22 @@ local function FromVector(v)
 end
 
 function ns.TargetPos(mapID)
-    if not C_SuperTrack.IsSuperTrackingAnything() then return end
+    if not ns.ST.IsSuperTrackingAnything() then return end
 
-    local x, y, desc = C_Navigation.GetNextWaypointForMap(mapID)
+    local x, y, desc = ns.NAV.GetNextWaypointForMap(mapID)
     if Valid(x, y) then return x, y, desc end
 
-    if C_SuperTrack.IsSuperTrackingUserWaypoint() then
-        x, y = FromVector(C_Map.GetUserWaypointPositionForMap(mapID))
+    if ns.ST.IsSuperTrackingUserWaypoint() then
+        x, y = FromVector(ns.UW.GetUserWaypointPositionForMap(mapID))
         if Valid(x, y) then return x, y end
     end
 
-    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    local questID = ns.ST.GetSuperTrackedQuestID()
     if questID and questID > 0 then
-        x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
-        if Valid(x, y) then return x, y end
+        if C_QuestLog.GetNextWaypointForMap then   -- Mists: none, its quest marks below
+            x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+            if Valid(x, y) then return x, y end
+        end
         if C_TaskQuest and C_TaskQuest.GetQuestLocation then
             x, y = C_TaskQuest.GetQuestLocation(questID, mapID)
             if Valid(x, y) then return x, y end
@@ -141,28 +153,30 @@ function ns.TargetPos(mapID)
         end
     end
 
-    local vignette = C_SuperTrack.GetSuperTrackedVignette()
+    local vignette = ns.ST.GetSuperTrackedVignette()
     if vignette then
         x, y = FromVector(C_VignetteInfo.GetVignettePosition(vignette, mapID))
         if Valid(x, y) then return x, y end
     end
 
-    if C_SuperTrack.IsSuperTrackingCorpse() and C_DeathInfo then
+    if ns.ST.IsSuperTrackingCorpse() and C_DeathInfo then
         x, y = FromVector(C_DeathInfo.GetCorpseMapPosition(mapID))
         if Valid(x, y) then return x, y end
     end
 end
 
 function ns.TargetName()
-    if not C_SuperTrack.IsSuperTrackingAnything() then return end
-    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    if not ns.ST.IsSuperTrackingAnything() then return end
+    local questID = ns.ST.GetSuperTrackedQuestID()
     if questID and questID > 0 then
-        local title = C_QuestLog.GetTitleForQuestID(questID)
+        -- Mists names a quest through C_QuestLog.GetQuestInfo
+        local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
+            or C_QuestLog.GetQuestInfo and C_QuestLog.GetQuestInfo(questID)
         if title and title ~= "" then return title end
     end
-    if C_SuperTrack.IsSuperTrackingUserWaypoint() then return "Waypoint" end
-    if C_SuperTrack.IsSuperTrackingCorpse() then return CORPSE or "Corpse" end
-    local name = C_SuperTrack.GetSuperTrackedItemName()
+    if ns.ST.IsSuperTrackingUserWaypoint() then return "Waypoint" end
+    if ns.ST.IsSuperTrackingCorpse() then return CORPSE or "Corpse" end
+    local name = ns.ST.GetSuperTrackedItemName()
     if name and ns.Plain(name) and name ~= "" then return name end
     return "Target"
 end
@@ -177,13 +191,23 @@ local function TrackedQuests()
     local function Add(id)
         if id and id > 0 and not seen[id] then
             seen[id] = true
-            local distSq, onContinent = C_QuestLog.GetDistanceSqToQuest(id)
+            -- Mists has no distance to a quest: the tracker's order then
+            local distSq, onContinent
+            if C_QuestLog.GetDistanceSqToQuest then distSq, onContinent = C_QuestLog.GetDistanceSqToQuest(id) end
             if not (onContinent and ns.Plain(distSq)) then distSq = math.huge end
             list[#list + 1] = { id = id, dist = distSq, order = #list }
         end
     end
-    for i = 1, C_QuestLog.GetNumQuestWatches() do Add(C_QuestLog.GetQuestIDForQuestWatchIndex(i)) end
-    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do Add(C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)) end
+    if C_QuestLog.GetQuestIDForQuestWatchIndex then
+        for i = 1, C_QuestLog.GetNumQuestWatches() do Add(C_QuestLog.GetQuestIDForQuestWatchIndex(i)) end
+        for i = 1, C_QuestLog.GetNumWorldQuestWatches() do Add(C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)) end
+    else
+        -- Mists: the old watch list, as its WatchFrame reads it
+        for i = 1, GetNumQuestWatches() do
+            local logIndex = GetQuestIndexForWatch(i)
+            Add(logIndex and select(8, GetQuestLogTitle(logIndex)))
+        end
+    end
     table.sort(list, function(a, b)
         if a.dist ~= b.dist then return a.dist < b.dist end
         return a.order < b.order
@@ -197,7 +221,7 @@ function ns.Step(dir)
         print("DeckUI Nav: no tracked quests to switch between.")
         return
     end
-    local current = C_SuperTrack.GetSuperTrackedQuestID()
+    local current = ns.ST.GetSuperTrackedQuestID()
     local index
     for i, q in ipairs(list) do
         if q.id == current then index = i end
@@ -208,7 +232,7 @@ function ns.Step(dir)
         index = dir > 0 and 1 or #list
     end
     local id = list[index].id
-    C_SuperTrack.SetSuperTrackedQuestID(id)
+    ns.ST.SetSuperTrackedQuestID(id)
     if ns.FlashTarget then ns.FlashTarget(("%d/%d"):format(index, #list)) end
 end
 
@@ -259,7 +283,7 @@ local function SetWaypoint(msg)
     end
 
     mapID = mapID or C_Map.GetBestMapForUnit("player")
-    if not mapID or not C_Map.CanSetUserWaypointOnMap(mapID) then
+    if not mapID or not ns.UW.CanSetUserWaypointOnMap(mapID) then
         print("DeckUI Nav: this map takes no waypoints.")
         return
     end
@@ -320,18 +344,18 @@ SlashCmdList.DECKNAV = function(msg)
             px and ("%.3f %.3f"):format(px, py) or "none",
             facing and ("%.0f deg"):format(math.deg(facing)) or "none (instance?)"))
         local w, h
-        if mapID then w, h = C_Map.GetMapWorldSize(mapID) end
+        if mapID then w, h = ns.UW.GetMapWorldSize(mapID) end
         print(("  map size %s x %s yd, super-tracking %s (type %s), name %s"):format(
             tostring(w), tostring(h),
-            tostring(C_SuperTrack.IsSuperTrackingAnything()),
-            tostring(C_SuperTrack.GetHighestPrioritySuperTrackingType()), tostring(ns.TargetName())))
+            tostring(ns.ST.IsSuperTrackingAnything()),
+            tostring(ns.ST.GetHighestPrioritySuperTrackingType()), tostring(ns.TargetName())))
         if mapID then
             local tx, ty, desc = ns.TargetPos(mapID)
             if tx then
                 local angle, dist = ns.Bearing(mapID, px, py, tx, ty)
                 print(("  target %.3f %.3f%s, %s yd on the map, %s yd by Blizzard, %s deg off"):format(tx, ty,
                     desc and desc ~= "" and (" (" .. desc .. ")") or "",
-                    dist and ("%.0f"):format(dist) or "?", ("%.0f"):format(C_Navigation.GetDistance() or -1),
+                    dist and ("%.0f"):format(dist) or "?", ("%.0f"):format(ns.NAV.GetDistance() or -1),
                     (angle and facing) and ("%.0f"):format(math.deg(ns.Relative(angle, facing))) or "?"))
             else
                 print("  target: no position on this map")

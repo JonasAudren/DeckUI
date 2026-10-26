@@ -238,7 +238,8 @@ local function Collect()
         end
     end
 
-    if DeckNavDB.vignettes then
+    -- Mists has no C_VignetteInfo (probe, 2026-10-25): no rares there
+    if DeckNavDB.vignettes and C_VignetteInfo then
         for _, guid in ipairs(C_VignetteInfo.GetVignettes() or {}) do
             local info = C_VignetteInfo.GetVignetteInfo(guid)
             if info and ns.Plain(info.onMinimap, info.isDead, info.atlasName)
@@ -262,7 +263,7 @@ end
 -- Blizzard's distance first (it follows the route through portals);
 -- the map's straight line when it has none
 local function Distance()
-    local d = C_Navigation.GetDistance()
+    local d = ns.NAV.GetDistance()
     if d and ns.Plain(d) and d > 0 then return d end
     return state.mapDist
 end
@@ -298,7 +299,7 @@ ns.navState = state
 ns.DistanceString = DistanceString
 
 local function UpdatePanel()
-    if not (DeckNavDB.panel and C_SuperTrack.IsSuperTrackingAnything()) then
+    if not (DeckNavDB.panel and ns.ST.IsSuperTrackingAnything()) then
         panel:Hide()
         return
     end
@@ -394,7 +395,7 @@ local function OnUpdate(_, elapsed)
         acc = 0
         Collect()
         -- distance and arrival time once, for the panel and the beacon
-        state.distance = C_SuperTrack.IsSuperTrackingAnything() and Distance() or nil
+        state.distance = ns.ST.IsSuperTrackingAnything() and Distance() or nil
         state.eta = state.distance and ArrivalTime(state.distance) or nil
         UpdatePanel()
     end
@@ -433,7 +434,7 @@ function ns.InitCompass()
     D.MakeMovable(bar, "Compass", DeckNavDB)
     D.MakeMovable(panel, "Navigation target", DeckNavDB)
     ns.ApplyScale()
-    driver:RegisterEvent("SUPER_TRACKING_CHANGED")
+    ns.NavEvent(driver, "SUPER_TRACKING_CHANGED")
     driver:SetScript("OnEvent", function()
         wipe(samples)
         acc = 1

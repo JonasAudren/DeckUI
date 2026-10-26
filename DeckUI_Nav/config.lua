@@ -12,17 +12,24 @@ D.RegisterModule("Nav", {
         local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
         local f = D.Flow(c)
 
-        f:Hint("The target is always the one Blizzard's navigation follows, so the diamond in the world, the map and the compass agree.")
+        -- Mists has no navigation of Blizzard's: there the target is our waypoint
+        -- or the quest focused in the tracker (nav_mists.lua)
+        f:Hint(D.IsMists and "The target is your active waypoint, or the quest you focused in the tracker."
+            or "The target is always the one Blizzard's navigation follows, so the diamond in the world, the map and the compass agree.")
 
         f:Label("Compass and target")
         f:Checkbox("Compass bar at the top", db, "compass", nothing,
             "Hides in instances, where the game gives no position. Move it with /deck unlock.")
         f:Checkbox("Party members on the compass", db, "party", nothing)
-        f:Checkbox("Rares and treasures on the compass", db, "vignettes", nothing)
+        if C_VignetteInfo then   -- Mists has none
+            f:Checkbox("Rares and treasures on the compass", db, "vignettes", nothing)
+        end
         f:Checkbox("Target with arrow, distance and arrival time", db, "panel", nothing,
             "Move it with /deck unlock.")
-        f:Checkbox("Beacon in the world", db, "beacon", function() ns.ApplyBeacon() end,
-            "Name, distance and arrival time around the target's marker in the world, in place of Blizzard's diamond.")
+        if ns.ApplyBeacon then   -- beacon.lua needs C_Navigation; not in Mists
+            f:Checkbox("Beacon in the world", db, "beacon", function() ns.ApplyBeacon() end,
+                "Name, distance and arrival time around the target's marker in the world, in place of Blizzard's diamond.")
+        end
         f:Slider("Size (this device)", 0.6, 1.4, 0.05, pct, device, "scale", function(v)
             ns.DeviceDB().scale = v
             ns.ApplyScale()

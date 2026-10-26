@@ -83,18 +83,18 @@ local function Push(wp)
     wp.active = true
     -- already Blizzard's pin (a Ctrl-click just set it): setting it again
     -- would only fire USER_WAYPOINT_UPDATED once more inside Blizzard's click
-    local current = C_Map.GetUserWaypoint()
+    local current = ns.UW.GetUserWaypoint()
     if current and current.uiMapID == wp.mapID and current.position
         and math.abs(current.position.x - wp.x) < 0.0005 and math.abs(current.position.y - wp.y) < 0.0005 then
         pushed = { mapID = wp.mapID, x = wp.x, y = wp.y }
-        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+        ns.ST.SetSuperTrackedUserWaypoint(true)
         Refresh()
         return
     end
-    if C_Map.CanSetUserWaypointOnMap(wp.mapID) then
+    if ns.UW.CanSetUserWaypointOnMap(wp.mapID) then
         pushed = { mapID = wp.mapID, x = wp.x, y = wp.y }
-        C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(wp.mapID, wp.x, wp.y))
-        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+        ns.UW.SetUserWaypoint(ns.MapPoint(wp.mapID, wp.x, wp.y))
+        ns.ST.SetSuperTrackedUserWaypoint(true)
     end
     Refresh()
 end
@@ -137,7 +137,7 @@ local function Remove(wp)
         local nextWp = Nearest()
         if nextWp then Push(nextWp) else
             pushed = nil
-            C_Map.ClearUserWaypoint()
+            ns.UW.ClearUserWaypoint()
             Refresh()
         end
     else
@@ -149,7 +149,7 @@ ns.RemoveWaypoint = Remove
 function ns.ClearWaypoints()
     wipe(list)
     pushed = nil
-    C_Map.ClearUserWaypoint()
+    ns.UW.ClearUserWaypoint()
     Refresh()
 end
 
@@ -177,7 +177,7 @@ local function Same(a, b)
 end
 
 local function OnUserWaypoint()
-    local point = C_Map.GetUserWaypoint()
+    local point = ns.UW.GetUserWaypoint()
     local current = point and point.position and { mapID = point.uiMapID, x = point.position.x, y = point.position.y }
     if current then
         if Same(current, pushed) then return end
@@ -500,7 +500,7 @@ driver:SetScript("OnUpdate", function(_, dt)
 end)
 
 local ev = CreateFrame("Frame")
-ev:RegisterEvent("USER_WAYPOINT_UPDATED")
+ns.NavEvent(ev, "USER_WAYPOINT_UPDATED")
 ev:SetScript("OnEvent", OnUserWaypoint)
 
 function ns.InitWaypoints()
@@ -510,6 +510,31 @@ function ns.InitWaypoints()
     D.MakeMovable(win, "Waypoint list", DeckNavDB)
     EventUtil.ContinueOnAddOnLoaded("Blizzard_WorldMap", function()
         canvas = WorldMapFrame.ScrollContainer and WorldMapFrame.ScrollContainer.Child
+        -- Mists sets no pin of its own on a Ctrl-click (it has no user
+        -- waypoint), so the click is heard here, touching nothing of its map.
+        -- Map and point are taken on the press: Blizzard's own handler runs
+        -- first on the release and may step into a sub-zone's map by then.
+        -- A press that became a drag (panning) adds nothing.
+        if D.IsMists and WorldMapFrame.ScrollContainer then
+            local pressed
+            WorldMapFrame.ScrollContainer:HookScript("OnMouseDown", function(self, button)
+                pressed = nil
+                if button ~= "LeftButton" or not IsControlKeyDown() then return end
+                local x, y = self:GetNormalizedCursorPosition()
+                pressed = { mapID = WorldMapFrame:GetMapID(), x = x, y = y, cursor = { GetCursorPosition() } }
+            end)
+            WorldMapFrame.ScrollContainer:HookScript("OnMouseUp", function(_, button)
+                local p = pressed
+                pressed = nil
+                if not p or button ~= "LeftButton" then return end
+                local cx, cy = GetCursorPosition()
+                if math.abs(cx - p.cursor[1]) > 6 or math.abs(cy - p.cursor[2]) > 6 then return end
+                if p.mapID and p.x and p.y and p.x >= 0 and p.x <= 1 and p.y >= 0 and p.y <= 1
+                    and ns.UW.CanSetUserWaypointOnMap(p.mapID) then
+                    ns.AddWaypoint(p.mapID, p.x, p.y)
+                end
+            end)
+        end
     end)
     -- the active point was Blizzard's waypoint when we left; hand it again
     local wp = Active()
