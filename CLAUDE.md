@@ -259,10 +259,14 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   with a flat box. Never a script or field - buy and post call protected functions.
 - **Blizzard's damage meter restyled** (`DeckUI/damagemeter.lua`, `DeckUIDB.styleDamageMeter`,
   Overview page, off by default; tested in game 2026-10-08). Its numbers are secret in combat, so
-  only textures and fonts change: post-hooks on the mixin tables `DamageMeterEntryMixin.
-  UpdateStyle` (flat bar, dark background, no shadow edge, our font at Blizzard's size) and
-  `DamageMeterSessionWindowMixin.SetStyle` (flat header and background, a thin edge). Mixin
-  functions are copied into frames at creation, so the hooks go in at our ADDON_LOADED via
+  only textures and fonts change. **No hook on the bars** (2026-10-26): a post-hook on
+  `DamageMeterEntryMixin.UpdateStyle` failed inside its own wrapper on 12.1.5 ("attempt to call a nil
+  value", no line of ours on the stack) at every Edit Mode layout. A bar (flat, dark background, no
+  shadow edge, our font at Blizzard's size) is restyled when its window's ScrollBox reports it set up
+  (`OnInitializedFrame`, after Blizzard's acquire callback ran UpdateStyle) and after the window
+  setters that restyle bars - post-hooks on `DamageMeterSessionWindowMixin` SetStyle, SetShowBarIcons,
+  SetBarHeight, SetTextScale, SetUseClassColor, SetBackgroundAlpha (flat header and background, a thin
+  edge). Mixin functions are copied into frames at creation, so the hooks go in at our ADDON_LOADED via
   `EventUtil.ContinueOnAddOnLoaded`, and existing windows are styled once directly. The
   "background opacity" setting keeps working: it sets the alpha of the textures we recolour.
 - Prefer small, complete edits; the owner reads the diffs. Keep debug commands
