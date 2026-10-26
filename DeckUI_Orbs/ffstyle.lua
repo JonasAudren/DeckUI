@@ -88,7 +88,7 @@ end
 local function AuraRow(self, width, size, point, relPoint, y)
     local count = math.floor(width / (size + 3))
     local auras = self:CreateAuras({
-        layout        = AnchorUtil.FlowLayoutAxis.Horizontal,
+        layout        = ns.FLOW.Horizontal,
         layoutLimit   = count * (size + 3),
         initialAnchor = "LEFT",
         growthX       = "RIGHT",
@@ -434,7 +434,7 @@ local function BuildBoss(self, unit)
         -- your debuffs on it, to the right of the row
         local size = 18
         local auras = self:CreateAuras({
-            layout        = AnchorUtil.FlowLayoutAxis.Horizontal,
+            layout        = ns.FLOW.Horizontal,
             layoutLimit   = 4 * (size + 2),
             initialAnchor = "LEFT",
             growthX       = "RIGHT",

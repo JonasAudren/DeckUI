@@ -93,6 +93,14 @@ local argcheck = Private.argcheck
 
 local STATE = {}
 
+-- DeckUI: Mists. Mists of Pandaria Classic has neither the AuraContainer widget
+-- nor its enums. DeckUI_Orbs/auras_mists.lua (loaded there before oUF) sets
+-- ns.MistsAuraContainer, a stand-in with the same methods, and ns.MistsFlowAxis;
+-- the other enums below are nil there and only passed through to it.
+local DispelStyle = Enum.CustomAuraButtonDispelTypeTextureStyle or {}
+local StealableFilter = Enum.CustomAuraButtonDispelTypeStealableFilter or {}
+local FlowAxis = AnchorUtil.FlowLayoutAxis or ns.MistsFlowAxis or {}
+
 local function CreateButton(element, options, button)
 	local size = options.size or element.size or 16
 	local width = options.width or element.width or size
@@ -144,7 +152,7 @@ local function CreateButton(element, options, button)
 		border:SetAllPoints()
 		button.Border = border
 		button:AddDispelTypeTexture(border, {
-			style = options.dispelBorderStyle or element.dispelBorderStyle or Enum.CustomAuraButtonDispelTypeTextureStyle.Border,
+			style = options.dispelBorderStyle or element.dispelBorderStyle or DispelStyle.Border,
 			showWhenHarmful = options.showDebuffBorder or element.showDebuffBorder,
 			showWhenHelpful = options.showBuffBorder or element.showBuffBorder,
 			customDispelColorMap = element.__owner.colors.dispel,
@@ -157,7 +165,7 @@ local function CreateButton(element, options, button)
 		dispelIndicator:SetSize(18, 18)
 		button.DispelIndicator = dispelIndicator
 		button:AddDispelTypeTexture(dispelIndicator, {
-			style = Enum.CustomAuraButtonDispelTypeTextureStyle.Icon,
+			style = DispelStyle.Icon,
 			showWhenHarmful = options.showDebuffIndicator or element.showDebuffIndicator,
 			showWhenHelpful = options.showBuffIndicator or element.showBuffIndicator,
 		})
@@ -171,10 +179,10 @@ local function CreateButton(element, options, button)
 		stealable:SetBlendMode('ADD')
 		button.Stealable = stealable
 		button:AddDispelTypeTexture(stealable, {
-			style = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset, -- since we use a texture
+			style = DispelStyle.PreserveAsset, -- since we use a texture
 			showWhenHelpful = true, -- this is required for stealableFilter option
 			showWithoutDispelType = true, -- this is _probably_ required for stealableFilter option
-			stealableFilter = options.stealableBorderFilter or element.stealableBorderFilter or Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable
+			stealableFilter = options.stealableBorderFilter or element.stealableBorderFilter or StealableFilter.Stealable
 		})
 	end
 
@@ -247,8 +255,8 @@ function elementMixin:AddGroup(filter, options)
 	options.layout = layout
 
 	-- some nice shorthands for stuff that might be shared across groups, with more familiar defaults
-	options.sortMethod = options.sortMethod or self.sortMethod or AuraContainerSortMethod.ExpirationOnly
-	options.sortDirection = options.sortDirection or self.sortDirection or AuraContainerSortDirection.Normal
+	options.sortMethod = options.sortMethod or self.sortMethod or (AuraContainerSortMethod and AuraContainerSortMethod.ExpirationOnly)
+	options.sortDirection = options.sortDirection or self.sortDirection or (AuraContainerSortDirection and AuraContainerSortDirection.Normal)
 
 	if(not options.initializeFrame) then
 		-- we want to provide a default set of widgets for buttons, and we load it late so we can
@@ -373,7 +381,12 @@ local function Create(self, options)
 	end
 
 	STATE[self].index = STATE[self].index + 1
-	local element = CreateFrame('AuraContainer', '$parentAuras' .. STATE[self].index, self, templates)
+	local element
+	if(ns.MistsAuraContainer) then -- DeckUI: Mists
+		element = ns.MistsAuraContainer(self)
+	else
+		element = CreateFrame('AuraContainer', '$parentAuras' .. STATE[self].index, self, templates)
+	end
 	STATE[self].elements[STATE[self].index] = element
 
 	element.__owner = self
@@ -386,7 +399,7 @@ local function Create(self, options)
 			element:SetFlowLayoutAxis(options.layout)
 		end
 
-		if(options.layout == AnchorUtil.FlowLayoutAxis.Vertical) then
+		if(options.layout ~= nil and options.layout == FlowAxis.Vertical) then
 			element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetHeight())
 		else
 			element:SetFlowLayoutMaximumLineSize(options.layoutLimit or self:GetWidth())
@@ -404,7 +417,7 @@ local function Create(self, options)
 
 		if(options.policy) then
 			-- just expose it easily for layouts in case they want to use it
-			element:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policy)
+			element:SetAuraProcessingPolicy(CustomAuraContainerAuraProcessingPolicy and CustomAuraContainerAuraProcessingPolicy.ProcessAura, options.policy)
 		end
 	end
 

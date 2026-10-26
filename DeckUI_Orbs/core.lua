@@ -3,6 +3,9 @@ local D = DeckUI
 
 ns.DISC = D.DISC
 ns.FONT = D.FONT
+-- the aura containers' layout axes; Mists has no AnchorUtil.FlowLayoutAxis,
+-- its stand-in (auras_mists.lua) brings its own
+ns.FLOW = AnchorUtil.FlowLayoutAxis or ns.MistsFlowAxis
 
 ns.GLOW  = 0
 ns.glows = {}

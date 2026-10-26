@@ -53,7 +53,14 @@ in Mists. A `_Mists.toc` lists only the files that run there; an option in the s
 file has loaded (`if D.ApplyX then`), and a debug command of a missing file says so. Code asks
 `D.IsMists` / `D.IsRetail`. `package.ps1` checks the `_Mists.toc` files on their own interface number,
 `bump-version.ps1 -MistsInterface` raises it; the upload still files under retail only until the port is
-done. In the classic client only `DeckUI` and `DeckUI_Cross` are junctions so far.
+done. In the classic client `DeckUI`, `DeckUI_Cross` and `DeckUI_Orbs` are junctions so far.
+**oUF carries Mists patches**, each marked `-- DeckUI: Mists` (blizzard.lua: oUF 13's hide-and-park where
+`SetRolesets` is missing; ouf.lua, private.lua, elements/auras.lua, classpower.lua, runes.lua) - **redo them
+at every oUF update**. They hand over to two files only the Mists toc loads, before oUF:
+`DeckUI_Orbs/auras_mists.lua` (a stand-in for the AuraContainer widget, which Mists lacks: exactly the
+container and button methods oUF and DeckUI call, `ns.MistsFlowAxis`; Orbs uses `ns.FLOW` for the axes)
+and `classpower_mists.lua` (shadow orbs, embers, fury, eclipse, chi, combo points on the target, rune
+colours by type; rules from Blizzard's 5.5.4 class bars, spell IDs from wago `wow_classic`).
 
 Each folder is a separate WoW addon; in `Interface\AddOns\` they are directory
 junctions pointing into this repo. Any `.lua` change is live after `/reload`;
@@ -285,8 +292,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   next to us. `WarnConsolePortBar` in `DeckUI_Cross/input.lua` prints that at login – keep it.
 - Blizzard's main bar is **not** called `MainMenuBar` anymore and buttons sit in per-button
   containers. Find a bar by climbing parents from `ActionButton1` until the parent is `UIParent`
-  (`ResolveBar` in `DeckUI_Cross/input.lua`). Hide by reparenting to a hidden frame +
-  visibility state driver + SetParent hook.
+  (`ResolveBar` in `DeckUI_Cross/input.lua`). Hide by reparenting to a hidden frame + SetParent
+  hook, state in our own tables. **No visibility state driver on a Blizzard bar** (removed
+  2026-10-26): bars are Edit Mode systems whose Lua `Hide` breaks the snaps of the bars docked to
+  them, and `RegisterStateDriver` runs that Hide once from our code - the neighbours' snap fields
+  turned tainted and Edit Mode's next layout in combat was blocked (`MultiBarLeft:SetPoint` after a
+  level-up in Mists; the same code is in retail). Never call `Hide`/`SetShown` on a bar either.
 - **Hiding the bars took Blizzard's leave-vehicle button with it** (reported 2026-09-29), which
   left no way out of a vehicle on the Deck. `MainMenuBarVehicleLeaveButton` is a child of
   Action Bar 1 (`MainActionBar`) - confirmed 2026-09-29 with `/dc bars`, which prints its parent

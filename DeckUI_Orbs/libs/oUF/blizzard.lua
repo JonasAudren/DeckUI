@@ -11,7 +11,45 @@ local isArenaHooked = false
 local isBossHooked = false
 local isPartyHooked = false
 
-local function handleFrame(baseName)
+-- DeckUI: Mists. Mists of Pandaria Classic has no SetRolesets, so its frames
+-- are hidden the way oUF 13 did: hidden, parked under a hidden parent and
+-- kept there (taken from oUF 13.4.5's blizzard.lua).
+local hiddenParent, hookedFrames, looseFrames = nil, {}, {}
+local function park(frame, doNotReparent)
+	frame:Hide()
+	if(doNotReparent) then return end
+
+	if(not hiddenParent) then
+		hiddenParent = CreateFrame('Frame', nil, UIParent)
+		hiddenParent:SetAllPoints()
+		hiddenParent:Hide()
+
+		local watcher = CreateFrame('Frame')
+		watcher:RegisterEvent('PLAYER_REGEN_ENABLED')
+		watcher:SetScript('OnEvent', function()
+			for loose in next, looseFrames do
+				loose:SetParent(hiddenParent)
+			end
+			table.wipe(looseFrames)
+		end)
+	end
+
+	frame:SetParent(hiddenParent)
+	if(not hookedFrames[frame]) then
+		hookedFrames[frame] = true
+		hooksecurefunc(frame, 'SetParent', function(self, parent)
+			if(parent ~= hiddenParent) then
+				if(InCombatLockdown() and self:IsProtected()) then
+					looseFrames[self] = true
+				else
+					self:SetParent(hiddenParent)
+				end
+			end
+		end)
+	end
+end
+
+local function handleFrame(baseName, doNotReparent)
 	local frame
 	if(type(baseName) == 'string') then
 		frame = _G[baseName]
@@ -21,7 +59,11 @@ local function handleFrame(baseName)
 
 	if(frame) then
 		frame:UnregisterAllEvents()
-		frame:SetRolesets('alwaysBlocked')
+		if(frame.SetRolesets) then
+			frame:SetRolesets('alwaysBlocked')
+		else
+			park(frame, doNotReparent) -- DeckUI: Mists
+		end
 
 		local health = frame.healthBar or frame.healthbar or frame.HealthBar or (frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar)
 		if(health) then
@@ -93,7 +135,9 @@ function oUF:DisableBlizzard(unit)
 			handleFrame(BossTargetFrameContainer)
 
 			for i = 1, MAX_BOSS_FRAMES do
-				handleFrame('Boss' .. i .. 'TargetFrame')
+				-- DeckUI: Mists - not reparented, as in oUF 13: their container's
+				-- layout breaks on a frame without a size
+				handleFrame('Boss' .. i .. 'TargetFrame', true)
 			end
 		end
 	elseif(unit:match('party%d?$')) then
@@ -102,8 +146,11 @@ function oUF:DisableBlizzard(unit)
 
 			handleFrame(PartyFrame)
 
-			for frame in PartyFrame.PartyMemberFramePool:EnumerateActive() do
-				handleFrame(frame)
+			-- DeckUI: Mists - its PartyFrame may come without the pool
+			if(PartyFrame and PartyFrame.PartyMemberFramePool) then
+				for frame in PartyFrame.PartyMemberFramePool:EnumerateActive() do
+					handleFrame(frame, true)
+				end
 			end
 
 			for i = 1, MEMBERS_PER_RAID_GROUP do
@@ -114,21 +161,26 @@ function oUF:DisableBlizzard(unit)
 		if(not isArenaHooked) then
 			isArenaHooked = true
 
-			handleFrame(CompactArenaFrame)
+			-- DeckUI: Mists - neither container exists there
+			if(CompactArenaFrame) then
+				handleFrame(CompactArenaFrame)
 
-			for _, frame in next, CompactArenaFrame.memberUnitFrames do
-				handleFrame(frame)
+				for _, frame in next, CompactArenaFrame.memberUnitFrames do
+					handleFrame(frame)
+				end
 			end
 
 			-- old arena frames, they're still used for flag carriers etc in battlegrounds
-			handleFrame(ArenaEnemyMatchFramesContainer)
+			if(ArenaEnemyMatchFramesContainer) then
+				handleFrame(ArenaEnemyMatchFramesContainer)
 
-			for _, frame in next, ArenaEnemyMatchFramesContainer.UnitFrames do
-				handleFrame(frame)
+				for _, frame in next, ArenaEnemyMatchFramesContainer.UnitFrames do
+					handleFrame(frame)
+				end
 			end
 		end
 	elseif(unit:match('nameplate%d?%d?%d?$')) then
 		local frame = C_NamePlate.GetNamePlateForUnit(unit)
-		handleFrame(frame.UnitFrame)
+		handleFrame(frame.UnitFrame, true) -- DeckUI: Mists - plates are never reparented
 	end
 end

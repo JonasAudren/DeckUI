@@ -83,7 +83,7 @@ local SPELL_VOID_METAMORPHOSIS = Constants.UnitPowerSpellIDs.VOID_METAMORPHOSIS_
 local SOUL_FRAGMENTS_NO_META_INDEX = 1
 local SOUL_FRAGMENTS_META_INDEX = 2
 
-local ClassPowerEnable, ClassPowerDisable
+local ClassPowerEnable, ClassPowerDisable, TargetPath
 local GetPower, GetPowerMax, GetPowerColor, GetPowerUpdaters
 local GetPowerInfo, GetAuraInfo
 
@@ -100,7 +100,7 @@ local function GetGenericPowerColor(element, powerType)
 end
 
 local function GetComboPoints(unit)
-	return UnitPower(unit, Enum.PowerType.ComboPoints), GetUnitChargedPowerPoints(unit)
+	return UnitPower(unit, Enum.PowerType.ComboPoints), GetUnitChargedPowerPoints and GetUnitChargedPowerPoints(unit) -- DeckUI: Mists
 end
 
 local function GetComboPointsMax(unit)
@@ -302,6 +302,16 @@ elseif(playerClass == 'WARLOCK') then
 	end
 end
 
+-- DeckUI: Mists. Mists of Pandaria Classic has class resources of its own (shadow
+-- orbs, burning embers, demonic fury, eclipse) and keeps combo points on the
+-- target. DeckUI_Orbs/classpower_mists.lua, loaded there before oUF, supplies
+-- the rules; its updates arrive as UNIT_POWER_FREQUENT and on a target change.
+local isMists = ns.MistsClassPower ~= nil
+if(isMists) then
+	GetComboPoints, GetComboPointsMax = ns.MistsComboPoints, ns.MistsComboPointsMax
+	GetPowerUpdaters, GetPowerInfo, GetAuraInfo = ns.MistsClassPower(playerClass, GetGenericPower, GetGenericPowerMax, GetGenericPowerColor, GetComboPoints, GetComboPointsMax)
+end
+
 local function UpdateColor(self, event, unit)
 	local element = self.ClassPower
 
@@ -348,7 +358,7 @@ local function Update(self, event, unit, powerType)
 		return
 	elseif(not unitIsUnit(unit, 'player')) then -- is this redundant?
 		return
-	elseif(event == 'UNIT_AURA' or event == 'UNIT_POWER_POINT_CHARGE') then
+	elseif(event == 'UNIT_AURA' or event == 'UNIT_POWER_POINT_CHARGE' or isMists) then -- DeckUI: Mists, its tokens differ
 		-- fake the power type for events that don't provide any
 		powerType = STATE[element].powerType
 	elseif(not powerType or powerType ~= STATE[element].powerType) then
@@ -397,6 +407,11 @@ local function Update(self, event, unit, powerType)
 
 			STATE[element].cur = cur
 		end
+
+		-- DeckUI: Mists - eclipse turns from lunar to solar colour as it swings
+		if(isMists and STATE[element].powerType == 'ECLIPSE') then
+			ColorPath(self, event, unit)
+		end
 	end
 	--[[ Callback: ClassPower:PostUpdate(cur, max, hasMaxChanged, powerType)
 	Called after the element has been updated.
@@ -426,6 +441,14 @@ local function Path(self, ...)
 	return (self.ClassPower.Override or Update) (self, ...)
 end
 
+-- DeckUI: Mists - combo points belong to the target there
+function TargetPath(self, event)
+	local element = self.ClassPower
+	if(STATE[element].enabled) then
+		Path(self, event, 'player', STATE[element].powerType)
+	end
+end
+
 local function Visibility(self, event, unit)
 	local element = self.ClassPower
 	local powerType, powerID, isAuraPower
@@ -433,7 +456,7 @@ local function Visibility(self, event, unit)
 	if(UnitHasVehicleUI('player')) then
 		unit = 'vehicle'
 
-		if(PlayerVehicleHasComboPoints()) then
+		if(PlayerVehicleHasComboPoints and PlayerVehicleHasComboPoints()) then -- DeckUI: Mists
 			powerType = POWER_TYPE_COMBO_POINTS
 		end
 	else
@@ -492,7 +515,7 @@ end
 
 local function VisibilityPath(self, event, ...)
 	if(event == 'TRAIT_CONFIG_UPDATED') then
-		if(C_ClassTalents.GetActiveConfigID() ~= ...) then return end
+		if(not C_ClassTalents or C_ClassTalents.GetActiveConfigID() ~= ...) then return end -- DeckUI: Mists has no C_ClassTalents
 	end
 
 	--[[ Override: ClassPower.OverrideVisibility(self, event, unit)
@@ -517,8 +540,13 @@ do
 			self:RegisterEvent('UNIT_MAXPOWER', Path)
 			self:RegisterEvent('UNIT_POWER_UPDATE', Path)
 
-			-- according to Blizz any class may receive this event due to specific spell auras
-			self:RegisterEvent('UNIT_POWER_POINT_CHARGE', Path)
+			if(isMists) then -- DeckUI: Mists
+				self:RegisterEvent('UNIT_POWER_FREQUENT', Path)
+				self:RegisterEvent('PLAYER_TARGET_CHANGED', TargetPath, true)
+			else
+				-- according to Blizz any class may receive this event due to specific spell auras
+				self:RegisterEvent('UNIT_POWER_POINT_CHARGE', Path)
+			end
 		end
 
 		self:RegisterEvent('SPELLS_CHANGED', ColorPath, true)
@@ -538,6 +566,8 @@ do
 		self:UnregisterEvent('UNIT_POWER_UPDATE', Path)
 		self:UnregisterEvent('UNIT_MAXPOWER', Path)
 		self:UnregisterEvent('UNIT_POWER_POINT_CHARGE', Path)
+		self:UnregisterEvent('UNIT_POWER_FREQUENT', Path) -- DeckUI: Mists
+		self:UnregisterEvent('PLAYER_TARGET_CHANGED', TargetPath)
 		self:UnregisterEvent('SPELLS_CHANGED', ColorPath)
 
 		if(not unregisterOnly) then
@@ -564,6 +594,11 @@ local function Enable(self, unit)
 		self:RegisterEvent('PLAYER_LEVEL_UP', VisibilityPath, true)
 		self:RegisterEvent('TRAIT_CONFIG_UPDATED', VisibilityPath, true)
 		self:RegisterEvent('UNIT_DISPLAYPOWER', VisibilityPath)
+		if(isMists) then -- DeckUI: Mists - forms and specs decide there (moonkin, cat, shadow)
+			self:RegisterEvent('UPDATE_SHAPESHIFT_FORM', VisibilityPath, true)
+			self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', VisibilityPath)
+			self:RegisterEvent('SPELLS_CHANGED', VisibilityPath, true)
+		end
 
 		element.ClassPowerEnable = ClassPowerEnable
 		element.ClassPowerDisable = ClassPowerDisable
@@ -590,6 +625,9 @@ local function Disable(self)
 		self:UnregisterEvent('PLAYER_LEVEL_UP', VisibilityPath)
 		self:UnregisterEvent('TRAIT_CONFIG_UPDATED', VisibilityPath)
 		self:UnregisterEvent('UNIT_DISPLAYPOWER', VisibilityPath)
+		self:UnregisterEvent('UPDATE_SHAPESHIFT_FORM', VisibilityPath) -- DeckUI: Mists
+		self:UnregisterEvent('PLAYER_SPECIALIZATION_CHANGED', VisibilityPath)
+		self:UnregisterEvent('SPELLS_CHANGED', VisibilityPath)
 	end
 end
 

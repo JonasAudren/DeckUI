@@ -85,7 +85,14 @@ local function UpdateColor(self, event)
 		color = self.colors.power.RUNES
 	end
 
-	if(color) then
+	if(ns.MistsRuneColor) then -- DeckUI: Mists - each rune has its own type there
+		for index, runeID in next, runemap do
+			local runeColor = ns.MistsRuneColor(runeID)
+			if(runeColor and element[index]) then
+				element[index]:SetStatusBarColor(runeColor:GetRGB())
+			end
+		end
+	elseif(color) then
 		for index = 1, #element do
 			element[index]:SetStatusBarColor(color:GetRGB())
 		end
@@ -193,6 +200,7 @@ local function Disable(self)
 
 		self:UnregisterEvent('PLAYER_SPECIALIZATION_CHANGED', ColorPath)
 		self:UnregisterEvent('RUNE_POWER_UPDATE', Path)
+		self:UnregisterEvent('RUNE_TYPE_UPDATE', AllPath) -- DeckUI: Mists
 	end
 end
 
@@ -217,6 +225,9 @@ local function Enable(self, unit)
 
 		self:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', ColorPath)
 		self:RegisterEvent('RUNE_POWER_UPDATE', Path, true)
+		if(ns.MistsRuneColor) then -- DeckUI: Mists - a rune turned death rune
+			self:RegisterEvent('RUNE_TYPE_UPDATE', AllPath, true)
+		end
 
 		return true
 	end

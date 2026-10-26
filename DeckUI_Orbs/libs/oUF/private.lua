@@ -70,6 +70,8 @@ for _, selectionType in next, oUF.Enum.SelectionType do
 end
 
 function Private.unitSelectionType(unit, considerHostile)
+	if(not UnitSelectionType) then return end -- DeckUI: Mists has no UnitSelectionType
+
 	if(considerHostile and UnitThreatSituation('player', unit)) then
 		return 0
 	else

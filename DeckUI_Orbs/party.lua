@@ -232,7 +232,7 @@ local function BuildRow(self, unit)
     if self.CreateAuras then
         local size, count = 20, 8
         local auras = self:CreateAuras({
-            layout        = AnchorUtil.FlowLayoutAxis.Horizontal,
+            layout        = ns.FLOW.Horizontal,
             layoutLimit   = count * (size + 2),
             initialAnchor = "LEFT",
             growthX       = "RIGHT",

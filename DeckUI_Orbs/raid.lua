@@ -256,7 +256,7 @@ local function BuildTile(self, unit)
         -- debuffs top right, over the end of the name; your own buffs bottom right
         local function Container(anchor, size, y, count)
             local auras = self:CreateAuras({
-                layout        = AnchorUtil.FlowLayoutAxis.Horizontal,
+                layout        = ns.FLOW.Horizontal,
                 layoutLimit   = count * (size + 1),
                 initialAnchor = anchor,
                 growthX       = "LEFT",
@@ -286,7 +286,7 @@ local function BuildTile(self, unit)
 
         -- the dispel frame over the whole tile
         local dispel = self:CreateAuras({
-            layout        = AnchorUtil.FlowLayoutAxis.Horizontal,
+            layout        = ns.FLOW.Horizontal,
             layoutLimit   = w,
             initialAnchor = "TOPLEFT",
             growthX       = "RIGHT",

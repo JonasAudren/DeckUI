@@ -133,7 +133,7 @@ local function CreateAuras(self, cfg, left, xOffset, filter, groupOptions)
     local width  = cfg.cols   * step
 
     local auras = self:CreateAuras({
-        layout        = AnchorUtil.FlowLayoutAxis.Vertical,
+        layout        = ns.FLOW.Vertical,
         layoutLimit   = height,
         initialAnchor = left and "TOPRIGHT" or "TOPLEFT",
         growthX       = left and "LEFT" or "RIGHT",

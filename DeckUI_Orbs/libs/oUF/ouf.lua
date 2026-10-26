@@ -755,7 +755,7 @@ do
 		local isPetHeader = template:match('PetHeader')
 		local name = overrideName or generateName(nil, ...)
 		local header = Mixin(CreateFrame('Frame', name, UIParent, template), headerMixin)
-		header:SetRolesets('unitFrames')
+		if(header.SetRolesets) then header:SetRolesets('unitFrames') end -- DeckUI: Mists has no rolesets
 
 		header:SetAttribute('template', 'SecureUnitButtonTemplate, SecureHandlerStateTemplate, SecureHandlerEnterLeaveTemplate, PingableUnitFrameTemplate')
 
@@ -847,7 +847,8 @@ function oUF:Spawn(unit, overrideName)
 	local object = CreateFrame('Button', name, UIParent, 'SecureUnitButtonTemplate, PingableUnitFrameTemplate')
 	Private.UpdateUnits(object, unit)
 
-	if(unit:match('arena%d?')) then
+	if(not object.SetRolesets) then -- DeckUI: Mists has no rolesets
+	elseif(unit:match('arena%d?')) then
 		object:SetRolesets('arenaFrames')
 	else
 		object:SetRolesets('unitFrames')

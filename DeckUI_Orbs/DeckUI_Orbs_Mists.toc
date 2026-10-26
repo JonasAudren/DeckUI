@@ -1,0 +1,27 @@
+## Interface: 50504
+## Title: DeckUI Orbs
+## Notes: DeckUI module: round unit frames (orbs)
+## Author: Gottlieb
+## Version: 1.7.1
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/JonasAudren/DeckUI
+## X-Curse-Project-ID: 1699742
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckOrbsDB
+
+# Mists of Pandaria Classic. The two *_mists.lua files come before oUF:
+# its Auras and ClassPower elements ask them for what Mists lacks
+# (the AuraContainer, its own class resources) - see "DeckUI: Mists" in libs\oUF.
+auras_mists.lua
+classpower_mists.lua
+libs\oUF\oUF.xml
+core.lua
+layout.lua
+ffstyle.lua
+party.lua
+raid.lua
+buffs.lua
+enemies.lua
+config.lua

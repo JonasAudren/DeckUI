@@ -80,6 +80,12 @@ local function Style(element, button)
         button.Border:SetPoint("BOTTOMLEFT", button, "TOPLEFT", 0, 2)
         button.Border:SetPoint("BOTTOMRIGHT", button, "TOPRIGHT", 0, 2)
         button.Border:SetHeight(3)
+        -- Mists' stand-in (auras_mists.lua) draws the old debuff frame;
+        -- the strip wants plain colour
+        if D.IsMists then
+            button.Border:SetTexture("Interface\\Buttons\\WHITE8x8")
+            button.Border:SetTexCoord(0, 1, 0, 1)
+        end
     end
 end
 
@@ -87,7 +93,7 @@ end
 local function Block(self, w, h, count, rows, anchor)
     local width = count * (w + GAP)
     local auras = self:CreateAuras({
-        layout        = AnchorUtil.FlowLayoutAxis.Horizontal,
+        layout        = ns.FLOW.Horizontal,
         layoutLimit   = width,
         initialAnchor = anchor,
         growthX       = anchor == "TOPLEFT" and "RIGHT" or "LEFT",
