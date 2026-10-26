@@ -26,7 +26,7 @@ Talking Head, Schadensmesser, Taschen sortieren). Und zwei technische Brocken:
    (Schattenkugeln, Glut, Dämonischer Furor, Eklipse, Todesrunen).
 
 **Empfehlung:** Ein Repository, eine Codebasis, **zweite Toc-Datei je Ordner** (`<Name>_Mists.toc`, Interface 50504),
-eine gemeinsame Zip für Retail und MoP. Reihenfolge nach Nutzen fürs Deck: erst Grundgerüst + Cross + Orbs (spielbar),
+eine gemeinsame Zip für Retail und MoP. Reihenfolge nach Nutzen: erst Grundgerüst + Cross + Orbs (spielbar),
 dann Taschen/Tooltip/Karte, zuletzt Quests/Nav/Week (die am meisten neu brauchen).
 
 **Erster Schritt erledigt (25.10.2026):** Das Prüf-Addon `DeckUI_Probe` lief im MoP-Client (Paladin Stufe 1,
@@ -422,11 +422,17 @@ Nichts davon wird aus Retail gelöscht – es steht nur nicht in den MoP-Tocs.
 
 ## 7. Reihenfolge (Phasen) mit Ziel und Test
 
+**Getestet wird am PC (Entscheidung des Besitzers, 26.10.2026).** MoP wird vorerst nicht auf dem Steam Deck gespielt –
+der Port ist ein Entgegenkommen an die PC-Spieler. Alles Deck-Spezifische (Gamepad-Einrichtung, LT/RT-Kreuze,
+LB-Zoom, Haltungen über LB, Schnellmenü RB, Fähigkeiten-Menü B, Pad-Standardtasten) wird trotzdem **in jeder Phase
+mitgebaut** und bleibt im Code, aber erst in **Phase 11** auf dem Deck getestet. Bis dahin prüft jede Phase am PC:
+Tastatur und Maus, keine Lua-Fehler, kein Taint.
+
 | Phase | Inhalt | Fertig, wenn … |
 |---|---|---|
 | **0** ✅ | Probe laufen lassen, Plan aktualisieren | erledigt 25.10.2026 (Abschnitt 3a); Rest-❓ werden in den Phasen im Spiel geklärt |
 | **1** ✅ | Flavor-Gerüst, `_Mists.toc` (zunächst nur Hub + Cross), Release-Skripte, Junctions | MoP lädt DeckUI ohne Lua-Fehler, Einstellungsfenster öffnet, `/deck build` zeigt 50504. **Gebaut 25.10.2026, im Spiel getestet 26.10. (PC, Tastaturmodus: Kreuze zeigen und zaubern, keine Fehler)**: `D.IsMists/IsRetail`, `D.MISTS_MODULES = { Cross }`, Hub-Toc mit core/errors/widgets/panel/minimap, Cross-Toc mit allen Dateien, Optionen und `/deck`-Befehle nur bei geladener Datei, Minikarten-Knopf am MoP-Radius, `package.ps1`/`bump-version.ps1 -MistsInterface`, Junctions für DeckUI und DeckUI_Cross. Statt `D.FEATURES` vorerst „Option da, wenn ihre Datei geladen ist“ – die Toc entscheidet |
-| **2** | Cross komplett (Kreuze, Gamepad, Haltungen, Leisten 3–8, Menüs) | Auf dem Deck in MoP spielbar: LT/RT+Tasten zaubern, Gedrückt-halten wiederholt, Fahrzeuge |
+| **2** | Cross komplett (Kreuze, Haltungen, Leisten 3–8, Menüs; Gamepad-Teile mitgebaut) | Am PC: Kreuze mit eigenen Tasten zaubern und leuchten, Gedrückt-halten wiederholt, Seitenwechsel (Haltung/Form, Fahrzeug, Reittier), Aussteigen, Haltungsleiste, Leisten 3–8, Assistent-Anzeige, jede Option der Seiten Cross/Action bars ohne Fehler. Gamepad-Teile: nur „lädt ohne Fehler“ |
 | **3** | Orbs: oUF-Patches, Aura-Ersatz, Ressourcen, alle Stile, Gruppe/Raid | Spieler/Ziel/Fokus/Gruppe/Raid ohne Fehler, Auren sichtbar, jede MoP-Klasse zeigt ihre Ressource |
 | **4** | Spec (Dual-Spec), Hub-Rest (Händler, Beute, Ruf, Leisten/Layout pro Gerät, Mikromenü, Infozeile) | Overview-Seite vollständig nutzbar |
 | **5** | Taschen + Bank, Tooltip | Taschen/Bank benutzen, ablegen, verkaufen ohne Taint-Meldung |
@@ -434,15 +440,17 @@ Nichts davon wird aus Retail gelöscht – es steht nur nicht in den MoP-Tocs.
 | **7** | Quests (Tracker, Erfolge, Szenario, Herausforderungsmodus) | Tracker ersetzt WatchFrame vollständig, Quest-Gegenstände im Kampf nutzbar |
 | **8** | Nav (Kompass, Ziel, Wegpunkte, Routen) | Wegpunkt per Strg+Klick, Ankunft, Route |
 | **9** | Week (MoP-Daten) | Tabelle für alle Charaktere mit MoP-Inhalten |
-| **10** | Release (CHANGELOG, Beschreibung „Retail + MoP Classic“), CurseForge mit beiden Versionen | Datei auf CurseForge mit 12.1.5 **und** 5.5.4 |
+| **10** | Release (CHANGELOG, Beschreibung „Retail + MoP Classic“), CurseForge mit beiden Versionen | Datei auf CurseForge mit 12.1.5 **und** 5.5.4. In der Beschreibung: Steam-Deck-Teile in MoP „not yet tested on the Steam Deck“ |
+| **11** | **Steam-Deck-Test in MoP** (alles auf einmal) | Junctions auf dem Deck; Controller-Modus-Meldung, Gamepad-Selbsteinrichtung, LT/RT-Kombinationen (auch LT+RT), Gedrückt-halten, LB-Zoom, Haltungen über LB, Schnellmenü RB, Fähigkeiten-Menü B, Pad-Standardtasten, Positionen und Größen pro Gerät, alle Module auf 1280×800 |
 
-Phasen 1–3 sind der Kern: danach ist DeckUI in MoP auf dem Deck spielbar. Ab Phase 4 kann jede Phase einzeln
+Phasen 1–3 sind der Kern: danach ist DeckUI in MoP am PC spielbar. Ab Phase 4 kann jede Phase einzeln
 released werden (Module, die noch nicht portiert sind, fehlen in der MoP-Toc einfach – keine halben Sachen).
 
-## 8. Tests (du, in MoP)
+## 8. Tests (du, in MoP, am PC – das Deck kommt in Phase 11)
 1. `/console scriptErrors 1`, `/console taintLog 1`, `/reload` – kein Fehlerfenster.
 2. `/deck build` → Client 5.5.4, Interface 50504, Toc 50504.
-3. Deck: Controller-Modus-Meldung, LT/RT-Kombinationen, Haltungswechsel (Krieger/Druide/Schurke), Fahrzeug + Aussteigen.
+3. PC: „keyboard mode“-Meldung, eigene Tasten der Leisten 1+2 auf den Kreuzen, Haltungswechsel (Krieger/Druide/Schurke),
+   Fahrzeug + Aussteigen.
 4. Jede Seite in `/deck`: jede Option einmal an/aus, kein Fehler, nichts Retail-only sichtbar.
 5. Je Klasse mit Sonderressource einmal einloggen (Priester Schatten, Hexer alle 3, Druide Gleichgewicht, DK, Mönch).
 6. Taschen/Bank/Händler/Auktionshaus/Post: benutzen, ablegen, verkaufen, kein „blocked“.
@@ -478,6 +486,7 @@ released werden (Module, die noch nicht portiert sind, fehlen in der MoP-Toc ein
 | 8 Nav | 2 Sitzungen |
 | 9 Week | 1–2 Sitzungen |
 | 10 Release | 1 Sitzung |
+| 11 Deck-Test | 1 Sitzung (Testen, kleine Korrekturen) |
 
 ## 11. Vorbereitete Dateien
 | Pfad | Zweck |
