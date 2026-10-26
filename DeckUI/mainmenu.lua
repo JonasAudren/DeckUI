@@ -154,8 +154,21 @@ end
 -------------------------------------------------------------------
 local faded, hooked = false, false
 
+-- Off down the tree, and back to what each frame had: switching on every
+-- child gave the game menu button's notification overlay (a plain frame
+-- above the button, frame level 100) the mouse, and it swallowed hover and
+-- clicks on the button (owner's /fstack, 2026-10-26). Kept in our table.
+local mouseBefore = {}
 local function NoMouse(frame, on)
-    if frame.EnableMouse then frame:EnableMouse(on) end
+    if frame.EnableMouse and frame.IsMouseEnabled then
+        if not on then
+            if mouseBefore[frame] == nil then mouseBefore[frame] = frame:IsMouseEnabled() end
+            frame:EnableMouse(false)
+        elseif mouseBefore[frame] ~= nil then
+            frame:EnableMouse(mouseBefore[frame])
+            mouseBefore[frame] = nil
+        end
+    end
     for _, child in ipairs({ frame:GetChildren() }) do NoMouse(child, on) end
 end
 

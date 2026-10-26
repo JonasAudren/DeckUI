@@ -240,10 +240,18 @@ function ns.ApplyDefaultBindingsNow()
         print("DeckUI Cross: not possible in combat.")
         return
     end
+    -- Escape must keep the game menu: B gets TOGGLEGAMEMENU here, and the
+    -- owner's PC was found with "bind ESCAPE NONE" next to "bind PAD2
+    -- TOGGLEGAMEMENU" in its bindings (2026-10-26, Esc opened nothing).
+    -- Whatever dropped it, Escape is put back if writing the pad keys did.
+    local escape = GetBindingAction("ESCAPE")
     local n = 0
     for key, command in pairs(DEFAULT_BINDINGS) do
         SetBinding(key, command)
         n = n + 1
+    end
+    if escape ~= "" and GetBindingAction("ESCAPE") ~= escape then
+        SetBinding("ESCAPE", escape)
     end
     SaveBindings(GetCurrentBindingSet())
     print("DeckUI Cross: default controller bindings applied (" .. n .. " keys).")
@@ -401,8 +409,19 @@ end
 -- invisible one (BlizzardLeaveVisible asks for the alpha too).
 local overrideFaded, overrideHooked = false, false
 
+-- Off down the tree, and back to what each frame had - switching on every
+-- child would give Blizzard's overlays the mouse (see DeckUI/mainmenu.lua)
+local mouseBefore = {}
 local function NoMouse(frame, on)
-    if frame.EnableMouse then frame:EnableMouse(on) end
+    if frame.EnableMouse and frame.IsMouseEnabled then
+        if not on then
+            if mouseBefore[frame] == nil then mouseBefore[frame] = frame:IsMouseEnabled() end
+            frame:EnableMouse(false)
+        elseif mouseBefore[frame] ~= nil then
+            frame:EnableMouse(mouseBefore[frame])
+            mouseBefore[frame] = nil
+        end
+    end
     for _, child in ipairs({ frame:GetChildren() }) do NoMouse(child, on) end
 end
 
