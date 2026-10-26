@@ -231,8 +231,7 @@ try {
         Add-Content $env:GITHUB_OUTPUT "zip=$zip"
         Add-Content $env:GITHUB_OUTPUT "version=$buildVersion"
         Add-Content $env:GITHUB_OUTPUT "interface=$interface"
-        # not used by the upload yet: the file is filed under retail only
-        # until the Mists port is complete (MISTS_PLAN.md, phase 10)
+        # the file is filed under both games (MISTS_PLAN.md, phase 10)
         Add-Content $env:GITHUB_OUTPUT "mists_interface=$mistsInterface"
     }
 }

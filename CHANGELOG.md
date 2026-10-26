@@ -8,6 +8,54 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.0.0
+
+**DeckUI now runs in Mists of Pandaria Classic.** One download for both
+games: the same folders load in Retail and in MoP Classic (5.5.4), and each
+game gets what fits it. All ten modules came along - unit frames with MoP's
+class resources, the cross hotbar, bags and the old bank, the quest
+tracker, the maps, the tooltip, the compass with waypoints and a week
+overview made for MoP. Everything was played on the PC; the controller
+parts are all there in MoP but **not yet tested on the Steam Deck** - tell
+us if something does not work for you.
+
+**Mists of Pandaria Classic**
+
+- **Orbs and Final Fantasy bars** with MoP's resources: shadow orbs, burning
+  embers, demonic fury, eclipse, chi, combo points on the target and runes
+  coloured by type. Party list, raid frames, buff bar and enemy list as in
+  Retail.
+- **Cross hotbar** with stances and forms, vehicles, the stance row, Action
+  Bars 3-8, the quick menu and the ability menu.
+- **Spec bar**: one button per talent group (dual spec), click to switch.
+- **Bags and bank**: one window for all bags and the old bank with its bank
+  bags; no sorting, which MoP does not have.
+- **Quest tracker** in place of MoP's: quests with their item buttons,
+  achievements, zone widgets, scenarios and **challenge modes with the
+  medal times**.
+- **Minimap** square or round, the world map as a movable window.
+- **Tooltip** with spec and item level of other players.
+- **Compass and waypoints**: Ctrl-click the world map or `/way`; routes,
+  pins on both maps, the waypoint list.
+- **Week overview for MoP**: raid lockouts (Raid Finder wings included),
+  valor and conquest of their weekly caps, the world bosses, your medal in
+  every challenge mode, charms, seals and coins - for all your characters.
+- Not in MoP, because the game has none of it: the damage meter style, the
+  talking head subtitle, delves, world quests, hunts and the scenario guide,
+  the beacon in the world.
+
+**Both games**
+
+- **Neutral creatures are yellow, not red**, on the FFXIV nameplates, in the
+  enemy list and on the target arrow - red once they attack you.
+- **Fast loot switches the game's auto loot on** as well; without it the
+  loot window still waited for a click.
+- **Hidden action bars stay hidden after a level-up in combat** - the game
+  put the main bar back, and could block the right bars in combat.
+- **The waypoint list** opens with a click on the navigation target below
+  the compass too, and you can drag it by its title while it is open.
+- Switching a module on from its own page no longer shows an error.
+
 ## 1.7.1
 
 - **Updated for patch 12.1.5.** DeckUI now loads without "out of date" on

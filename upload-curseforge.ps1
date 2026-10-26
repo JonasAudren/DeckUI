@@ -11,6 +11,9 @@
     gameVersions wants numeric ids, not "12.1.0", so the ids are looked up
     through GET /api/game/versions and matched by name. The name is derived
     from the ## Interface number unless -GameVersion says otherwise.
+    One file can serve several games: -Interface takes a list - retail's
+    and Mists of Pandaria Classic's (5.5.4) since 2.0.0 - and the file is
+    filed under each. Every name must be found, or nothing is uploaded.
 
     The token is read from the CF_API_TOKEN environment variable and is never
     passed on the command line, so it stays out of shell history and logs.
@@ -19,7 +22,7 @@
     5.1 cannot do multipart. GitHub's runners have pwsh preinstalled.
 
     Usage:  pwsh ./upload-curseforge.ps1 -Zip dist/DeckUI-1.0.0.zip `
-                -ProjectId 1699742 -ReleaseType beta -Interface 120100 -DryRun
+                -ProjectId 1699742 -ReleaseType beta -Interface 120105,50504 -DryRun
 #>
 
 param(
@@ -29,8 +32,8 @@ param(
 
     # Either give the interface number and let the game version be derived,
     # or name the version directly when the derived one is not what you want.
-    [string]$Interface,
-    [string]$GameVersion,
+    [string[]]$Interface,
+    [string[]]$GameVersion,
 
     [string]$Changelog = "",
     [ValidateSet("text", "html", "markdown")] [string]$ChangelogType = "markdown",
@@ -44,7 +47,7 @@ $ErrorActionPreference = "Stop"
 
 if (-not (Test-Path $Zip)) { throw "no such file: $Zip" }
 if (-not $Interface -and -not $GameVersion) {
-    throw "give -Interface (e.g. 120100) or -GameVersion (e.g. 12.1.0)"
+    throw "give -Interface (e.g. 120105,50504) or -GameVersion (e.g. 12.1.5,5.5.4)"
 }
 
 $token = $env:CF_API_TOKEN
@@ -60,8 +63,11 @@ function ConvertTo-GameVersionName([string]$iface) {
 }
 
 if (-not $GameVersion) {
-    $GameVersion = ConvertTo-GameVersionName $Interface
-    Write-Host ("  interface {0} -> game version {1}" -f $Interface, $GameVersion)
+    $GameVersion = @(foreach ($i in $Interface) {
+        $name = ConvertTo-GameVersionName $i
+        Write-Host ("  interface {0} -> game version {1}" -f $i, $name)
+        $name
+    })
 }
 
 $headers = @{ "X-Api-Token" = $token }
@@ -69,16 +75,22 @@ $headers = @{ "X-Api-Token" = $token }
 Write-Host "  asking CurseForge for its game version list"
 $all = Invoke-RestMethod -Uri "https://wow.curseforge.com/api/game/versions" -Headers $headers
 
-$matching = @($all | Where-Object { $_.name -eq $GameVersion })
-if ($matching.Count -eq 0) {
-    # Do not guess a different version: an addon filed under the wrong game
-    # version is worse than a failed upload. Show what is on offer instead.
-    $recent = ($all | Sort-Object -Property id -Descending | Select-Object -First 12 |
-               ForEach-Object { "{0} (id {1})" -f $_.name, $_.id }) -join "`n    "
-    throw "CurseForge lists no game version named '$GameVersion'.`n  The newest it offers:`n    $recent`n  Pass the right one with -GameVersion."
+$ids = @()
+foreach ($name in $GameVersion) {
+    $matching = @($all | Where-Object { $_.name -eq $name })
+    if ($matching.Count -eq 0) {
+        # Do not guess a different version: an addon filed under the wrong game
+        # version is worse than a failed upload. Show what is on offer instead.
+        $recent = ($all | Sort-Object -Property id -Descending | Select-Object -First 12 |
+                   ForEach-Object { "{0} (id {1})" -f $_.name, $_.id }) -join "`n    "
+        throw "CurseForge lists no game version named '$name'.`n  The newest it offers:`n    $recent`n  Pass the right one with -GameVersion."
+    }
+    # the type tells retail, Classic and a PTR apart - check it in the dry run
+    foreach ($m in $matching) {
+        Write-Host ("  game version {0} -> id {1} (type {2})" -f $name, $m.id, $m.gameVersionTypeID)
+    }
+    $ids += @($matching | ForEach-Object { $_.id })
 }
-$ids = @($matching | ForEach-Object { $_.id })
-Write-Host ("  game version {0} -> id(s) {1}" -f $GameVersion, ($ids -join ", "))
 
 $metadata = [ordered]@{
     changelog     = $Changelog

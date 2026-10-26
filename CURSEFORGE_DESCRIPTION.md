@@ -4,7 +4,11 @@ A compact, controller-friendly interface for World of Warcraft on the **Steam De
 
 DeckUI is a hub with nine load-on-demand modules; switch each one on or off on its own page in `/deck`.
 
+**New in 2.0: Mists of Pandaria Classic.** The same download runs in **Retail (Midnight)** and in **MoP Classic** – see "In Mists of Pandaria Classic" below for what each game gets.
+
 **New in 1.7: Final Fantasy XIV's look** – capsule bars for you and your target, FFXIV's hotbars, nameplates, enemy list, scenario guide, round minimap and main menu, all as options to tick. And the Steam Deck now sets itself up again by itself after you played on the PC.
+
+The module list below describes Retail.
 
 ## DeckUI Orbs – round unit frames
 - Player and target as large orbs: health fills the orb, power runs as a ring around it, cast bar inside the orb
@@ -124,6 +128,21 @@ DeckUI is a hub with nine load-on-demand modules; switch each one on or off on i
 
 ## Blizzard's damage meter in DeckUI's look
 One checkbox on the Overview page gives the game's built-in damage meter flat bars, a dark background and a thin edge, matching the rest of DeckUI.
+
+## In Mists of Pandaria Classic (new in 2.0)
+All ten modules run in MoP Classic too, from the same download. What differs is the game's content:
+- **Orbs and Final Fantasy bars** with MoP's class resources – shadow orbs, burning embers, demonic fury, eclipse, chi, combo points and runes by type; party list, raid frames, buff bar and enemy list as in Retail
+- **Cross hotbar** with stances, forms and vehicles, the stance row, Action Bars 3–8, quick menu and ability menu
+- **Spec bar**: one button per talent group (dual spec)
+- **Bags and the old bank** with its bank bags (no sorting – MoP has none)
+- **Quest tracker** with quest item buttons, achievements, scenarios and **challenge modes with their medal times**
+- **Minimap** square or round, the world map as a movable window in Blizzard's look
+- **Tooltip** with spec and item level of other players
+- **Compass and waypoints**: Ctrl-click the world map or `/way`, routes, the waypoint list
+- **Week overview made for MoP**: raid lockouts with Raid Finder wings, valor and conquest of their weekly caps, the world bosses, your challenge-mode medals, charms, seals and coins
+- Not in MoP, because the game has none of it: the damage meter style, the talking head subtitle, delves, world quests, hunts, the scenario guide and the beacon in the world
+
+Everything was played on the PC. The Steam Deck parts are all there in MoP but **not yet tested on the Steam Deck** – please report what does not work.
 
 ## The settings window
 `/deck` opens one window with the pages in a sidebar, grouped by theme, and every page scrolls. Each module is switched on or off at the top of its own page; modules that are off are listed in grey and say what they do. Explanations sit in the tooltips, and a bar at the bottom says when a change needs a reload – with a button that does it. At the bottom of every page, **Move** unlocks just that page's frames and **Defaults** puts its settings back. `/deck raid`, `/deck bags`, `/deck week` and so on open a page directly.

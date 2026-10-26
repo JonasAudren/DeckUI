@@ -98,7 +98,8 @@ jobs:
             Zip           = "${{ steps.build.outputs.zip }}"
             ProjectId     = "1699742"
             ReleaseType   = "${{ steps.plan.outputs.release_type }}"
-            Interface     = "${{ steps.build.outputs.interface }}"
+            # one file for both games: retail's interface and Mists'
+            Interface     = @(@("${{ steps.build.outputs.interface }}", "${{ steps.build.outputs.mists_interface }}") | Where-Object { $_ })
             Changelog     = (Get-Content release-notes.md -Raw)
           }
           if ("${{ steps.plan.outputs.dry_run }}" -eq "true") { $params["DryRun"] = $true }

@@ -25,7 +25,12 @@ in /deck; what you do not use is never loaded.
                   renown and currencies for every character
                   (off until you switch it on in /deck)
 
-Requires World of Warcraft Retail, Interface 120100 (Midnight).
+Runs in World of Warcraft Retail (Midnight, Interface 120105) and in
+Mists of Pandaria Classic (Interface 50504) - the same folders for both;
+each game reads its own .toc files (the _Mists.toc ones in MoP). In MoP
+Classic the week overview shows MoP's week, and parts the game does not
+have (delves, world quests, hunts, the damage meter style, the talking head
+subtitle, the beacon in the world) are left out.
 License: MIT, see LICENSE.txt. The bundled libraries and their
 licences are listed in THIRD-PARTY.txt.
 
@@ -35,7 +40,8 @@ Installation
 1. Quit the game completely.
 2. Copy all ten folders into
 
-     World of Warcraft\_retail_\Interface\AddOns\
+     World of Warcraft\_retail_\Interface\AddOns\          (Retail)
+     World of Warcraft\_classic_\Interface\AddOns\         (MoP Classic)
 
    so that you end up with AddOns\DeckUI, AddOns\DeckUI_Orbs,
    AddOns\DeckUI_Cross, AddOns\DeckUI_Spec, AddOns\DeckUI_Bags,
