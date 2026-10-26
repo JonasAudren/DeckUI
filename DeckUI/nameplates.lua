@@ -24,6 +24,9 @@ local D = DeckUI
 local W, BAR_H = 120, 4
 local NAME_ENEMY = { 1, 0.45, 0.45 }
 local BAR_ENEMY = { 0.9, 0.25, 0.25 }
+-- neutral creatures (reaction 4) are yellow, as the game draws them
+local NAME_NEUTRAL = { 1, 0.9, 0.4 }
+local BAR_NEUTRAL = { 0.95, 0.8, 0.2 }
 local TAPPED = { 0.55, 0.55, 0.55 }
 
 local function Secret(v) return issecretvalue and issecretvalue(v) end
@@ -121,9 +124,10 @@ local function Fill(f)
     f.bar:SetMinMaxValues(0, UnitHealthMax(unit))
     f.bar:SetValue(UnitHealth(unit))
     local tapped = Ask(UnitIsTapDenied(unit))
-    local c = tapped and TAPPED or BAR_ENEMY
+    local neutral = Ask(UnitReaction(unit, "player")) == 4
+    local c = tapped and TAPPED or neutral and BAR_NEUTRAL or BAR_ENEMY
     f.bar:SetStatusBarColor(c[1], c[2], c[3])
-    local n = tapped and TAPPED or NAME_ENEMY
+    local n = tapped and TAPPED or neutral and NAME_NEUTRAL or NAME_ENEMY
     f.name:SetTextColor(n[1], n[2], n[3])
 
     local index = Ask(GetRaidTargetIndex(unit))

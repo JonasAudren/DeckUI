@@ -25,6 +25,7 @@ local oUF = ns.oUF
 local W, ROW_H, MAX_ROWS = 210, 26, 8
 local POLL = 0.15
 local HOSTILE = { 0.9, 0.35, 0.3 }
+local NEUTRAL = { 0.95, 0.8, 0.2 }   -- reaction 4, yellow as in the game
 local TAPPED = { 0.5, 0.5, 0.5 }
 local GROUP = { "player", "party1", "party2", "party3", "party4" }
 
@@ -146,7 +147,8 @@ local function Fill(row, unit)
     row.name:SetText(UnitName(unit))
     row.bar:SetMinMaxValues(0, UnitHealthMax(unit))
     row.bar:SetValue(UnitHealth(unit))
-    local c = Ask(UnitIsTapDenied(unit)) and TAPPED or HOSTILE
+    local c = Ask(UnitIsTapDenied(unit)) and TAPPED
+        or Ask(UnitReaction(unit, "player")) == 4 and NEUTRAL or HOSTILE
     row.bar:SetStatusBarColor(c[1], c[2], c[3])
     row.aggro:SetAlphaFromBoolean(UnitIsUnit(unit .. "target", "player"), 1, 0)
     row.lit:SetAlphaFromBoolean(UnitIsUnit(unit, "target"), 1, 0)

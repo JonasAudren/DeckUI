@@ -56,6 +56,10 @@ local function Secret(v) return issecretvalue and issecretvalue(v) end
 local function Colour()
     local attackable = UnitCanAttack("player", "target")
     if Secret(attackable) then return NEUTRAL end
+    -- a neutral creature can be attacked too, and is yellow as in the game
+    -- (owner's report, 2026-10-26)
+    local reaction = UnitReaction("target", "player")
+    if attackable and not Secret(reaction) and reaction == 4 then return NEUTRAL end
     if attackable then return ENEMY end
     local friend = UnitIsFriend("player", "target")
     if not Secret(friend) and friend then return FRIEND end
