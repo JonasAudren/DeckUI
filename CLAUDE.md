@@ -298,6 +298,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   them, and `RegisterStateDriver` runs that Hide once from our code - the neighbours' snap fields
   turned tainted and Edit Mode's next layout in combat was blocked (`MultiBarLeft:SetPoint` after a
   level-up in Mists; the same code is in retail). Never call `Hide`/`SetShown` on a bar either.
+  Edit Mode itself reparents its bars when it lays them out again (`AddManagedFrame`,
+  `BreakFromFrameManager`) - in combat after a level-up the main bar came back: the SetParent hook
+  parks it again at once out of combat, and in combat fades it (`SetAlpha(0)`, allowed there) and
+  parks it on PLAYER_REGEN_ENABLED (`Repark`).
 - **Hiding the bars took Blizzard's leave-vehicle button with it** (reported 2026-09-29), which
   left no way out of a vehicle on the Deck. `MainMenuBarVehicleLeaveButton` is a child of
   Action Bar 1 (`MainActionBar`) - confirmed 2026-09-29 with `/dc bars`, which prints its parent

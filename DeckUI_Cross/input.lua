@@ -330,13 +330,23 @@ local hidePending = false
 -- Mode's code is the same in retail). Under a hidden parent a Show() does
 -- not make it visible either. State in our own tables, nothing on the bar.
 local origParent, parked = {}, {}
+local reparkPending = false
 
 local function HideBar(bar)
     if not origParent[bar] then
         origParent[bar] = bar:GetParent()
-        -- if Blizzard (Edit Mode etc.) reparents the bar, pull it back
+        -- Edit Mode hands its bars back to its own containers when it lays
+        -- them out again (AddManagedFrame / BreakFromFrameManager) - a
+        -- level-up in combat did it and the main bar came back (Mists,
+        -- 2026-10-26). Out of combat it is parked again at once; in combat
+        -- a parent cannot be set, so it is faded (alpha is allowed there)
+        -- and parked once the fight is over.
         hooksecurefunc(bar, "SetParent", function(self, parent)
-            if parked[self] and parent ~= hider and not InCombatLockdown() then
+            if not parked[self] or parent == hider then return end
+            if InCombatLockdown() then
+                self:SetAlpha(0)
+                reparkPending = true
+            else
                 self:SetParent(hider)
             end
         end)
@@ -349,6 +359,16 @@ local function ShowBar(bar)
     if not origParent[bar] then return end
     parked[bar] = nil
     bar:SetParent(origParent[bar])
+    bar:SetAlpha(1)
+end
+
+-- after combat: whatever Edit Mode handed back goes under the hider again
+local function Repark()
+    reparkPending = false
+    for bar in pairs(parked) do
+        if bar:GetParent() ~= hider then bar:SetParent(hider) end
+        bar:SetAlpha(1)
+    end
 end
 
 -- the same for any other bar, found through one of its buttons (stance.lua)
@@ -750,6 +770,7 @@ ev:SetScript("OnEvent", function(self, event, a1, a2, a3)
         UpdateHighlight()
         if bindingsPending then ns.ApplyBindings() end
         if hidePending then ns.SetBlizzardBarsHidden(DeckCrossDB.hideBlizzardBars) end
+        if reparkPending then Repark() end
     elseif event == "MODIFIER_STATE_CHANGED" then
         UpdateHighlight()
     elseif event == "UPDATE_BINDINGS" then
