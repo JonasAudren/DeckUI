@@ -8,6 +8,27 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.0.1
+
+A few fixes, all but the damage meter for both games.
+
+- **Blizzard's game menu button works again after the round main menu.**
+  Switching the round buttons off gave a small notification overlay on
+  Blizzard's game menu button the mouse, and it swallowed hover and clicks.
+  Blizzard's menu now gets back exactly the mouse settings it had.
+- **The round main menu has no game menu button any more.** Blizzard's
+  button only opens the menu while the mouse is over Blizzard's own button,
+  so ours never could. Esc and Start open it.
+- **"Default bindings" keeps Esc on the game menu.** It puts B on the game
+  menu; if Esc ever lost it along the way, it is put back.
+- **The damage meter style no longer throws an error** (Retail, patch 12.1.5:
+  "attempt to call a nil value" whenever the meter was laid out). The
+  look is the same.
+
+If Esc does not open the game menu for you, your Esc key may have lost its
+binding. Type `/run SetBinding("ESCAPE","TOGGLEGAMEMENU") SaveBindings(GetCurrentBindingSet())`
+in chat to put it back.
+
 ## 2.0.0
 
 **DeckUI now runs in Mists of Pandaria Classic.** One download for both
