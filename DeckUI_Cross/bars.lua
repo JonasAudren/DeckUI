@@ -209,6 +209,15 @@ end
 
 local pending = false
 
+-- How see-through the bars are (owner's wish, 2026-10-26; FFXIV's hotbars
+-- have the same setting), DeckCrossDB.barAlpha, shared by both devices.
+-- On the holder, so LibActionButton setting a button back to alpha 1 on
+-- every update does not undo it; alpha may change in combat too.
+function ns.ApplyBarAlpha()
+    local alpha = DeckCrossDB and DeckCrossDB.barAlpha or 1
+    for _, bar in pairs(bars) do bar.holder:SetAlpha(alpha) end
+end
+
 -- shows our bars and hides Blizzard's (or gives them back), out of combat
 function ns.ApplyBars()
     if not DeckCrossDB then return end
@@ -234,6 +243,7 @@ function ns.ApplyBars()
         -- hid are both no-ops (input.lua's HideBar/ShowBar).
         ns.SetBlizzardBarHidden(info.native .. "1", (s.shown or menuTakesIt) and true or false)
     end
+    ns.ApplyBarAlpha()
 end
 
 local ev = CreateFrame("Frame")
@@ -243,6 +253,7 @@ ev:SetScript("OnEvent", function()
 end)
 
 function ns.InitBars()
+    if DeckCrossDB.barAlpha == nil then DeckCrossDB.barAlpha = 1 end
     ns.ApplyBars()
 end
 

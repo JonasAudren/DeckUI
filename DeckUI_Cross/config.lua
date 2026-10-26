@@ -100,6 +100,10 @@ D.RegisterModule("Bars", {
             ns.DeviceDB().barScale = v
             apply()
         end)
+        f:Slider("Opacity", 0.1, 1, 0.05, pct, function() return DeckCrossDB end, "barAlpha", function(v)
+            DeckCrossDB.barAlpha = v
+            ns.ApplyBarAlpha()
+        end)
 
         local names = {}
         for _, per in ipairs(ns.BAR_LAYOUTS) do
