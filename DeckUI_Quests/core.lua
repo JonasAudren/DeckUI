@@ -776,7 +776,41 @@ end)
 -- This replaced taking single modules out (2026-09-29): that wrote into
 -- the container's module list and tainted every later layout of the
 -- modules left behind, which only worked while none of them had buttons.
+-- Mists has no ObjectiveTracker but the old WatchFrame (Wrath/WatchFrame.lua,
+-- 5.5.4), which redraws itself from its own events. Its events go and it is
+-- hidden; a Show from Blizzard's code puts it out of sight again - faded in
+-- combat, where a frame holding the quest item buttons may not be hidden,
+-- and hidden once the fight is over. New quests are still watched
+-- automatically: that is the quest log's doing there (QuestLogFrame.lua).
+local watchPending = false
+local function DisableWatchFrame()
+    local f = WatchFrame
+    if not f then return end
+    f:UnregisterAllEvents()
+    f:Hide()
+    hooksecurefunc(f, "Show", function(self)
+        if InCombatLockdown() then
+            self:SetAlpha(0)
+            watchPending = true
+        else
+            self:Hide()
+        end
+    end)
+    local ev = CreateFrame("Frame")
+    ev:RegisterEvent("PLAYER_REGEN_ENABLED")
+    ev:SetScript("OnEvent", function()
+        if not watchPending then return end
+        watchPending = false
+        f:Hide()
+        f:SetAlpha(1)
+    end)
+end
+
 local function DisableBlizzardTracker()
+    if D.IsMists then
+        DisableWatchFrame()
+        return
+    end
     if ObjectiveTrackerManager then
         ObjectiveTrackerManager:SetCanAddModules(false)
         ObjectiveTrackerManager:RemoveAllModules()
@@ -864,11 +898,12 @@ SlashCmdList.DECKQUESTS = function(msg)
         D.ResetPosition(tracker)
         ns.RequestRedraw()
         print("DeckUI Quests: tracker back at its default place (top right).")
-    elseif msg == "journey" then
+    -- the next three belong to files Mists does not load (delves, guide, hunt)
+    elseif msg == "journey" and ns.ShowJourney then
         ns.ShowJourney()
-    elseif msg == "guide" then
+    elseif msg == "guide" and ns.GuideDebug then
         ns.GuideDebug()
-    elseif msg == "hunts" then
+    elseif msg == "hunts" and ns.PrintHunts then
         ns.PrintHunts()
     elseif msg == "debug" then
         local point, rel, relPoint, x, y = tracker:GetPoint()

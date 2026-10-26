@@ -258,7 +258,50 @@ local function ChallengeElapsed()
     return nil
 end
 
+-- Mists has challenge modes instead of keystones: one clock and a medal
+-- time each, from GetChallengeModeMapTimes of the instance's map - bronze
+-- first, the best last (CHALLENGE_MEDAL_BRONZE 1 .. GOLD 3), as its own
+-- WorldStateChallengeMode timer reads them (5.5.4).
+local MEDAL_NAMES = { "Bronze", "Silver", "Gold", "Platinum", "Diamond" }
+
+local function MedalName(i)
+    return _G["CHALLENGE_MODE_MEDAL" .. i] or MEDAL_NAMES[i] or ""
+end
+
+local function MedalEntry()
+    local elapsed = ChallengeElapsed()
+    if not elapsed then return nil end
+    local name, _, _, _, _, _, _, instanceMapID = GetInstanceInfo()
+    local times = instanceMapID and C_ChallengeMode.GetChallengeModeMapTimes(instanceMapID) or {}
+    ns.ticking.scenario = true
+
+    -- the best medal still in reach, then the ones below it
+    local best
+    for i = #times, 1, -1 do
+        if elapsed < times[i] then best = i break end
+    end
+    local lines = {}
+    if best then
+        lines[1] = {
+            text = ("%s - %s within %s"):format(Clock(elapsed), MedalName(best), Clock(times[best] - elapsed)),
+            bar = math.min(1, elapsed / times[best]),
+        }
+        for i = best - 1, 1, -1 do
+            lines[#lines + 1] = { text = ("%s within %s"):format(MedalName(i), Clock(times[i] - elapsed)) }
+        end
+    else
+        lines[1] = { text = ("%s  (no medal)"):format(Clock(elapsed)), color = { 1, 0.3, 0.3 } }
+    end
+    return {
+        key = "keystone",
+        title = ("%s  %s"):format(CHALLENGE_MODE or "Challenge mode", name or ""),
+        color = { 1, 0.82, 0 },
+        lines = lines,
+    }
+end
+
 local function KeystoneEntry()
+    if not C_ChallengeMode.GetActiveKeystoneInfo then return MedalEntry() end
     local mapID = C_ChallengeMode.GetActiveChallengeMapID()
     if not mapID then return nil end
     local name, _, timeLimit = C_ChallengeMode.GetMapUIInfo(mapID)
