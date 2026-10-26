@@ -437,6 +437,15 @@ function ns.SetBlizzardBarsHidden(state)
             print("DeckUI Cross: " .. why)
         end
     end
+    -- Mists draws the classic bar art - gryphons, slot frames, room for the
+    -- XP bar and the bags - as a frame of its own, MainMenuBar, and shows it
+    -- from MainActionBar:UpdateEndCaps whenever Edit Mode lays the main bar
+    -- out at its default place (a level-up, a spec change; Blizzard_ActionBar
+    -- Classic/MainActionBarOverrides.lua, 5.5.4). Parked like the bars: its
+    -- SetShown then shows nothing.
+    if D.IsMists and _G.MainMenuBar then
+        if state then HideBar(MainMenuBar) else ShowBar(MainMenuBar) end
+    end
     SetOverrideBarFaded(state)
 end
 
@@ -547,6 +556,12 @@ function ns.PrintBars()
         if micro then
             print("  MicroMenu parent=" .. (micro:GetParent() and (micro:GetParent():GetName() or "?") or "nil"))
         end
+    end
+    -- Mists' classic bar art (see SetBlizzardBarsHidden)
+    if D.IsMists and _G.MainMenuBar then
+        print(string.format("  MainMenuBar parent=%s shown=%s visible=%s",
+            MainMenuBar:GetParent() and (MainMenuBar:GetParent():GetName() or "?") or "nil",
+            tostring(MainMenuBar:IsShown()), tostring(MainMenuBar:IsVisible())))
     end
     PrintLeave()
     if ns.PrintStance then ns.PrintStance() end
