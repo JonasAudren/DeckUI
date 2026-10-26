@@ -245,6 +245,28 @@ local PIECES = {
     { get = function() return MinimapCluster.InstanceDifficulty end, point = { "TOPLEFT", 26, -20 } },
 }
 
+-- Mists' minimap is the old one (Blizzard_Minimap, Classic/Minimap.xml,
+-- 5.5.4): the round border, north tag, tracking, clock, zoom and world map
+-- buttons hang off MinimapBackdrop, a child of Minimap itself, so they
+-- would come along into our frame; mail and the battleground queue are
+-- children of Minimap; difficulty and challenge mode belong to the cluster
+-- and would vanish with it. Each is placed here like retail's pieces.
+if D.IsMists then
+    PIECES = {
+        { get = function() return MiniMapTracking end,           point = { "TOPLEFT", 4, -20 },     hover = true },
+        { get = function() return GameTimeFrame end,             point = { "TOPRIGHT", -4, -20 },   hover = true },
+        { get = function() return MiniMapWorldMapButton end,     point = { "TOPRIGHT", -4, -46 },   hover = true },
+        { get = function() return MinimapZoomIn end,             point = { "RIGHT", -4, 12 },       hover = true },
+        { get = function() return MinimapZoomOut end,            point = { "RIGHT", -4, -12 },      hover = true },
+        { get = function() return MiniMapMailFrame end,          point = { "BOTTOMLEFT", 4, 22 } },
+        { get = function() return MiniMapBattlefieldFrame end,   point = { "BOTTOMLEFT", 30, 22 } },
+        { get = function() return LFGMinimapFrame end,           point = { "BOTTOMLEFT", 56, 22 } },
+        { get = function() return MiniMapInstanceDifficulty end, point = { "TOPLEFT", 26, -20 } },
+        { get = function() return GuildInstanceDifficulty end,   point = { "TOPLEFT", 26, -20 } },
+        { get = function() return MiniMapChallengeMode end,      point = { "TOPLEFT", 26, -20 } },
+    }
+end
+
 local placing = false
 
 local function PlacePieces()
@@ -341,6 +363,15 @@ local function TakeOver()
     Minimap:SetFrameLevel(holder:GetFrameLevel() + 1)
     -- the round ring drawn around Blizzard's map
     if MinimapCompassTexture then MinimapCompassTexture:SetAlpha(0) end
+    -- Mists: its round border and north tag come along with Minimap, and
+    -- its clock button too - ours is on the map's edge
+    if MinimapBorder then MinimapBorder:SetAlpha(0) end
+    if MinimapNorthTag then MinimapNorthTag:SetAlpha(0) end
+    if D.IsMists then
+        EventUtil.ContinueOnAddOnLoaded("Blizzard_TimeManager", function()
+            if TimeManagerClockButton then TimeManagerClockButton:SetParent(hider) end
+        end)
+    end
     MinimapCluster:SetParent(hider)
     PlacePieces()
     ns.ApplyShape()

@@ -38,11 +38,17 @@ D.RegisterModule("Map", {
         f:Slider("Size (this device)", 0.5, 1.4, 0.05, pct, device, "worldMapScale",
             Store("worldMapScale", ns.ApplyWorldMapScale))
         f:Checkbox("Open without the quest log", db, "questLogClosed", function() end)
-        f:Checkbox("Controls only under the mouse", db, "mapControlsOnHover", ns.ApplyMapHover,
-            "Breadcrumbs, filter, floor and close buttons appear while the mouse is over the map.")
+        -- part of the restyle, which Mists' map does not get (worldmap.lua)
+        if not D.IsMists then
+            f:Checkbox("Controls only under the mouse", db, "mapControlsOnHover", ns.ApplyMapHover,
+                "Breadcrumbs, filter, floor and close buttons appear while the mouse is over the map.")
+        end
         f:Checkbox("Fade the map while moving", cvars, "mapFade", function() end,
             "The game's own setting - it has no checkbox in the game's options, so it lives here.")
-        f:Checkbox("Show your coordinates", cvars, "worldMapShowPlayerCoords", function() end)
-        f:Checkbox("Show the cursor's coordinates", cvars, "worldMapShowCursorCoords", function() end)
+        -- Mists has neither CVar (probe, 2026-10-25)
+        if not D.IsMists then
+            f:Checkbox("Show your coordinates", cvars, "worldMapShowPlayerCoords", function() end)
+            f:Checkbox("Show the cursor's coordinates", cvars, "worldMapShowCursorCoords", function() end)
+        end
     end,
 })

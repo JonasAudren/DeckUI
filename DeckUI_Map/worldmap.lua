@@ -414,8 +414,15 @@ ns.OnInit(function()
     if not WorldMapFrame then return end
     ns.ApplyWorldMapScale()
     ApplyMapCVars()
-    StyleWorldMap()
-    StyleQuestLog()
+    -- Mists' map is Cataclysm's (Blizzard_WorldMap/Cata, 5.5.4): its own
+    -- border art, continent and zone dropdowns, no breadcrumbs. The restyle
+    -- above is made for retail's frame, so Mists keeps Blizzard's look for
+    -- now - scaled, windowed and movable all the same (it is a UI panel
+    -- there too).
+    if not D.IsMists then
+        StyleWorldMap()
+        StyleQuestLog()
+    end
     MakeWorldMapMovable()
 end)
 

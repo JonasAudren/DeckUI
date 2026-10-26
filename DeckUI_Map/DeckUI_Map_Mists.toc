@@ -1,0 +1,18 @@
+## Interface: 50504
+## Title: DeckUI Map
+## Notes: DeckUI module: a square minimap and a smaller world map
+## Author: Gottlieb
+## Version: 1.7.1
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/JonasAudren/DeckUI
+## X-Curse-Project-ID: 1699742
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckMapDB
+
+# Mists of Pandaria Classic: the same files; its old minimap and Cataclysm world map are told apart inside (D.IsMists)
+core.lua
+minimap.lua
+worldmap.lua
+config.lua
