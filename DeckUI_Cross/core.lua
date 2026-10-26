@@ -219,6 +219,10 @@ local function MakeRound(b, size)
         b.NormalTexture.SetTexture = Nop
         b.NormalTexture.SetAlpha   = Nop
     end
+    -- Mists' button template draws the old UI-Quickslot square 15 pixels
+    -- past the button, and LibActionButton shows it on every empty slot.
+    -- Our disc marks empty slots already; an alpha survives its Show/Hide.
+    if D.IsMists and b.SlotBackground then b.SlotBackground:SetAlpha(0) end
 
     -- Blizzard's own hover/pushed/checked textures are switched off and
     -- kept off (LibActionButton re-applies them on art updates), we draw

@@ -98,6 +98,8 @@ local function Style(b)
         b.NormalTexture.SetTexture = Nop
         b.NormalTexture.SetAlpha = Nop
     end
+    -- Mists' UI-Quickslot square on empty slots (see core.lua)
+    if D.IsMists and b.SlotBackground then b.SlotBackground:SetAlpha(0) end
     -- LibActionButton puts these back on art updates; ours stay instead
     for _, getter in ipairs({ "GetHighlightTexture", "GetPushedTexture", "GetCheckedTexture" }) do
         local tex = b[getter] and b[getter](b)
