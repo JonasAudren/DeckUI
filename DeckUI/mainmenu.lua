@@ -22,11 +22,16 @@ local D = DeckUI
 -- module fades the override bar. Nothing is written onto Blizzard's frames.
 -------------------------------------------------------------------
 local SIZE, GAP = 24, 1   -- tighter and smaller after the first look (owner, 2026-10-09)
+-- No game menu button: Blizzard's opens the menu only while the mouse is
+-- over Blizzard's own button (MainMenuMicroButtonMixin:OnClick, IsMouseOver
+-- - OnMouseUp in Mists), so a click passed on from ours never opened it,
+-- and opening it from our code would run the panel manager tainted. Esc
+-- and Start open it (owner's choice, 2026-10-26).
 local BUTTONS = {
     "CharacterMicroButton", "ProfessionMicroButton", "PlayerSpellsMicroButton",
     "AchievementMicroButton", "QuestLogMicroButton", "HousingMicroButton",
     "GuildMicroButton", "LFDMicroButton", "CollectionsMicroButton",
-    "EJMicroButton", "StoreMicroButton", "MainMenuMicroButton",
+    "EJMicroButton", "StoreMicroButton",
 }
 -- Mists' row, in the order of its own micro menu (Blizzard_MicroMenu,
 -- Classic/MainMenuBarMicroButtons.xml, 5.5.4)
@@ -36,7 +41,7 @@ if D.IsMists then
         "AchievementMicroButton", "QuestLogMicroButton", "SocialsMicroButton",
         "GuildMicroButton", "PVPMicroButton", "LFGMicroButton",
         "CollectionsMicroButton", "EJMicroButton", "StoreMicroButton",
-        "MainMenuMicroButton", "HelpMicroButton",
+        "HelpMicroButton",
     }
 end
 local GOLD = { 0.85, 0.68, 0.3 }

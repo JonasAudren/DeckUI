@@ -228,6 +228,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   off down the tree, like the override bar): Blizzard reparents it into the vehicle bar and to
   full-screen frames (`MicroMenuBar_SetFullScreenFrame`), so no parent of ours would hold.
   Secure buttons: shown, hidden and laid out only out of combat. Movable "Main menu".
+  **No game menu button** (removed 2026-10-26): Blizzard's opens the menu only while the mouse is over
+  Blizzard's own button (`IsMouseOver` in its OnClick), so a passed-on click never worked; Esc/Start open it.
+  The mouse goes off down the faded tree and **each frame's own state comes back** - switching it on for
+  every child gave the button's NotificationOverlay the mouse, and it swallowed hover and clicks.
 - **Auction prices** (`DeckUI/auction.lua`, `DeckUIDB.ahScan` on, "Loot and merchant" page;
   not yet tested in game; owner's wish 2026-10-08: know prices on the road). On
   AUCTION_HOUSE_SHOW, at most every 15 minutes (`ahLastScan`), `C_AuctionHouse.ReplicateItems()`
