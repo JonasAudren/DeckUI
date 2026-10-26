@@ -9,7 +9,9 @@
     hence this script.
 
     ## Interface can be raised in the same go, for the day a game patch
-    lands: package.ps1 aborts when the files disagree on it.
+    lands: package.ps1 aborts when the files disagree on it. The
+    _Mists.toc files (Mists of Pandaria Classic) take the same version and
+    their own interface number, -MistsInterface.
 
     The files are written through .NET without a BOM and keep their line
     endings, for the reason package.ps1 explains: Set-Content puts a BOM in
@@ -17,6 +19,7 @@
 
     Usage:  powershell -ExecutionPolicy Bypass -File bump-version.ps1 1.0.1
             pwsh ./bump-version.ps1 1.0.1 -Interface 120200
+            pwsh ./bump-version.ps1 1.0.1 -MistsInterface 50505
             pwsh ./bump-version.ps1 1.0.1 -DryRun
 #>
 
@@ -26,6 +29,9 @@ param(
 
     # New ## Interface for a game patch, e.g. 120200. Left out it stays put.
     [string]$Interface,
+
+    # The same for the _Mists.toc files, e.g. 50505.
+    [string]$MistsInterface,
 
     # Show what would change and write nothing.
     [switch]$DryRun
@@ -46,6 +52,9 @@ if ($newVersion -notmatch "^\d+(\.\d+){1,3}([-.][0-9A-Za-z][0-9A-Za-z.-]*)?$") {
 if ($Interface -and $Interface -notmatch "^\d{5,6}$") {
     throw "'$Interface' does not look like an interface number (expected e.g. 120100)"
 }
+if ($MistsInterface -and $MistsInterface -notmatch "^\d{5}$") {
+    throw "'$MistsInterface' does not look like a Mists interface number (expected e.g. 50504)"
+}
 
 # Replace the one header line, and insist that it was there: a silent no-op
 # would ship the old version under a new tag.
@@ -63,29 +72,37 @@ function Set-TocField([string]$text, [string]$field, [string]$value, [string]$wh
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $changed   = 0
 
+# every .toc: the retail one of each folder, plus its _Mists.toc where the
+# folder has one; each with the interface number meant for its game
+$tocs = @()
 foreach ($a in $addons) {
     $toc = Join-Path $root "$a/$a.toc"
     if (-not (Test-Path $toc)) { throw "missing $toc" }
+    $tocs += [pscustomobject]@{ Path = $toc; Name = "$a.toc"; Interface = $Interface }
+    $mists = Get-MistsToc $root $a
+    if ($mists) { $tocs += [pscustomobject]@{ Path = $mists; Name = "${a}_Mists.toc"; Interface = $MistsInterface } }
+}
 
-    $oldVersion   = Get-TocField $toc "Version"
-    $oldInterface = Get-TocField $toc "Interface"
-    if (-not $oldVersion)   { throw "no ## Version in $toc" }
-    if (-not $oldInterface) { throw "no ## Interface in $toc" }
+foreach ($t in $tocs) {
+    $oldVersion   = Get-TocField $t.Path "Version"
+    $oldInterface = Get-TocField $t.Path "Interface"
+    if (-not $oldVersion)   { throw "no ## Version in $($t.Path)" }
+    if (-not $oldInterface) { throw "no ## Interface in $($t.Path)" }
 
-    $text = Get-Content $toc -Raw
-    $new  = Set-TocField $text "Version" $newVersion "$a.toc"
-    if ($Interface) { $new = Set-TocField $new "Interface" $Interface "$a.toc" }
+    $text = Get-Content $t.Path -Raw
+    $new  = Set-TocField $text "Version" $newVersion $t.Name
+    if ($t.Interface) { $new = Set-TocField $new "Interface" $t.Interface $t.Name }
 
     $note = "version {0} -> {1}" -f $oldVersion, $newVersion
-    if ($Interface) { $note += ", interface {0} -> {1}" -f $oldInterface, $Interface }
+    if ($t.Interface) { $note += ", interface {0} -> {1}" -f $oldInterface, $t.Interface }
 
     if ($new -eq $text) {
-        Write-Host ("  {0,-14} already at {1}" -f $a, $newVersion)
+        Write-Host ("  {0,-24} already at {1}" -f $t.Name, $newVersion)
         continue
     }
 
-    if (-not $DryRun) { [System.IO.File]::WriteAllText($toc, $new, $utf8NoBom) }
-    Write-Host ("  {0,-14} {1}" -f $a, $note)
+    if (-not $DryRun) { [System.IO.File]::WriteAllText($t.Path, $new, $utf8NoBom) }
+    Write-Host ("  {0,-24} {1}" -f $t.Name, $note)
     $changed++
 }
 
@@ -119,7 +136,7 @@ Write-Host ("  {0} .toc file(s) updated" -f $changed) -ForegroundColor Green
 
 Write-Host ""
 Write-Host "  next, to release this version:"
-Write-Host ("    git add {0}" -f (($addons | ForEach-Object { "$_/$_.toc" }) -join " "))
+Write-Host ("    git add {0}" -f (($tocs | ForEach-Object { $_.Path.Substring($root.Length + 1).Replace("\", "/") }) -join " "))
 Write-Host ("    git commit -m ""Raise the version to {0}""" -f $newVersion)
 Write-Host ("    git push && git tag v{0} && git push origin v{0}" -f $newVersion)
 Write-Host ""

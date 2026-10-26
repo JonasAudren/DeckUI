@@ -10,6 +10,15 @@ must not ship just because it exists.
 
 $addons = @("DeckUI", "DeckUI_Orbs", "DeckUI_Cross", "DeckUI_Spec", "DeckUI_Bags", "DeckUI_Quests", "DeckUI_Map", "DeckUI_Tooltip", "DeckUI_Nav", "DeckUI_Week")
 
+# Mists of Pandaria Classic reads <Name>_Mists.toc where there is one
+# (MISTS_PLAN.md). Only the folders ported so far have it; the others are
+# retail-only, so a missing one is not an error. Returns the path or $null.
+function Get-MistsToc($root, $addon) {
+    $toc = Join-Path $root "$addon/${addon}_Mists.toc"
+    if (Test-Path $toc) { return $toc }
+    return $null
+}
+
 function Get-TocField($path, $field) {
     foreach ($line in Get-Content $path) {
         if ($line -match "^##\s+$field\s*:\s*(.+?)\s*$") { return $matches[1] }

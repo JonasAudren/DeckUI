@@ -764,8 +764,9 @@ ev:SetScript("OnEvent", function(self, event, a1, a2, a3)
             end
         end
     elseif event == "CVAR_UPDATE" then
-        -- the name may come in any case
-        if type(a1) == "string" then
+        -- the name may come in any case. Mists fires this while the client
+        -- is still loading, before Init has set up DeckCrossDB (2026-10-26).
+        if DeckCrossDB and type(a1) == "string" then
             for cvar in pairs(WantedCVars()) do
                 if cvar:lower() == a1:lower() then ns.EnsureGamepad() break end
             end

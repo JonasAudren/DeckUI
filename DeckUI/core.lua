@@ -49,6 +49,24 @@ D.MODULE_TITLES = {
 -- the maps is not something an update should do to anyone unasked.
 D.MODULE_OFF_BY_DEFAULT = { Bags = true, Quests = true, Map = true, Tooltip = true, Nav = true, Week = true }
 
+-- Which game this is: retail, or Mists of Pandaria Classic (5.5.x, since
+-- 2026-10-25, MISTS_PLAN.md). Both run the same engine; what differs is
+-- game content and some of Blizzard's frames. The client loads
+-- <Name>_Mists.toc there, so each file list says which of our files run.
+-- Modules ask these two, as they ask D.IsDeck().
+D.IsMists  = WOW_PROJECT_MISTS_CLASSIC ~= nil and WOW_PROJECT_ID == WOW_PROJECT_MISTS_CLASSIC
+D.IsRetail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+
+-- The modules ported to Mists so far, one phase of the port at a time.
+-- The others have no _Mists.toc: the client would fall back to the retail
+-- one and run retail code, so they are not offered at all.
+D.MISTS_MODULES = { Cross = true }
+if D.IsMists then
+    for i = #D.MODULE_ORDER, 1, -1 do
+        if not D.MISTS_MODULES[D.MODULE_ORDER[i]] then table.remove(D.MODULE_ORDER, i) end
+    end
+end
+
 -- Key bindings (Bindings.xml) live in the hub: the game reads them at
 -- startup, before a LoadOnDemand module exists. They call into the module
 -- through D.navStep, which DeckUI_Nav sets when it loads.
@@ -214,7 +232,8 @@ function D.PrintBuild()
     else
         print(("DeckUI: our .toc says %s - MISMATCH, the .toc files want %s"):format(
             tostring(ours), tostring(toc)))
-        print("DeckUI: fix before releasing with  bump-version.ps1 <version> -Interface " .. tostring(toc))
+        print(("DeckUI: fix before releasing with  bump-version.ps1 <version> %s %s"):format(
+            D.IsMists and "-MistsInterface" or "-Interface", tostring(toc)))
     end
 end
 

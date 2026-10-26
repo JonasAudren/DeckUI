@@ -65,12 +65,38 @@ foreach ($a in $addons) {
     Write-Host ("  {0,-14} version {1}  interface {2}" -f $a, $v, $i)
 }
 
+# The _Mists.toc files (Mists of Pandaria Classic) agree among themselves
+# on their own interface number; their version is checked with the rest.
+$mistsTocs       = @()
+$mistsInterfaces = @()
+foreach ($a in $addons) {
+    $toc = Get-MistsToc $root $a
+    if (-not $toc) { continue }
+    $v = Get-TocField $toc "Version"
+    $i = Get-TocField $toc "Interface"
+    if (-not $v) { throw "no ## Version in $toc" }
+    if (-not $i) { throw "no ## Interface in $toc" }
+    $versions        += $v
+    $mistsInterfaces += $i
+    $mistsTocs       += "$a/${a}_Mists.toc"
+    Write-Host ("  {0,-14} version {1}  interface {2}  (Mists)" -f $a, $v, $i)
+}
+
 $uniqueVersions   = @($versions   | Sort-Object -Unique)
 $uniqueInterfaces = @($interfaces | Sort-Object -Unique)
 if ($uniqueInterfaces.Count -ne 1) {
     throw "the .toc files disagree on ## Interface: " + ($uniqueInterfaces -join ", ")
 }
 $interface = $uniqueInterfaces[0]
+
+$mistsInterface = ""
+if ($mistsTocs.Count -gt 0) {
+    $uniqueMists = @($mistsInterfaces | Sort-Object -Unique)
+    if ($uniqueMists.Count -ne 1) {
+        throw "the _Mists.toc files disagree on ## Interface: " + ($uniqueMists -join ", ")
+    }
+    $mistsInterface = $uniqueMists[0]
+}
 
 if ($Version) {
     $buildVersion = $Version -replace "^v", ""
@@ -126,8 +152,9 @@ try {
     # in front of ## Interface on Windows PowerShell.
     if ($Version) {
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-        foreach ($a in $addons) {
-            $toc  = Join-Path $stage "$a/$a.toc"
+        $stamped = @($addons | ForEach-Object { "$_/$_.toc" }) + $mistsTocs
+        foreach ($rel in $stamped) {
+            $toc  = Join-Path $stage $rel
             # The character class instead of a dot: in .NET a dot matches every
             # character but the newline itself, so on a CRLF working copy it also eats
             # the carriage return and leaves that one line ending bare, mixing the two
@@ -135,7 +162,7 @@ try {
             $text = (Get-Content $toc -Raw) -replace "(?m)^##\s+Version\s*:[^\r\n]*", "## Version: $buildVersion"
             [System.IO.File]::WriteAllText($toc, $text, $utf8NoBom)
         }
-        Write-Host ("  stamped version {0} into the {1} .toc files" -f $buildVersion, $addons.Count)
+        Write-Host ("  stamped version {0} into the {1} .toc files" -f $buildVersion, $stamped.Count)
     }
 
     # --- zip it, entry names with forward slashes ---------------------
@@ -204,6 +231,9 @@ try {
         Add-Content $env:GITHUB_OUTPUT "zip=$zip"
         Add-Content $env:GITHUB_OUTPUT "version=$buildVersion"
         Add-Content $env:GITHUB_OUTPUT "interface=$interface"
+        # not used by the upload yet: the file is filed under retail only
+        # until the Mists port is complete (MISTS_PLAN.md, phase 10)
+        Add-Content $env:GITHUB_OUTPUT "mists_interface=$mistsInterface"
     }
 }
 finally {

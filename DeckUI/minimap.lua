@@ -48,6 +48,11 @@ local function UpdatePosition()
         -- DeckUI Map's round map: just outside its ring, whatever its size
         local r = Minimap:GetWidth() / 2 + 22
         x, y = x * r, y * r
+    elseif D.IsMists then
+        -- Mists' minimap is 140 pixels, not retail's 200: hug its edge
+        -- the way LibDBIcon does
+        local r = Minimap:GetWidth() / 2 + 10
+        x, y = x * r, y * r
     else
         x, y = x * RADIUS, y * RADIUS
     end

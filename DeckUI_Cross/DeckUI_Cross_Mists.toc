@@ -1,0 +1,27 @@
+## Interface: 50504
+## Title: DeckUI Cross
+## Notes: DeckUI module: FFXIV-style cross hotbar for controller and Steam Deck, keyboard on PC
+## Author: Gottlieb
+## Version: 1.7.1
+## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
+## X-Website: https://github.com/JonasAudren/DeckUI
+## X-Curse-Project-ID: 1699742
+## X-Category: Action Bars, Unit Frames
+## Dependencies: DeckUI
+## LoadOnDemand: 1
+## SavedVariables: DeckCrossDB
+
+# Mists of Pandaria Classic: the same files as retail. MoP's action bars
+# are retail's (MainActionBar, MultiBar5-7, the same binding commands).
+libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\LibActionButton-1.0\LibButtonGlow-1.0\LibButtonGlow-1.0.lua
+libs\LibActionButton-1.0\LibActionButton-1.0.lua
+core.lua
+input.lua
+assist.lua
+stance.lua
+quickmenu.lua
+abilitymenu.lua
+bars.lua
+config.lua

@@ -540,40 +540,60 @@ panel:AddTab("General", {
         f:Label("Interface")
         f:Checkbox("Show minimap button", db, "showMinimap", function(v) D.SetMinimapShown(v) end,
             "Left click opens these settings, Shift-click the week overview.")
-        f:Checkbox("Damage meter in DeckUI's look", db, "styleDamageMeter", D.SetDamageMeterStyled,
-            "Blizzard's damage meter with flat bars and DeckUI's font. Its numbers stay Blizzard's.")
-        f:Checkbox("Name of the interact target", db, "softTargetName", D.SetSoftTargetName,
-            "With the interact key, the object it would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it. Needs the interact key on (Options > Gameplay > Controls); switching this on turns on the icon for objects. /deck softtarget shows both settings.")
-        f:Checkbox("Ring while casting on it", db, "softTargetCast", function() end,
-            "Fills around the icon while you cast or gather. The game does not say which object a cast is for, so it shows for any cast while a name is up.")
-        f:Checkbox("Arrow over your target", db, "targetArrow", function() D.ApplyTargetArrow() end,
-            "Final Fantasy XIV's marker: an arrowhead bobbing over your target's nameplate - red for an enemy, green for a friend, gold when the game does not say. It needs the target's nameplate, so it shows only where nameplates do. /deck targetarrow shows what it sees.")
-        f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
-            "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
-        f:Checkbox("Talking head as a subtitle", db, "talkingHead", function() D.ApplyTalkingHead() end,
-            "Blizzard's talking head box with its portrait becomes a line of text on a dark band: the speaker in gold, what is said in white. The voice plays as before. An open world map covers it. Move it with Move below.")
-        f:Checkbox("Its text in instances too", db, "talkingHeadInstances", function() end,
-            "Off: in dungeons and raids you only hear the voice.")
-        f:Checkbox("Server info", db, "infoServer", function() D.ApplyInfoBars() end,
-            "Final Fantasy XIV's line at the top right: your realm, a letter when mail waits, your latency and the time. Move it with Move below.")
-        -- what the server line shows, each value on its own switch
-        local onOff = { [true] = "on", [false] = "off" }
-        local function Part(key)
-            return { label = D.INFO_PART_NAMES[key], values = { true, false }, names = onOff,
-                     get = function() return D.InfoParts()[key] end,
-                     set = function(v) D.InfoParts()[key] = v; D.ApplyInfoBars() end }
+        -- Each option below lives in a file of its own, and a game's .toc
+        -- lists only the files that work there (Mists of Pandaria has no
+        -- damage meter, no talking head) - an option shows when its file
+        -- has loaded.
+        if D.SetDamageMeterStyled then
+            f:Checkbox("Damage meter in DeckUI's look", db, "styleDamageMeter", D.SetDamageMeterStyled,
+                "Blizzard's damage meter with flat bars and DeckUI's font. Its numbers stay Blizzard's.")
         end
-        for i = 1, #D.INFO_PARTS, 2 do
-            f:Cycles(Part(D.INFO_PARTS[i]), Part(D.INFO_PARTS[i + 1]))
+        if D.SetSoftTargetName then
+            f:Checkbox("Name of the interact target", db, "softTargetName", D.SetSoftTargetName,
+                "With the interact key, the object it would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it. Needs the interact key on (Options > Gameplay > Controls); switching this on turns on the icon for objects. /deck softtarget shows both settings.")
+            f:Checkbox("Ring while casting on it", db, "softTargetCast", function() end,
+                "Fills around the icon while you cast or gather. The game does not say which object a cast is for, so it shows for any cast while a name is up.")
         end
-        f:Checkbox("Gold", db, "infoGold", function() D.ApplyInfoBars() end,
-            "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
-        f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,
-            "FFXIV's inventory overview: a block of dots per bag, bright for a used slot, dark for a free one, the free slots as a number. A click opens your bags. In combat it appears or goes once the fight ends.")
-        f:Checkbox("Main menu as round buttons", db, "mainMenu", function() D.ApplyMainMenu() end,
-            "Final Fantasy XIV's main menu: the game's menu buttons (character, talents, group finder, game menu, ...) as a row of round buttons with a gold ring, which turns bright while a button has news. They open what Blizzard's open; Blizzard's own row goes out of sight. In combat it switches once the fight ends.")
-        f:Checkbox("Hide Blizzard's bag buttons", db, "hideBagBar", function() D.ApplyInfoBars() end,
-            "The backpack and bag slots at the bottom right go out of sight - the bag overview above takes their place. Your bag key still opens the bags; untick to have them back.")
+        if D.ApplyTargetArrow then
+            f:Checkbox("Arrow over your target", db, "targetArrow", function() D.ApplyTargetArrow() end,
+                "Final Fantasy XIV's marker: an arrowhead bobbing over your target's nameplate - red for an enemy, green for a friend, gold when the game does not say. It needs the target's nameplate, so it shows only where nameplates do. /deck targetarrow shows what it sees.")
+        end
+        if D.ApplyPlates then
+            f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
+                "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
+        end
+        if D.ApplyTalkingHead then
+            f:Checkbox("Talking head as a subtitle", db, "talkingHead", function() D.ApplyTalkingHead() end,
+                "Blizzard's talking head box with its portrait becomes a line of text on a dark band: the speaker in gold, what is said in white. The voice plays as before. An open world map covers it. Move it with Move below.")
+            f:Checkbox("Its text in instances too", db, "talkingHeadInstances", function() end,
+                "Off: in dungeons and raids you only hear the voice.")
+        end
+        if D.ApplyInfoBars then
+            f:Checkbox("Server info", db, "infoServer", function() D.ApplyInfoBars() end,
+                "Final Fantasy XIV's line at the top right: your realm, a letter when mail waits, your latency and the time. Move it with Move below.")
+            -- what the server line shows, each value on its own switch
+            local onOff = { [true] = "on", [false] = "off" }
+            local function Part(key)
+                return { label = D.INFO_PART_NAMES[key], values = { true, false }, names = onOff,
+                         get = function() return D.InfoParts()[key] end,
+                         set = function(v) D.InfoParts()[key] = v; D.ApplyInfoBars() end }
+            end
+            for i = 1, #D.INFO_PARTS, 2 do
+                f:Cycles(Part(D.INFO_PARTS[i]), Part(D.INFO_PARTS[i + 1]))
+            end
+            f:Checkbox("Gold", db, "infoGold", function() D.ApplyInfoBars() end,
+                "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
+            f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,
+                "FFXIV's inventory overview: a block of dots per bag, bright for a used slot, dark for a free one, the free slots as a number. A click opens your bags. In combat it appears or goes once the fight ends.")
+        end
+        if D.ApplyMainMenu then
+            f:Checkbox("Main menu as round buttons", db, "mainMenu", function() D.ApplyMainMenu() end,
+                "Final Fantasy XIV's main menu: the game's menu buttons (character, talents, group finder, game menu, ...) as a row of round buttons with a gold ring, which turns bright while a button has news. They open what Blizzard's open; Blizzard's own row goes out of sight. In combat it switches once the fight ends.")
+        end
+        if D.ApplyInfoBars then
+            f:Checkbox("Hide Blizzard's bag buttons", db, "hideBagBar", function() D.ApplyInfoBars() end,
+                "The backpack and bag slots at the bottom right go out of sight - the bag overview above takes their place. Your bag key still opens the bags; untick to have them back.")
+        end
 
         f:Gap(8)
         -- the error collector (errors.lua), with how many it holds
@@ -589,37 +609,44 @@ panel:AddTab("General", {
 -------------------------------------------------------------------
 D.PAGE_NAMES.Loot = "Loot and merchant"
 
-panel:AddTab("Loot", {
-    title = "Loot and merchant",
-    build = function(c)
-        local db = function() return DeckUIDB end
-        local nothing = function() end
-        local f = D.Flow(c)
+-- only where loot.lua runs (see the Overview's options above); asked once
+-- all of the hub's files have loaded, since loot.lua comes after this one
+EventUtil.ContinueOnAddOnLoaded("DeckUI", function()
+    if not D.ApplyLootWindow then return end
+    panel:AddTab("Loot", {
+        title = "Loot and merchant",
+        build = function(c)
+            local db = function() return DeckUIDB end
+            local nothing = function() end
+            local f = D.Flow(c)
 
-        f:Label("At the merchant")
-        f:Checkbox("Sell junk", db, "autoSellJunk", nothing,
-            "Grey items are sold as soon as a merchant opens.")
-        f:Checkbox("Repair", db, "autoRepair", nothing,
-            "Repairs everything when a merchant who can repair opens.")
-        f:Checkbox("Repair with guild funds first", db, "repairGuild", nothing,
-            "Uses the guild bank where you are allowed to; your own gold covers the rest.")
+            f:Label("At the merchant")
+            f:Checkbox("Sell junk", db, "autoSellJunk", nothing,
+                "Grey items are sold as soon as a merchant opens.")
+            f:Checkbox("Repair", db, "autoRepair", nothing,
+                "Repairs everything when a merchant who can repair opens.")
+            f:Checkbox("Repair with guild funds first", db, "repairGuild", nothing,
+                "Uses the guild bank where you are allowed to; your own gold covers the rest.")
 
-        f:Gap(8)
-        f:Label("Loot")
-        f:Checkbox("Fast auto loot", db, "fastLoot", nothing,
-            "Takes everything the moment a corpse opens, without the loot window flickering up.")
-        f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
-            "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
+            f:Gap(8)
+            f:Label("Loot")
+            f:Checkbox("Fast auto loot", db, "fastLoot", nothing,
+                "Takes everything the moment a corpse opens, without the loot window flickering up.")
+            f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
+                "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
 
-        f:Gap(8)
-        f:Label("Auction house")
-        f:Checkbox("Scan button at the auction house", db, "ahScan", function() end,
-            "Below the auction house window: \"Scan now\" reads every listing - at most every 15 minutes (the game's limit), in small slices so nothing freezes. The game only allows it on a click. The prices then show in tooltips and the bags anywhere you go - as fresh as your last visit. /deck ah shows what is stored.")
-        f:Checkbox("Auction house window in DeckUI's look", db, "ahStyle", function(v)
-            D.NeedReload("ahStyle", true)
-        end, "Blizzard's frame art, portrait and parchment give way to DeckUI's dark panel, flat buttons and tabs. Only the look changes. Applies when the auction house is next opened after a reload.")
-    end,
-})
+            if D.PrintAuction then
+                f:Gap(8)
+                f:Label("Auction house")
+                f:Checkbox("Scan button at the auction house", db, "ahScan", function() end,
+                    "Below the auction house window: \"Scan now\" reads every listing - at most every 15 minutes (the game's limit), in small slices so nothing freezes. The game only allows it on a click. The prices then show in tooltips and the bags anywhere you go - as fresh as your last visit. /deck ah shows what is stored.")
+                f:Checkbox("Auction house window in DeckUI's look", db, "ahStyle", function(v)
+                    D.NeedReload("ahStyle", true)
+                end, "Blizzard's frame art, portrait and parchment give way to DeckUI's dark panel, flat buttons and tabs. Only the look changes. Applies when the auction house is next opened after a reload.")
+            end
+        end,
+    })
+end)
 
 -------------------------------------------------------------------
 -- "Devices": everything that differs between the Deck and the PC
@@ -683,8 +710,12 @@ panel:AddTab("Devices", {
         f:Label("Keep on this device")
         local keepTip = "Blizzard keeps this on its server, so every device loads the same. Tick it on each device: what is set up there when you tick the box becomes that device's, and later changes are remembered."
         f:Checkbox("Key bindings", function() return D.bindingsCVar end, "localOnly", D.SetLocalBindings, keepTip)
-        f:Checkbox("Action bar layouts", db, "keepBars", D.SetKeepBars, keepTip)
-        f:Checkbox("Edit Mode layout", db, "keepLayouts", D.SetKeepLayouts, keepTip)
+        if D.SetKeepBars then
+            f:Checkbox("Action bar layouts", db, "keepBars", D.SetKeepBars, keepTip)
+        end
+        if D.SetKeepLayouts then
+            f:Checkbox("Edit Mode layout", db, "keepLayouts", D.SetKeepLayouts, keepTip)
+        end
     end,
 })
 
@@ -697,6 +728,12 @@ end
 -------------------------------------------------------------------
 -- Slash command
 -------------------------------------------------------------------
+-- the debug commands of files a game's .toc may leave out
+local DEBUG_COMMANDS = {
+    bars = "PrintBars", layout = "PrintLayout", ah = "PrintAuction", plates = "PlatesDebug",
+    targetarrow = "TargetArrowDebug", softtarget = "PrintSoftTarget",
+}
+
 SLASH_DECKUI1 = "/deck"
 SlashCmdList.DECKUI = function(msg)
     msg = (msg or ""):lower():trim()
@@ -710,18 +747,9 @@ SlashCmdList.DECKUI = function(msg)
         D.PrintDevice()
     elseif msg == "build" then
         D.PrintBuild()
-    elseif msg == "bars" then
-        D.PrintBars()
-    elseif msg == "layout" then
-        D.PrintLayout()
-    elseif msg == "ah" then
-        D.PrintAuction()
-    elseif msg == "plates" then
-        D.PlatesDebug()
-    elseif msg == "targetarrow" then
-        D.TargetArrowDebug()
-    elseif msg == "softtarget" then
-        D.PrintSoftTarget()
+    elseif DEBUG_COMMANDS[msg] then
+        local fn = D[DEBUG_COMMANDS[msg]]
+        if fn then fn() else print("DeckUI: /deck " .. msg .. " is not part of DeckUI in this game.") end
     elseif msg == "errors" then
         D.ShowErrors()
     elseif msg == "deck" or msg == "pc" or msg == "auto" then

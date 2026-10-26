@@ -45,6 +45,16 @@ fallback carries build and release plumbing that means nothing to a player. It f
 rather than failing so a forgotten section never blocks a release, and `bump-version.ps1`
 says so when the section is missing.
 
+**Mists of Pandaria Classic** (5.5.4, Interface 50504, `C:\Spiele\World of Warcraft\_classic_`) is being
+ported, plan and probe results in `MISTS_PLAN.md` (phase 1 since 2026-10-25). The client reads
+`<Name>_Mists.toc` where a folder has one, else the retail `.toc` - so a folder without one must not be
+loaded there: `D.MISTS_MODULES` (core.lua) lists the ported modules and `D.MODULE_ORDER` drops the rest
+in Mists. A `_Mists.toc` lists only the files that run there; an option in the settings shows when its
+file has loaded (`if D.ApplyX then`), and a debug command of a missing file says so. Code asks
+`D.IsMists` / `D.IsRetail`. `package.ps1` checks the `_Mists.toc` files on their own interface number,
+`bump-version.ps1 -MistsInterface` raises it; the upload still files under retail only until the port is
+done. In the classic client only `DeckUI` and `DeckUI_Cross` are junctions so far.
+
 Each folder is a separate WoW addon; in `Interface\AddOns\` they are directory
 junctions pointing into this repo. Any `.lua` change is live after `/reload`;
 `.toc` changes or new folders/textures need a full client restart.
