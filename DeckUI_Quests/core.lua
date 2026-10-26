@@ -305,7 +305,10 @@ local function DrawEntry(entry, y, width, textSize)
     end
     head:SetText(entry.title or "")
     head:SetTextColor(unpack(entry.color or WHITE))
-    ns.drawn[#ns.drawn].head = head
+    local drawn = ns.drawn[#ns.drawn]
+    drawn.head = head
+    -- what the block shows, for the quest item button to keep clear of
+    drawn.parts = { head }
     local top = y
     y = y + head:GetStringHeight() + LINE_GAP
 
@@ -321,6 +324,7 @@ local function DrawEntry(entry, y, width, textSize)
                 local done = line.done
                 fs:SetText(line.text .. (done and XIV_DONE_MARK or XIV_OPEN_MARK))
                 fs:SetTextColor(unpack(line.color or (done and XIV_DONE) or XIV_LINE))
+                drawn.parts[#drawn.parts + 1] = fs
             else
                 fs:SetJustifyH("LEFT")
                 fs:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent + 8, -y)
@@ -339,6 +343,7 @@ local function DrawEntry(entry, y, width, textSize)
                 b:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + indent + 8, -y)
             end
             b:SetSize(barWidth, BAR_HEIGHT)
+            drawn.parts[#drawn.parts + 1] = b
             if line.range then
                 -- handed on untouched: StatusBar takes secret values
                 b:SetMinMaxValues(line.range[1], line.range[2])
@@ -665,13 +670,32 @@ function ns.PlaceSecureButtons()
             -- the row's top, left of the tracker's edge, in UIParent space;
             -- in the right-aligned list, left of the title's text instead
             local left = tracker:GetLeft() * tracker:GetEffectiveScale()
-            local head = drawn.head
-            if xiv and head and head:GetRight() then
-                left = (head:GetRight() - head:GetStringWidth()) * head:GetEffectiveScale()
+            -- in the right-aligned list, left of the block's widest line (title,
+            -- objectives, bars): beside the title alone it sat on the objective
+            -- below, which runs further left (owner's screenshot, 2026-10-26)
+            if xiv and drawn.parts then
+                local edge
+                for _, part in ipairs(drawn.parts) do
+                    local x
+                    if part.GetStringWidth then
+                        local right = part:GetRight()
+                        x = right and (right - part:GetStringWidth()) * part:GetEffectiveScale()
+                    else
+                        local l = part:GetLeft()
+                        x = l and l * part:GetEffectiveScale()
+                    end
+                    if x and (not edge or x < edge) then edge = x end
+                end
+                if edge then left = edge end
             end
             b:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT",
                 (left / uiScale - 4) / s_b,
                 rowTop * row:GetEffectiveScale() / uiScale / s_b)
+            -- above its row: in the right-aligned list the button sits inside
+            -- the tracker, same strata, and the row took its mouse - no
+            -- tooltip, no use (owner, Mists, 2026-10-26). Out of combat only,
+            -- like everything else done to a secure button here.
+            b:SetFrameLevel(row:GetFrameLevel() + 5)
             UpdateSecureState(b)
             b:Show()
         end
