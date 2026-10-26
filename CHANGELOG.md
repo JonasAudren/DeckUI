@@ -8,6 +8,23 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.0.2
+
+A few wishes and one fix, for both games.
+
+- **The week overview in the round main menu.** One more round button at
+  the end of the row opens and closes the week overview, in combat too.
+  It shows while the Week module is on.
+- **The target's status icons in Final Fantasy XIV's shapes** (FF and XIV
+  styles): buffs with a roof on top, debuffs with a point at the bottom,
+  the dispel colour as a strip above - like the buff bar.
+- **Action bars 3-8 can be see-through.** An "Opacity" slider on the
+  Action bars page, from 10% to 100%.
+- **Quest items in FFXIV's task list work again.** With the task list on,
+  the item buttons could not be clicked and showed no tooltip; they also
+  covered the quest's lines. They now sit left of the whole quest and
+  take clicks.
+
 ## 2.0.1
 
 A few fixes, all but the damage meter for both games.
