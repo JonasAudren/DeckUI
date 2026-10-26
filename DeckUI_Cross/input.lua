@@ -320,29 +320,35 @@ end
 
 local hidePending = false
 
+-- Parked under the hidden frame only, the bar's own Show/Hide untouched.
+-- A visibility state driver used to hide it as well, and that was taint:
+-- action bars are Edit Mode systems with a Lua Hide (HideOverride) that
+-- breaks the snaps of the bars docked to them, and the driver runs it once
+-- at once, from our code - the neighbours' snap fields were then ours, and
+-- the next time Edit Mode laid out the right bars in combat it was blocked
+-- (MultiBarLeft:SetPoint, after a level-up in Mists, 2026-10-26; Edit
+-- Mode's code is the same in retail). Under a hidden parent a Show() does
+-- not make it visible either. State in our own tables, nothing on the bar.
+local origParent, parked = {}, {}
+
 local function HideBar(bar)
-    if not bar.DeckOrigParent then
-        bar.DeckOrigParent = bar:GetParent()
+    if not origParent[bar] then
+        origParent[bar] = bar:GetParent()
         -- if Blizzard (Edit Mode etc.) reparents the bar, pull it back
         hooksecurefunc(bar, "SetParent", function(self, parent)
-            if self.DeckHidden and parent ~= hider and not InCombatLockdown() then
+            if parked[self] and parent ~= hider and not InCombatLockdown() then
                 self:SetParent(hider)
             end
         end)
     end
-    bar.DeckHidden = true
+    parked[bar] = true
     bar:SetParent(hider)
-    -- belt and braces: a secure visibility driver keeps it hidden even
-    -- if something calls Show() on it
-    RegisterStateDriver(bar, "visibility", "hide")
 end
 
 local function ShowBar(bar)
-    if not bar.DeckOrigParent then return end
-    bar.DeckHidden = false
-    UnregisterStateDriver(bar, "visibility")
-    bar:SetParent(bar.DeckOrigParent)
-    bar:Show()
+    if not origParent[bar] then return end
+    parked[bar] = nil
+    bar:SetParent(origParent[bar])
 end
 
 -- the same for any other bar, found through one of its buttons (stance.lua)
