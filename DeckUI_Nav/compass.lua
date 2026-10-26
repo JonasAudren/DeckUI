@@ -99,7 +99,13 @@ center:SetSize(2, H - 2)
 center:SetPoint("CENTER")
 
 local targetMark = clip:CreateTexture(nil, "OVERLAY", nil, 2)
-targetMark:SetAtlas("Navigation-Tracked-Icon")
+-- Mists has no Navigation-Tracked-Icon either: a gold disc
+if C_Texture.GetAtlasInfo("Navigation-Tracked-Icon") then
+    targetMark:SetAtlas("Navigation-Tracked-Icon")
+else
+    targetMark:SetTexture(D.DISC)
+    targetMark:SetVertexColor(1, 0.82, 0)
+end
 targetMark:SetSize(16, 16)
 targetMark:Hide()
 
@@ -153,8 +159,28 @@ panel:SetPoint(unpack(panel.defaultPoint))
 panel:Hide()
 FlatBox(panel)
 
+-- a click on the target opens the waypoint list too, like the bar above
+-- (owner's wish, 2026-10-26)
+panel:EnableMouse(true)
+panel:SetScript("OnMouseUp", function(_, button)
+    if button == "LeftButton" and ns.ToggleWaypoints then ns.ToggleWaypoints() end
+end)
+panel:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:SetText("Navigation target", 1, 0.82, 0)
+    GameTooltip:AddLine("Click: the waypoint list", 0.8, 0.8, 0.8)
+    GameTooltip:Show()
+end)
+panel:SetScript("OnLeave", GameTooltip_Hide)
+
 local arrow = panel:CreateTexture(nil, "ARTWORK")
-arrow:SetAtlas("Navigation-Tracked-Arrow")
+-- Mists has no Navigation-Tracked-Arrow (probe, 2026-10-25): the
+-- minimap's player arrow, which points up the same way
+if C_Texture.GetAtlasInfo("Navigation-Tracked-Arrow") then
+    arrow:SetAtlas("Navigation-Tracked-Arrow")
+else
+    arrow:SetTexture("Interface\\Minimap\\MinimapArrow")
+end
 arrow:SetSize(26, 26)
 arrow:SetPoint("LEFT", 8, 0)
 

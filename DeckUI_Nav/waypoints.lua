@@ -508,6 +508,8 @@ function ns.InitWaypoints()
     list = DeckNavDB.waypoints
     if DeckNavDB.routeMode == nil then DeckNavDB.routeMode = false end
     D.MakeMovable(win, "Waypoint list", DeckNavDB)
+    -- dragged by its title and edges while open, no Move needed (rows keep their clicks)
+    D.MakeDraggable(win)
     EventUtil.ContinueOnAddOnLoaded("Blizzard_WorldMap", function()
         canvas = WorldMapFrame.ScrollContainer and WorldMapFrame.ScrollContainer.Child
         -- Mists sets no pin of its own on a Ctrl-click (it has no user
