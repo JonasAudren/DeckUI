@@ -576,7 +576,7 @@ panel:AddTab("General", {
         end
         if D.ApplyLFGWindow then
             f:Checkbox("Dungeon queue as a window", db, "lfgWindow", function() D.ApplyLFGWindow() end,
-                "While you queue for a dungeon, raid finder or scenario: a small window with how many tanks, healers and damage dealers are found, the estimated wait and how long you have waited. Blizzard's eye stays. Move it with Move below.")
+                "While you queue for a dungeon, raid finder or scenario: a small window with how many tanks, healers and damage dealers are found, the estimated wait and how long you have waited. Blizzard's eye at the map goes while this is on; a right click on the window leaves a queue. Drag it to move it.")
         end
         if D.ApplyCharPanel then
             f:Checkbox("Character panel: item level, enchants, gems", db, "charPanel", function() D.ApplyCharPanel() end,

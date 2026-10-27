@@ -7,7 +7,7 @@ local D = DeckUI
 -- small window that says while you wait who has been found, how long the
 -- estimate is and how long you have been waiting - what the eye only shows
 -- on mouse-over. DeckUIDB.lfgWindow, off by default, Overview page; movable
--- "Dungeon queue". Blizzard's eye stays.
+-- "Dungeon queue". Blizzard's eye goes while it is on (see FadeEye).
 --
 -- One block per queue (Dungeon Finder, Raid Finder, scenarios), read the
 -- way Blizzard's QueueStatusFrame reads it (5.5.4 and 12.1.5 alike):
@@ -168,7 +168,51 @@ local function Tick()
     end
 end
 
+-------------------------------------------------------------------
+-- Blizzard's eye goes while the window is on
+-------------------------------------------------------------------
+-- Owner's wish (2026-10-27): the eye at the map only gets in the way now.
+-- Faded, not parked or hidden: Blizzard shows and hides it with the queue
+-- (and DeckUI_Map places Mists' one on its minimap), so alpha 0 is held by
+-- a SetAlpha post-hook, and it gives up the mouse. Mists' eye is
+-- LFGMinimapFrame, retail's QueueStatusButton. Its right-click menu went
+-- with it, so our window's right click offers leaving the queue.
+local eyeFaded, eyeHooked = false, {}
+
+local function Eye()
+    return LFGMinimapFrame or QueueStatusButton
+end
+
+local function FadeEye(state)
+    local eye = Eye()
+    if not eye then return end
+    if not eyeHooked[eye] then
+        eyeHooked[eye] = true
+        hooksecurefunc(eye, "SetAlpha", function(self, alpha)
+            if eyeFaded and alpha ~= 0 then self:SetAlpha(0) end
+        end)
+    end
+    eyeFaded = state
+    eye:SetAlpha(state and 0 or 1)
+    eye:EnableMouse(not state)
+end
+
+win:SetScript("OnMouseUp", function(self, button)
+    if button ~= "RightButton" or not MenuUtil then return end
+    MenuUtil.CreateContextMenu(self, function(_, root)
+        root:CreateTitle("Dungeon queue")
+        for _, cat in ipairs(CATEGORIES) do
+            local id, mode
+            if cat.id then id, mode = ActiveQueue(cat.id) end
+            if id and mode == "queued" then
+                root:CreateButton("Leave: " .. cat.name, function() LeaveLFG(cat.id) end)
+            end
+        end
+    end)
+end)
+
 function D.ApplyLFGWindow()
+    FadeEye(Enabled() and true or false)
     Tick()
 end
 
@@ -183,7 +227,11 @@ ev:SetScript("OnEvent", function(_, event)
         -- dragged directly while it shows, no Move needed (owner, 2026-10-27)
         D.MakeDraggable(win)
     end
-    if Enabled() then Tick() end
+    -- the eye may come with the group finder later than our login
+    if Enabled() then
+        if not eyeFaded then FadeEye(true) end
+        Tick()
+    end
 end)
 
 -- shown while unlocked, so it can be placed without a queue
