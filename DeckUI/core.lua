@@ -526,6 +526,7 @@ local DEFAULTS = {
     targetArrow   = false,   -- FFXIV's arrow over the target's nameplate (targetarrow.lua)
     xivPlates     = false,   -- enemy nameplates as FFXIV draws them (nameplates.lua)
     lfgWindow     = false,   -- the dungeon queue as a small window (lfgqueue.lua)
+    restock       = false,   -- buy reagents, flasks, food up to a count at merchants (restock.lua, Mists)
     mailHelper    = false,   -- your characters in the mail's "To" field, what Open All took (mail.lua, Mists)
     charPanel     = false,   -- item level, missing enchants and gems on the character panel (charpanel.lua, Mists)
     talkingHead   = false,   -- the talking head as a subtitle (talkinghead.lua)

@@ -212,7 +212,7 @@ D.PAGE_FRAMES = {
 -- positions" on the Devices page does that. The game reloads right after,
 -- and each module fills what is missing with its defaults as it loads.
 local LOOT_KEYS = { autoSellJunk = true, autoRepair = true, repairGuild = true, fastLoot = true, lootWindow = true,
-                    mailHelper = true }
+                    mailHelper = true, restock = true }
 local function GroupKey(k) return k == "showParty" or k:find("^party") ~= nil end
 local function RaidKey(k) return k == "showRaid" or k:find("^raid") ~= nil end
 D.PAGE_RESET = {
@@ -662,6 +662,10 @@ EventUtil.ContinueOnAddOnLoaded("DeckUI", function()
             f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
                 "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
 
+            if D.ApplyRestock then
+                f:Checkbox("Restock at merchants", db, "restock", function() D.ApplyRestock() end,
+                    "Beside the merchant a small list of things to keep in your bags - drop an item from your bags on it, set how many with - and +. Each merchant visit buys what is missing, as far as the merchant sells it for gold and your gold reaches; a chat line says what was bought. Per character.")
+            end
             if D.ApplyMail then
                 f:Checkbox("Mail helper", db, "mailHelper", function() D.ApplyMail() end,
                     "At the mailbox: a button beside the recipient lists your characters on this realm and the last ten people you mailed. After Blizzard's Open All, one chat line says what it took - gold and items.")
