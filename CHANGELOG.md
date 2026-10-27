@@ -11,7 +11,7 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 ## 2.0.3
 
 Quality of life, much of it for Mists of Pandaria Classic. Every new part is
-off until you switch it on.
+off until you switch it on, except the elite, rare and boss marks.
 
 **Both games**
 
@@ -20,6 +20,12 @@ off until you switch it on.
   found, the estimated wait and how long you have waited. Blizzard's eye at
   the map goes while it is on; right click the window to leave a queue.
   Drag it anywhere. Overview page.
+- **The quest book.** A searchable book of every quest your characters know:
+  each quest they had in their quest log and each one they completed, sorted
+  by kind (dungeon, raid, daily ...) and marked done for this character and
+  how many others. The game has no list of all quests, so the book grows as
+  you play; names of completed quests load in the background. Overview page,
+  /questbook, or its bubble in the round main menu.
 - **Party and raid frames in Final Fantasy XIV's look**, like the XIV player
   frame: capsule bars without a box, the health number large, pink mana, a
   warm band behind the member you target. Switch "Look" on the Group or Raid
@@ -49,6 +55,8 @@ off until you switch it on.
 - **Restock at merchants:** keep a list of reagents, flasks and food beside
   the merchant and set how many you want - each visit buys what is missing,
   for gold only. Loot and merchant page.
+- **Fixed:** the character, PvP and group finder bubbles of the round main
+  menu did nothing when clicked - they open their windows now.
 
 ## 2.0.2
 
