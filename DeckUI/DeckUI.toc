@@ -27,4 +27,5 @@ infobars.lua
 mainmenu.lua
 auction.lua
 auctionstyle.lua
+lfgqueue.lua
 minimap.lua

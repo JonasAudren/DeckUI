@@ -28,6 +28,7 @@ infobars.lua
 mainmenu.lua
 charpanel.lua
 mail.lua
+lfgqueue.lua
 auction.lua
 auctionstyle.lua
 minimap.lua

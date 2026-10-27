@@ -202,7 +202,7 @@ D.PAGE_FRAMES = {
     Nav     = { "Compass", "Navigation target", "Waypoint list" },
     Week    = { "Week", "Week button" },
     Loot    = { "Loot", "Loot list" },
-    General = { "Talking head", "Server info", "Gold", "Bag overview", "Main menu" },
+    General = { "Talking head", "Server info", "Gold", "Bag overview", "Main menu", "Dungeon queue" },
 }
 
 -- What "Defaults" clears on each page: the SavedVariables table by name,
@@ -573,6 +573,10 @@ panel:AddTab("General", {
         if D.ApplyPlates then
             f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
                 "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
+        end
+        if D.ApplyLFGWindow then
+            f:Checkbox("Dungeon queue as a window", db, "lfgWindow", function() D.ApplyLFGWindow() end,
+                "While you queue for a dungeon, raid finder or scenario: a small window with how many tanks, healers and damage dealers are found, the estimated wait and how long you have waited. Blizzard's eye stays. Move it with Move below.")
         end
         if D.ApplyCharPanel then
             f:Checkbox("Character panel: item level, enchants, gems", db, "charPanel", function() D.ApplyCharPanel() end,
