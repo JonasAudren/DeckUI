@@ -114,10 +114,24 @@ local function TestButton(f, c, label, isOn, toggle, tip)
     return b
 end
 
+-- the look of party and raid alike, on both pages; needs a reload
+local function GroupLook()
+    return { label = "Look", values = { "panel", "xiv" },
+             names = { panel = "Dark panels", xiv = "Final Fantasy XIV" },
+             tip = "Dark panels with bars, or Final Fantasy XIV's look like the XIV player frame: capsule bars without a box, the health number large, pink mana. For the party list and the raid frames alike. Needs a reload.",
+             get = function() return DeckOrbsDB.groupStyle or "panel" end,
+             set = function(v)
+                 DeckOrbsDB.groupStyle = v
+                 if loaded.groupStyle == nil then loaded.groupStyle = "panel" end
+                 D.NeedReload("orbs:groupStyle", v ~= loaded.groupStyle)
+             end }
+end
+
 D.RegisterModule("Group", {
     title = "Group",
     build = function(c)
         if loaded.showParty == nil then loaded.showParty = DeckOrbsDB.showParty end
+        if loaded.groupStyle == nil then loaded.groupStyle = DeckOrbsDB.groupStyle end
         local f = D.Flow(c)
         c.widgets = c.widgets or {}
 
@@ -128,6 +142,8 @@ D.RegisterModule("Group", {
         TestButton(f, c, function(on) return on and "End party test" or "Test: five rows of you" end,
             function() return ns.partyTest end, function() ns.SetPartyTest(not ns.partyTest) end,
             "Shows the list with five copies of you, to see size and place. Switches out of combat; also /orbs test.")
+
+        f:Cycles(GroupLook())
 
         f:Gap(4)
         f:Label("Layout (this device)")
@@ -209,6 +225,8 @@ D.RegisterModule("Raid", {
 
         f:Gap(4)
         f:Label("Look")
+        if loaded.groupStyle == nil then loaded.groupStyle = DeckOrbsDB.groupStyle end
+        f:Cycles(GroupLook())
         f:Cycles(
             RaidSetting("Bar", "raidColor", { "ff", "class" }, { ff = "FF green", class = "Class" }, look),
             RaidSetting("Health", "raidHpText", { "none", "percent", "short" },

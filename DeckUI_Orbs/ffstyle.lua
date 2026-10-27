@@ -547,6 +547,12 @@ ns.PillBar = PillBar   -- the enemy list (enemies.lua) wears it too
 local function PinkMana(element, unit)
     if UnitPowerType(unit) == MANA then element:SetStatusBarColor(0.88, 0.42, 0.68) end
 end
+ns.PinkMana = PinkMana   -- the party and raid frames in the XIV look too
+
+-- Party and raid in the XIV look (DeckOrbsDB.groupStyle "xiv", owner's wish
+-- 2026-10-27: like his player frame): capsule bars without a panel instead
+-- of the dark boxes - party.lua and raid.lua ask this
+function ns.GroupXIV() return DeckOrbsDB and DeckOrbsDB.groupStyle == "xiv" end
 
 -- "HP" small, the number large beside it, under a bar
 local function BarNumber(self, bar, label)

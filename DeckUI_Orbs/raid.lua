@@ -133,7 +133,7 @@ end
 
 -- colours, texts and toggles: anything that can change without a reload
 local function LookTile(self)
-    self.DeckBg:SetColorTexture(0.05, 0.05, 0.05, DeckOrbsDB.raidBgAlpha or 0.8)
+    self.DeckBg:SetColorTexture(0.05, 0.05, 0.05, ns.GroupXIV() and 0 or DeckOrbsDB.raidBgAlpha or 0.8)
     -- FF green (oUF's health colour) unless the bar takes the class colour
     self.Health.colorClass = DeckOrbsDB.raidColor == "class"
 
@@ -177,7 +177,17 @@ local function Edge(self, level, r, g, b)
 end
 
 local function Bar(self, height, y, level)
-    local bar = CreateFrame("StatusBar", nil, self)
+    local bar
+    if ns.GroupXIV() then
+        -- a capsule, like the XIV player frame's; its ends follow the height
+        bar = ns.PillBar(self, Size() - 2 * INSET, height)
+        bar:ClearAllPoints()
+        bar:SetPoint("TOPLEFT", INSET, y)
+        bar:SetPoint("TOPRIGHT", -INSET, y)
+        bar:SetFrameLevel(level)
+        return bar
+    end
+    bar = CreateFrame("StatusBar", nil, self)
     bar:SetStatusBarTexture(WHITE)
     bar:SetPoint("TOPLEFT", INSET, y)
     bar:SetPoint("TOPRIGHT", -INSET, y)
@@ -198,23 +208,26 @@ local function BuildTile(self, unit)
     self.DeckDispelButtons = {}
     local level = self:GetFrameLevel()
 
+    local xiv = ns.GroupXIV()
     local bg = self:CreateTexture(nil, "BACKGROUND", nil, -8)
     bg:SetAllPoints()
     self.DeckBg = bg
-    ns.Edges(self, 0.3, 0.3, 0.3)
+    -- the XIV look has no panel: no grey edge either (LookTile clears the fill)
+    if not xiv then ns.Edges(self, 0.3, 0.3, 0.3) end
 
     -- texts on a layer of their own, above the bars
     local texts = CreateFrame("Frame", nil, self)
     texts:SetAllPoints()
     texts:SetFrameLevel(level + 3)
 
-    local health = Bar(self, 6, -17, level + 1)
+    local health = Bar(self, xiv and 7 or 6, -17, level + 1)
     health.colorHealth = true
     health.colorDisconnected = true
     self.Health = health
 
-    local power = Bar(self, 2, -25, level + 1)
+    local power = Bar(self, xiv and 3 or 2, xiv and -26 or -25, level + 1)
     power.colorPower = true
+    if xiv then power.PostUpdateColor = ns.PinkMana end
     power:Hide()
     self.Power = power
 

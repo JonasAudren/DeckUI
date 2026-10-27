@@ -149,23 +149,47 @@ local function OnEnter(self)
 end
 ns.GroupOnEnter = OnEnter
 
+-- a bar of the row: plain in the panel look, a capsule in the XIV look
+local function RowBar(self, width, height)
+    if ns.GroupXIV() then return ns.PillBar(self, width, height) end
+    local bar = CreateFrame("StatusBar", nil, self)
+    bar:SetStatusBarTexture(WHITE)
+    bar:SetSize(width, height)
+    local bg = bar:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(0.12, 0.12, 0.12, 1)
+    return bar
+end
+
 local function BuildRow(self, unit)
+    local xiv = ns.GroupXIV()
     self:SetSize(W, H)
     self:RegisterForClicks("AnyUp")
     self:SetScript("OnEnter", OnEnter)
     self:SetScript("OnLeave", GameTooltip_Hide)
 
-    local bg = self:CreateTexture(nil, "BACKGROUND", nil, -8)
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.05, 0.05, 0.05, 0.8)
-    Edges(self, 0.3, 0.3, 0.3)
-
-    -- the member you target: a gold edge above the grey one
     local edge = CreateFrame("Frame", nil, self)
-    edge:SetPoint("TOPLEFT", -1, 1)
-    edge:SetPoint("BOTTOMRIGHT", 1, -1)
-    edge:SetFrameLevel(self:GetFrameLevel() + 5)
-    Edges(edge, GOLD[1], GOLD[2], GOLD[3])
+    if xiv then
+        -- no panel, like the XIV player frame; the member you target gets
+        -- a warm band behind the row, as FFXIV lights its party list
+        edge:SetAllPoints()
+        edge:SetFrameLevel(math.max(0, self:GetFrameLevel() - 1))
+        local band = edge:CreateTexture(nil, "BACKGROUND")
+        band:SetAllPoints()
+        band:SetTexture(WHITE)
+        band:SetGradient("HORIZONTAL", CreateColor(1, 0.75, 0.3, 0.35), CreateColor(1, 0.75, 0.3, 0))
+    else
+        local bg = self:CreateTexture(nil, "BACKGROUND", nil, -8)
+        bg:SetAllPoints()
+        bg:SetColorTexture(0.05, 0.05, 0.05, 0.8)
+        Edges(self, 0.3, 0.3, 0.3)
+
+        -- the member you target: a gold edge above the grey one
+        edge:SetPoint("TOPLEFT", -1, 1)
+        edge:SetPoint("BOTTOMRIGHT", 1, -1)
+        edge:SetFrameLevel(self:GetFrameLevel() + 5)
+        Edges(edge, GOLD[1], GOLD[2], GOLD[3])
+    end
     edge:SetAlpha(0)
     self.DeckTargetEdge = edge
 
@@ -197,18 +221,14 @@ local function BuildRow(self, unit)
     self:Tag(name, "[raidcolor][name]")
 
     local hp = self:CreateFontString(nil, "OVERLAY")
-    hp:SetFont(ns.FONT, 12, "OUTLINE")
-    hp:SetPoint("TOPRIGHT", -6, -3)
+    -- the XIV look writes the number large, like the player frame's
+    hp:SetFont(ns.FONT, xiv and 15 or 12, "OUTLINE")
+    hp:SetPoint("TOPRIGHT", -6, xiv and -1 or -3)
     hp:SetJustifyH("RIGHT")
     self:Tag(hp, "[deck:partyhp]")
 
-    local health = CreateFrame("StatusBar", nil, self)
-    health:SetStatusBarTexture(WHITE)
+    local health = RowBar(self, barWidth, xiv and 8 or 9)
     health:SetPoint("TOPLEFT", left, -19)
-    health:SetSize(barWidth, 9)
-    local hbg = health:CreateTexture(nil, "BACKGROUND")
-    hbg:SetAllPoints()
-    hbg:SetColorTexture(0.12, 0.12, 0.12, 1)
     -- oUF's health colour is a plain green, like FFXIV's bars
     health.colorHealth = true
     health.colorDisconnected = true
@@ -217,14 +237,10 @@ local function BuildRow(self, unit)
     health.PostUpdate = function(bar) UpdateClassIcon(bar.__owner) end
     self.Health = health
 
-    local power = CreateFrame("StatusBar", nil, self)
-    power:SetStatusBarTexture(WHITE)
-    power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -2)
-    power:SetSize(barWidth, 3)
-    local pbg = power:CreateTexture(nil, "BACKGROUND")
-    pbg:SetAllPoints()
-    pbg:SetColorTexture(0.12, 0.12, 0.12, 1)
+    local power = RowBar(self, barWidth, xiv and 4 or 3)
+    power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, xiv and -3 or -2)
     power.colorPower = true
+    if xiv then power.PostUpdateColor = ns.PinkMana end
     self.Power = power
 
     self.Range = { insideAlpha = 1, outsideAlpha = 0.4 }

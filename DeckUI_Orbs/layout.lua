@@ -31,6 +31,7 @@ ns.DEFAULTS = {
     hpText          = "percent",   -- "percent" | "absolute" | "both"
     showParty       = false,       -- FFXIV-style party list (party.lua); replaces Blizzard's
     showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
+    groupStyle      = "panel",     -- party and raid: "panel" (dark panels) | "xiv" (capsule bars), /reload
     style           = "orbs",      -- player/target: "orbs", "ff" or "ffxiv" (ffstyle.lua), /reload
     enemyList       = false,       -- FFXIV's enemy list from the nameplate units (enemies.lua)
     xivCastCenter   = false,       -- "ffxiv" style: your cast in the screen's middle; /reload
