@@ -211,7 +211,8 @@ D.PAGE_FRAMES = {
 -- what is data, not settings. Positions are never touched - "Reset all
 -- positions" on the Devices page does that. The game reloads right after,
 -- and each module fills what is missing with its defaults as it loads.
-local LOOT_KEYS = { autoSellJunk = true, autoRepair = true, repairGuild = true, fastLoot = true, lootWindow = true }
+local LOOT_KEYS = { autoSellJunk = true, autoRepair = true, repairGuild = true, fastLoot = true, lootWindow = true,
+                    mailHelper = true }
 local function GroupKey(k) return k == "showParty" or k:find("^party") ~= nil end
 local function RaidKey(k) return k == "showRaid" or k:find("^raid") ~= nil end
 D.PAGE_RESET = {
@@ -656,6 +657,11 @@ EventUtil.ContinueOnAddOnLoaded("DeckUI", function()
             end, "Takes everything the moment a corpse opens, without the loot window flickering up. Switches the game's own auto loot on as well; holding the auto loot key (Shift) loots by hand.")
             f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
                 "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
+
+            if D.ApplyMail then
+                f:Checkbox("Mail helper", db, "mailHelper", function() D.ApplyMail() end,
+                    "At the mailbox: a button beside the recipient lists your characters on this realm and the last ten people you mailed. After Blizzard's Open All, one chat line says what it took - gold and items.")
+            end
 
             if D.PrintAuction then
                 f:Gap(8)

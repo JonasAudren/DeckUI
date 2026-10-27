@@ -27,6 +27,7 @@ nameplates.lua
 infobars.lua
 mainmenu.lua
 charpanel.lua
+mail.lua
 auction.lua
 auctionstyle.lua
 minimap.lua

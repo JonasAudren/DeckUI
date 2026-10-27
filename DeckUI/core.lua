@@ -525,6 +525,7 @@ local DEFAULTS = {
     softTargetCast = true,   -- and a ring that fills while you cast on it
     targetArrow   = false,   -- FFXIV's arrow over the target's nameplate (targetarrow.lua)
     xivPlates     = false,   -- enemy nameplates as FFXIV draws them (nameplates.lua)
+    mailHelper    = false,   -- your characters in the mail's "To" field, what Open All took (mail.lua, Mists)
     charPanel     = false,   -- item level, missing enchants and gems on the character panel (charpanel.lua, Mists)
     talkingHead   = false,   -- the talking head as a subtitle (talkinghead.lua)
     talkingHeadInstances = true, -- its text in instances too (off: the voice only)
