@@ -130,7 +130,9 @@ local function Update()
     if not summary and CharacterFrame then
         summary = CharacterFrame:CreateFontString(nil, "OVERLAY")
         summary:SetFont(D.FONT, 12, "OUTLINE")
-        summary:SetPoint("TOP", CharacterFrame, "BOTTOM", 0, -4)
+        -- below the tabs that hang under the window - right under it, the
+        -- line ran into them (owner's screenshot, 2026-10-27)
+        summary:SetPoint("TOP", CharacterFrame, "BOTTOM", 0, -34)
     end
     if summary then
         local _, equipped = GetAverageItemLevel()
