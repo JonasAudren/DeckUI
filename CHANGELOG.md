@@ -8,6 +8,20 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.0.4
+
+The week overview in Mists of Pandaria Classic now keeps track of your
+dailies and Pandaria's reputations.
+
+**Mists of Pandaria Classic**
+
+- **Dailies in the week overview.** Every daily quest in your quest log is
+  remembered across your characters, with its zone; each character counts
+  the ones done today, starting over at the daily reset. A new "Dailies"
+  column shows today's count, and a character's details list them by zone.
+- **Reputation in the week overview.** A character's details list every
+  Pandaria faction it has met, with its standing and progress.
+
 ## 2.0.3
 
 Quality of life, much of it for Mists of Pandaria Classic. Every new part is
