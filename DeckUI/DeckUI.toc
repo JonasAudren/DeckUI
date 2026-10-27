@@ -28,4 +28,5 @@ mainmenu.lua
 auction.lua
 auctionstyle.lua
 lfgqueue.lua
+questbook.lua
 minimap.lua

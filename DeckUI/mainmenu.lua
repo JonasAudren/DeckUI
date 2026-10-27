@@ -83,14 +83,34 @@ local function Dress(b)
     hover:SetBlendMode("ADD")
 end
 
+-- Three of Mists' micro buttons open their window not on a click but on
+-- mouse down and up over themselves (OnMouseDown/OnMouseUp with IsMouseOver,
+-- Classic/MainMenuBarMicroButtons.xml, 5.5.4) - a click passed on from our
+-- bubble did nothing (owner, 2026-10-27). For these the bubble calls what
+-- Blizzard's handler calls. Retail's buttons all open on a click.
+local DIRECT = D.IsMists and {
+    CharacterMicroButton = function() ToggleCharacter("PaperDollFrame") end,
+    PVPMicroButton       = function() if TogglePVPFrame then TogglePVPFrame() end end,
+    LFGMicroButton       = function() if PVEFrame_ToggleFrame then PVEFrame_ToggleFrame() end end,
+} or {}
+
 local function Build(name)
     local blizzard = _G[name]
-    local b = CreateFrame("Button", nil, bar, "SecureActionButtonTemplate")
+    local b
+    if DIRECT[name] then
+        b = CreateFrame("Button", nil, bar)
+        b:RegisterForClicks("LeftButtonUp")
+        b:SetScript("OnClick", function()
+            if blizzard:IsEnabled() then DIRECT[name]() end
+        end)
+    else
+        b = CreateFrame("Button", nil, bar, "SecureActionButtonTemplate")
+        -- down and up: the template acts on the one ActionButtonUseKeyDown names
+        b:RegisterForClicks("AnyUp", "AnyDown")
+        b:SetAttribute("type", "click")
+        b:SetAttribute("clickbutton", blizzard)
+    end
     b:SetSize(SIZE, SIZE)
-    -- down and up: the template acts on the one ActionButtonUseKeyDown names
-    b:RegisterForClicks("AnyUp", "AnyDown")
-    b:SetAttribute("type", "click")
-    b:SetAttribute("clickbutton", blizzard)
     b.blizzard = blizzard
     Dress(b)
 
@@ -107,26 +127,37 @@ local function Build(name)
     return b
 end
 
--- The week overview as one more bubble (owner's wish, 2026-10-26), last in
--- the row where the game menu button was. Our own window, so a plain
--- button calls DeckUI's toggle - no Blizzard frame involved, no secure
--- click needed, works in combat. Shown while the Week module is loaded
--- (D.weekToggle exists then); the module's own round button stays a
--- choice of its own on the Week page.
-local function BuildWeek()
+-- DeckUI's own windows as more bubbles, last in the row where the game menu
+-- button was: the week overview (owner's wish, 2026-10-26) and the quest
+-- book (2026-10-27). Our own windows, so a plain button calls DeckUI's
+-- toggle - no Blizzard frame involved, no secure click needed, works in
+-- combat. Each shows while its window can open: the Week module loaded
+-- (D.weekToggle exists then), the quest book switched on.
+local OWN = {
+    { icon = "Interface\\Icons\\INV_Misc_Note_02", title = "This week",
+      tip = "The week overview for all your characters",
+      toggle = function() D.ToggleWeek() end,
+      available = function() return D.weekToggle ~= nil end },
+    { icon = "Interface\\Icons\\INV_Misc_Book_09", title = "Quest book",
+      tip = "Every quest your characters know, searchable",
+      toggle = function() if D.ToggleQuestBook then D.ToggleQuestBook() end end,
+      available = function() return D.ToggleQuestBook ~= nil and DeckUIDB.questBook end },
+}
+
+local function BuildOwn(spec)
     local b = CreateFrame("Button", nil, bar)
     b:SetSize(SIZE, SIZE)
     b:RegisterForClicks("LeftButtonUp")
     Dress(b)
-    b.icon:SetTexture("Interface\\Icons\\INV_Misc_Note_02")
+    b.icon:SetTexture(spec.icon)
     b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     b.icon:SetSize(SIZE - 4, SIZE - 4)
-    b.week = true
-    b:SetScript("OnClick", function() D.ToggleWeek() end)
+    b.own = spec
+    b:SetScript("OnClick", spec.toggle)
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText("This week", 1, 1, 1)
-        GameTooltip:AddLine("The week overview for all your characters", 0.8, 0.8, 0.8)
+        GameTooltip:SetText(spec.title, 1, 1, 1)
+        GameTooltip:AddLine(spec.tip, 0.8, 0.8, 0.8)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", GameTooltip_Hide)
@@ -134,13 +165,13 @@ local function BuildWeek()
 end
 
 local function Available(b)
-    if b.week then return D.weekToggle ~= nil end
+    if b.own then return b.own.available() and true or false end
     return b.blizzard:IsShown()
 end
 
 -- icon, enabled state and Blizzard's alert flash, read off its button
 local function Paint(b)
-    if b.week then return end
+    if b.own then return end
     local blizzard = b.blizzard
     local enabled = blizzard:IsEnabled()
     if blizzard == CharacterMicroButton then
@@ -244,7 +275,7 @@ function D.ApplyMainMenu()
         for _, name in ipairs(BUTTONS) do
             if _G[name] then buttons[#buttons + 1] = Build(name) end
         end
-        buttons[#buttons + 1] = BuildWeek()
+        for _, spec in ipairs(OWN) do buttons[#buttons + 1] = BuildOwn(spec) end
     end
     if on then
         for _, b in ipairs(buttons) do Paint(b) end

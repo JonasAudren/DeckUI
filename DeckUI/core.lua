@@ -525,6 +525,7 @@ local DEFAULTS = {
     softTargetCast = true,   -- and a ring that fills while you cast on it
     targetArrow   = false,   -- FFXIV's arrow over the target's nameplate (targetarrow.lua)
     xivPlates     = false,   -- enemy nameplates as FFXIV draws them (nameplates.lua)
+    questBook     = false,   -- the quest book: every quest your characters know (questbook.lua)
     lfgWindow     = false,   -- the dungeon queue as a small window (lfgqueue.lua)
     restock       = false,   -- buy reagents, flasks, food up to a count at merchants (restock.lua, Mists)
     mailHelper    = false,   -- your characters in the mail's "To" field, what Open All took (mail.lua, Mists)

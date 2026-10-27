@@ -202,7 +202,7 @@ D.PAGE_FRAMES = {
     Nav     = { "Compass", "Navigation target", "Waypoint list" },
     Week    = { "Week", "Week button" },
     Loot    = { "Loot", "Loot list" },
-    General = { "Talking head", "Server info", "Gold", "Bag overview", "Main menu", "Dungeon queue" },
+    General = { "Talking head", "Server info", "Gold", "Bag overview", "Main menu", "Dungeon queue", "Quest book" },
 }
 
 -- What "Defaults" clears on each page: the SavedVariables table by name,
@@ -573,6 +573,11 @@ panel:AddTab("General", {
         if D.ApplyPlates then
             f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
                 "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
+        end
+        if D.ApplyQuestBook then
+            f:Checkbox("Quest book", db, "questBook", function() D.ApplyQuestBook() end,
+                "A searchable book of every quest your characters know: each one they had in their quest log, and each one they completed - the names of those load in the background. Sorted by kind (dungeon, raid, daily ...), marked done for this character and how many others. The game has no list of all quests, so the book grows as you play. /questbook opens it.")
+            f:Button("Open the quest book", function() D.ToggleQuestBook() end)
         end
         if D.ApplyLFGWindow then
             f:Checkbox("Dungeon queue as a window", db, "lfgWindow", function() D.ApplyLFGWindow() end,

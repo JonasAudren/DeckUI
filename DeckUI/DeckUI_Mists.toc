@@ -30,6 +30,7 @@ charpanel.lua
 mail.lua
 restock.lua
 lfgqueue.lua
+questbook.lua
 auction.lua
 auctionstyle.lua
 minimap.lua
