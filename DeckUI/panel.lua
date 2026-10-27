@@ -220,7 +220,7 @@ D.PAGE_RESET = {
     Raid    = { db = "DeckOrbsDB", match = RaidKey },
     Cross   = { db = "DeckCrossDB", match = function(k) return k ~= "bars" and k ~= "barScale" and k ~= "barAlpha" end },
     Bars    = { db = "DeckCrossDB", match = function(k) return k == "bars" or k == "barScale" or k == "barAlpha" end },
-    Spec    = { db = "DeckSpecDB" },
+    Spec    = { db = "DeckSpecDB", keep = { groupSets = true } },
     Bags    = { db = "DeckBagsDB", keep = { trackedItems = true } },
     Quests  = { db = "DeckQuestsDB" },
     Map     = { db = "DeckMapDB" },

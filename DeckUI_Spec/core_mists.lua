@@ -77,6 +77,8 @@ local function MakeButton(group)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText(self.group == 1 and "Primary talents" or "Secondary talents")
         GameTooltip:AddLine(name or "No specialization chosen yet - the talent frame (N) sets it.", 1, 1, 1, true)
+        local set = ns.GroupSet(self.group)
+        if set then GameTooltip:AddLine("Gear: " .. set, 0.8, 0.8, 0.8, true) end
         if C_SpecializationInfo.GetActiveSpecGroup(false, false) ~= self.group then
             GameTooltip:AddLine("Click to switch (a short cast, not in combat).", 0.6, 0.6, 0.6, true)
         end
@@ -84,6 +86,56 @@ local function MakeButton(group)
     end)
     b:SetScript("OnLeave", GameTooltip_Hide)
     return b
+end
+
+-------------------------------------------------------------------
+-- Gear per talent group
+-------------------------------------------------------------------
+-- Owner's wish (2026-10-27): switching the talent group puts on the gear
+-- that goes with it. Mists' equipment manager has sets but does not swap
+-- them on a group change by itself (its character panel never assigns a
+-- set to a spec), so DeckUI does: per character, a set name per group
+-- (DeckSpecDB.groupSets["Name-Realm"][group], by name - IDs are the
+-- manager's own), chosen on the Spec page; on ACTIVE_TALENT_GROUP_CHANGED
+-- the set is put on with C_EquipmentSet.UseEquipmentSet - the manager's
+-- own call, the one its "Equip" button makes. A group switch cannot
+-- happen in combat, so neither does the swap.
+local function CharKey() return UnitName("player") .. "-" .. GetRealmName() end
+
+function ns.GroupSet(group, name)
+    DeckSpecDB.groupSets = DeckSpecDB.groupSets or {}
+    local mine = DeckSpecDB.groupSets[CharKey()] or {}
+    DeckSpecDB.groupSets[CharKey()] = mine
+    if name ~= nil then mine[group] = name ~= "NONE" and name or nil end
+    return mine[group]
+end
+
+-- "NONE" first, then the character's sets by name
+function ns.SetNames(into)
+    into = into or {}
+    wipe(into)
+    into[1] = "NONE"
+    local names = {}
+    for _, id in ipairs(C_EquipmentSet.GetEquipmentSetIDs() or {}) do
+        local name = C_EquipmentSet.GetEquipmentSetInfo(id)
+        if name then names[#names + 1] = name end
+    end
+    table.sort(names)
+    for _, name in ipairs(names) do into[#into + 1] = name end
+    return into
+end
+
+local function EquipGroupSet()
+    local group = C_SpecializationInfo.GetActiveSpecGroup(false, false)
+    local name = group and ns.GroupSet(group)
+    if not name or InCombatLockdown() then return end
+    local id = C_EquipmentSet.GetEquipmentSetID(name)
+    if not id then
+        print(("DeckUI Spec: the equipment set \"%s\" no longer exists - choose another on the Spec page."):format(name))
+        return
+    end
+    C_EquipmentSet.UseEquipmentSet(id)
+    print(("DeckUI Spec: put on \"%s\"."):format(name))
 end
 
 function ns.UpdateActive()
@@ -144,6 +196,8 @@ ev:SetScript("OnEvent", function(self, event, unit)
         return
     else
         Build()
+        -- a moment later: the group's spells and the swap settle first
+        if event == "ACTIVE_TALENT_GROUP_CHANGED" then C_Timer.After(0.5, EquipGroupSet) end
     end
 end)
 
