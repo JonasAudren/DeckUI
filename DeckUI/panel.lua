@@ -218,7 +218,7 @@ D.PAGE_RESET = {
     Orbs    = { db = "DeckOrbsDB", match = function(k) return not GroupKey(k) and not RaidKey(k) end },
     Group   = { db = "DeckOrbsDB", match = GroupKey },
     Raid    = { db = "DeckOrbsDB", match = RaidKey },
-    Cross   = { db = "DeckCrossDB", match = function(k) return k ~= "bars" and k ~= "barScale" end },
+    Cross   = { db = "DeckCrossDB", match = function(k) return k ~= "bars" and k ~= "barScale" and k ~= "barAlpha" end },
     Bars    = { db = "DeckCrossDB", match = function(k) return k == "bars" or k == "barScale" or k == "barAlpha" end },
     Spec    = { db = "DeckSpecDB" },
     Bags    = { db = "DeckBagsDB", keep = { trackedItems = true } },
@@ -572,6 +572,10 @@ panel:AddTab("General", {
         if D.ApplyPlates then
             f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
                 "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
+        end
+        if D.ApplyCharPanel then
+            f:Checkbox("Character panel: item level, enchants, gems", db, "charPanel", function() D.ApplyCharPanel() end,
+                "On each slot of the character panel its item level, a red E when an enchant is missing and a purple G when a socket is empty (the belt's buckle included). Below the panel: average item level, missing enchants, empty sockets.")
         end
         if D.ApplyTalkingHead then
             f:Checkbox("Talking head as a subtitle", db, "talkingHead", function() D.ApplyTalkingHead() end,

@@ -26,6 +26,7 @@ targetarrow.lua
 nameplates.lua
 infobars.lua
 mainmenu.lua
+charpanel.lua
 auction.lua
 auctionstyle.lua
 minimap.lua
