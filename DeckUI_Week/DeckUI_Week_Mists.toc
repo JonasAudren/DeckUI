@@ -2,7 +2,7 @@
 ## Title: DeckUI Week
 ## Notes: DeckUI module: your week at a glance - raid lockouts, valor and conquest, world bosses, challenge modes, weekly quests, for every character
 ## Author: Gottlieb
-## Version: 2.0.2
+## Version: 2.0.3
 ## IconTexture: Interface\AddOns\DeckUI_Cross\textures\face_a
 ## X-Website: https://github.com/JonasAudren/DeckUI
 ## X-Curse-Project-ID: 1699742
