@@ -318,6 +318,7 @@ local function Init()
     DeckWeekDB.chars = DeckWeekDB.chars or {}
     DeckWeekDB.weeklies = DeckWeekDB.weeklies or {}
     DeckWeekDB.hidden = DeckWeekDB.hidden or {}
+    DeckWeekDB.dailies = DeckWeekDB.dailies or {}   -- learned in Mists (collect_mists.lua)
     -- learned before data.lua knew them
     for questID in pairs(DeckWeekDB.weeklies) do
         if ns.KNOWN_QUESTS[questID] then DeckWeekDB.weeklies[questID] = nil end

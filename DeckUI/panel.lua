@@ -227,7 +227,7 @@ D.PAGE_RESET = {
     Map     = { db = "DeckMapDB" },
     Tooltip = { db = "DeckTooltipDB" },
     Nav     = { db = "DeckNavDB" },
-    Week    = { db = "DeckWeekDB", keep = { chars = true, weeklies = true, hidden = true, recorded = true } },
+    Week    = { db = "DeckWeekDB", keep = { chars = true, weeklies = true, dailies = true, hidden = true, recorded = true } },
     Loot    = { db = "DeckUIDB", match = function(k) return LOOT_KEYS[k] end },
 }
 
@@ -434,7 +434,7 @@ D.MODULE_DESCRIPTIONS = {
     Week    = "The week at a glance for all your characters: Great Vault, keystone, hunts, delves, profession knowledge, weekly quests.",
 }
 if D.IsMists then
-    D.MODULE_DESCRIPTIONS.Week = "The week at a glance for all your characters: raid lockouts, valor and conquest, world bosses, challenge modes, weekly quests."
+    D.MODULE_DESCRIPTIONS.Week = "The week at a glance for all your characters: raid lockouts, valor and conquest, world bosses, challenge modes, dailies, reputation, weekly quests."
 end
 
 local function ModuleLoaded(key)

@@ -8,7 +8,7 @@ D.RegisterModule("Week", {
         local f = D.Flow(c)
 
         f:Hint(D.IsMists
-            and "Every character in one table: raid lockouts, valor and conquest, world bosses, challenge modes and weekly quests. Click a character for the details."
+            and "Every character in one table: raid lockouts, valor and conquest, world bosses, challenge modes, today's dailies, reputation and weekly quests. Click a character for the details."
             or "Every character in one table: Great Vault, keystone, prey hunts, delves, profession knowledge and weekly quests. Click a character for the details.")
 
         f:Label("This week")

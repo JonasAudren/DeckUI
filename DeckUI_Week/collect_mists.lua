@@ -18,15 +18,56 @@ local D = DeckUI
 -- log API (Mists has no C_QuestLog.GetInfo).
 -------------------------------------------------------------------
 local WEEKLY = Enum.QuestFrequency and Enum.QuestFrequency.Weekly or LE_QUEST_FREQUENCY_WEEKLY
+local DAILY = Enum.QuestFrequency and Enum.QuestFrequency.Daily or LE_QUEST_FREQUENCY_DAILY
 
+-- Weeklies as in retail, and dailies too (owner's wish, 2026-10-27: MoP
+-- lives on its dailies). A daily is remembered account-wide with its title
+-- and the quest log header it sat under (the zone), so the window can say
+-- where the day's quests were done. Which dailies the game offers changes
+-- every day, so there is no "of how many" - only what was done today.
 function ns.LearnWeeklies()
     local known = DeckWeekDB.weeklies
+    local dailies = DeckWeekDB.dailies
+    local header
     for i = 1, GetNumQuestLogEntries() do
         local title, _, _, isHeader, _, _, frequency, questID = GetQuestLogTitle(i)
-        if not isHeader and questID and WEEKLY and frequency == WEEKLY and not ns.KNOWN_QUESTS[questID] then
-            known[questID] = title or known[questID] or ("Quest " .. questID)
+        if isHeader then
+            header = title
+        elseif questID and not ns.KNOWN_QUESTS[questID] then
+            if WEEKLY and frequency == WEEKLY then
+                known[questID] = title or known[questID] or ("Quest " .. questID)
+            elseif DAILY and frequency == DAILY then
+                dailies[questID] = { title = title or ("Quest " .. questID), group = header or "" }
+            end
         end
     end
+end
+
+-- the learned dailies this character has done today, counted by group
+local function Dailies()
+    local done, total = {}, 0
+    for questID, q in pairs(DeckWeekDB.dailies) do
+        if ns.Done(questID) then
+            done[q.group] = (done[q.group] or 0) + 1
+            total = total + 1
+        end
+    end
+    return { total = total, groups = done,
+             resetAt = time() + (C_DateAndTime.GetSecondsUntilDailyReset() or 0) }
+end
+
+-- Pandaria's factions this character has standing with (a neutral one at
+-- zero has never been met), read the way the reputation pane shows them
+local function Reputations()
+    local list = {}
+    local neutral = FACTION_STANDING_LABEL4
+    for _, id in ipairs(ns.MISTS_FACTIONS) do
+        local s = D.FactionStatus and D.FactionStatus(id)
+        if s and not (s.standing == neutral and s.cur == 0) then
+            list[#list + 1] = s
+        end
+    end
+    return list
 end
 
 local function Locks()
@@ -79,11 +120,12 @@ end
 ns.COLLECTORS = {
     locks = Locks, worldBosses = WorldBosses, challenges = Challenges,
     currencies = Currencies, weekliesDone = ns.Weeklies,
+    dailies = Dailies, reputations = Reputations,
 }
 
 -- what the game sends on request: the Raid Finder wings' kills
 local ev = CreateFrame("Frame")
-for _, e in ipairs({ "LFG_LOCK_INFO_RECEIVED", "LFG_UPDATE_RANDOM_INFO" }) do pcall(ev.RegisterEvent, ev, e) end
+for _, e in ipairs({ "LFG_LOCK_INFO_RECEIVED", "LFG_UPDATE_RANDOM_INFO", "UPDATE_FACTION" }) do pcall(ev.RegisterEvent, ev, e) end
 ev:RegisterEvent("PLAYER_ENTERING_WORLD")
 ev:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_ENTERING_WORLD" then

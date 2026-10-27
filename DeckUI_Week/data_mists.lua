@@ -42,6 +42,31 @@ ns.WORLD_BOSSES = {
     { quest = 33118, name = "Ordos" },
 }
 
+-- Pandaria's reputations, in the order the game lists them: every faction
+-- under the "Mists of Pandaria" header (ParentFactionID 1245) in wago's
+-- Faction table for wow_classic 5.5.4, read 2026-10-27. Faction-bound ones
+-- (Shieldwall / Dominance, Kirin Tor / Sunreavers) are both listed; a
+-- character only shows the one it has standing with.
+ns.MISTS_FACTIONS = {
+    1269,  -- Golden Lotus
+    1270,  -- Shado-Pan
+    1271,  -- Order of the Cloud Serpent
+    1272,  -- The Tillers
+    1302,  -- The Anglers
+    1337,  -- The Klaxxi
+    1341,  -- The August Celestials
+    1345,  -- The Lorewalkers
+    1359,  -- The Black Prince
+    1376,  -- Operation: Shieldwall
+    1375,  -- Dominance Offensive
+    1387,  -- Kirin Tor Offensive
+    1388,  -- Sunreaver Onslaught
+    1435,  -- Shado-Pan Assault
+    1492,  -- Emperor Shaohao
+    1228,  -- Forest Hozen
+    1242,  -- Pearlfin Jinyu
+}
+
 -- Week's shared code asks these; Mists has none of them
 ns.WEEKLIES = {}
 

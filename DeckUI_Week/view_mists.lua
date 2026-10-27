@@ -18,6 +18,7 @@ ns.COLS = {
     { key = "conquest", title = "Conquest",    w = 84, tip = "Conquest Points earned this week, of the weekly cap." },
     { key = "bosses",   title = "World bosses", w = 80, tip = "World bosses killed this week (one loot kill each)." },
     { key = "medals",   title = "Challenge",   w = 66, tip = "Challenge modes with a gold medal, of all of them." },
+    { key = "dailies",  title = "Dailies",     w = 50, tip = "Daily quests done today." },
     { key = "quests",   title = "Weeklies",    w = 58, tip = "Weekly quests done, of the ones listed (hidden ones not counted)." },
 }
 
@@ -56,6 +57,13 @@ local function BossesDone(snap, stale)
     return n
 end
 
+-- today's dailies; a snapshot from before the daily reset counts none
+local function DailiesToday(snap)
+    local d = snap.dailies
+    if not d or (d.resetAt and time() >= d.resetAt) then return 0, {} end
+    return d.total or 0, d.groups or {}
+end
+
 local function GoldMedals(snap)
     local n = 0
     for _, m in ipairs(snap.challenges or {}) do
@@ -76,6 +84,8 @@ function ns.FillCells(c, snap, stale)
     c.bosses:SetText(F.Count(BossesDone(snap, stale), #ns.WORLD_BOSSES))
     local gold, total = GoldMedals(snap)
     c.medals:SetText(total > 0 and F.Count(gold, total) or (F.GREY .. "-|r"))
+    local today = DailiesToday(snap)
+    c.dailies:SetText(today > 0 and (F.GREEN .. today .. "|r") or (F.GREY .. "0|r"))
 end
 
 -- left, above the lockouts: the two weekly caps
@@ -92,9 +102,29 @@ local function Medal(medal)
     return (texture and ("|T%s:14:14|t "):format(texture) or "") .. name
 end
 
--- right: world bosses, challenge modes, currencies
+-- right: today's dailies, reputation, world bosses, challenge modes, currencies
 function ns.DetailsRight(R, snap, stale)
     local F = ns.Fmt
+    local today, groups = DailiesToday(snap)
+    R:Heading("Today")
+    R:Line("Daily quests done", today > 0 and (F.GREEN .. today .. "|r") or (F.GREY .. "none yet|r"))
+    local names = {}
+    for group in pairs(groups) do names[#names + 1] = group end
+    table.sort(names)
+    for _, group in ipairs(names) do
+        R:Line(F.GREY .. "    " .. (group ~= "" and group or "Other") .. "|r", groups[group])
+    end
+
+    if snap.reputations and #snap.reputations > 0 then
+        R:Heading("Reputation")
+        for _, f in ipairs(snap.reputations) do
+            local color = ("|cff%02x%02x%02x"):format(f.r * 255, f.g * 255, f.b * 255)
+            local progress = f.cur >= f.max and "" or ("  %s%s/%s|r"):format(F.GREY,
+                BreakUpLargeNumbers(f.cur), BreakUpLargeNumbers(f.max))
+            R:Line(f.name, color .. (f.standing or "") .. "|r" .. progress)
+        end
+    end
+
     R:Heading("World bosses")
     for _, b in ipairs(ns.WORLD_BOSSES) do
         local done = not stale and snap.worldBosses and snap.worldBosses[b.quest]
