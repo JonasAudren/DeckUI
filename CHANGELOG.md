@@ -8,6 +8,48 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.0.3
+
+Quality of life, much of it for Mists of Pandaria Classic. Every new part is
+off until you switch it on.
+
+**Both games**
+
+- **The dungeon queue as a small window.** While you queue for a dungeon,
+  raid finder or scenario: how many tanks, healers and damage dealers are
+  found, the estimated wait and how long you have waited. Blizzard's eye at
+  the map goes while it is on; right click the window to leave a queue.
+  Drag it anywhere. Overview page.
+- **Party and raid frames in Final Fantasy XIV's look**, like the XIV player
+  frame: capsule bars without a box, the health number large, pink mana, a
+  warm band behind the member you target. Switch "Look" on the Group or Raid
+  page; the dark panels stay the default.
+- **Loot rolls like Final Fantasy XIV's loot window.** Every open group roll
+  in one movable list: the item in its quality colour and the time left; pick
+  one and roll with Need, Greed (Transmog in retail where it applies) or Pass
+  along the bottom - the first item is picked for you. What your character
+  cannot pick is greyed, its tooltip says why. "Loot and merchant" page.
+- **Elite, rare and boss marks.** A diamond before the name - gold for elites,
+  silver with a star for rares, red with a crown for bosses - on the FFXIV
+  nameplates, the enemy list and the Final Fantasy target and focus bars.
+  Overview page, on by default.
+- **Enemy nameplates (FFXIV style) colour the level** by how hard the enemy is
+  for you - grey, green, yellow, orange, red; bosses' "??" in red.
+
+**Mists of Pandaria Classic**
+
+- **Character panel:** each slot shows its item level, a red E when an
+  enchant is missing and a purple G for an empty socket (the belt buckle
+  too); a line below sums it up. Overview page.
+- **Gear per talent group:** pick an equipment set for each talent group on
+  the Spec page - switching the group puts it on.
+- **Mail helper:** a button beside the recipient lists your characters on
+  the realm and the last people you mailed; after "Open All" a chat line
+  says what it took. Loot and merchant page.
+- **Restock at merchants:** keep a list of reagents, flasks and food beside
+  the merchant and set how many you want - each visit buys what is missing,
+  for gold only. Loot and merchant page.
+
 ## 2.0.2
 
 A few wishes and one fix, for both games.

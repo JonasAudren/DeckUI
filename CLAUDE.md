@@ -166,6 +166,27 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   while unlocked, since both are hidden otherwise and could not be grabbed. Take all is
   also the binding DECKUI_LOOT_ALL. The one Blizzard call that writes elsewhere is
   `HandleModifiedItemClick` on a modified click (chat link, dressing room).
+- **Loot rolls** (`DeckUI/lootroll.lua`, `DeckUIDB.lootRolls`, "Loot and merchant" page, off, live;
+  tested in game (Mists) 2026-10-27, retail not yet; owner's wish 2026-10-27). Both games still roll (retail too, Transmog
+  instead of Greed where the item offers it; neither game's frames offer disenchant). START_LOOT_ROLL
+  adds a row, CANCEL_LOOT_ROLL / CANCEL_ALL_LOOT_ROLLS remove it, a click is `RollOnLoot(id, 0|1|2|4)`;
+  `GetActiveLootRollIDs` refills after a /reload. Blizzard's `GroupLootFrame1-4` are **faded, never
+  hidden** (alpha 0 post-hook, mouse off down the tree): they reach the event through UIParent /
+  the event router and keep opening and closing themselves - a hidden one would be handed the next
+  roll by Blizzard's container. The bind-on-pickup confirmation stays Blizzard's (CONFIRM_LOOT_ROLL).
+  Laid out like FFXIV's loot window (same day): title band, a list, the picked row marked like the
+  enemy list's target, Need / Greed-or-Transmog / Pass once at the bottom for the picked roll (the
+  first is picked by itself). **An uncached item never drops its roll** (owner, second dungeon of
+  2026-10-27: nothing showed, Blizzard's frames being faded) - it shows "Loading item..." with only
+  Pass, and Draw re-asks every 0.3 s; a roll leaves only by event or a plain time left of 0.
+  Movable "Loot rolls", samples while unlocked; `/deck rolls`.
+- **Rank marks** (`DeckUI/rankmark.lua`, `DeckUIDB.rankMarks`, Overview, **on**; tested in game
+  (Mists) 2026-10-27, retail not yet; owner's wish 2026-10-27). A diamond before enemy names: elite gold, rare silver + star, rare
+  elite gold + star, boss red + crown (textures `DeckUI/textures/rank_*.tga`, make-status-masks.py).
+  `D.UnitRank(unit)`: `UnitIsBossMob` (retail), `UnitClassification` (worldboss = boss; elite at level
+  -1 = boss, Mists' dungeon bosses); any secret answer = no mark. `D.RankMark(parent, size)` makes one
+  (`:SetRank(rank)`); drawn on the FFXIV nameplates, the enemy list and the FF/XIV target and focus
+  (oUF element `DeckRank` in ffstyle.lua); `D.OnRankMarks(fn)` refreshes them when the box is ticked.
 - **The interact target's name** (`DeckUI/softtarget.lua`, `DeckUIDB.softTargetName` /
   `softTargetCast`, Overview page, off by default; not yet tested in game; replaces Plumber's
   "Nameplate: Soft Target", 2026-10-08). On PLAYER_SOFT_INTERACT_CHANGED (30 ms later, the plate

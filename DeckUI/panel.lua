@@ -201,7 +201,7 @@ D.PAGE_FRAMES = {
     Tooltip = { "Tooltip" },
     Nav     = { "Compass", "Navigation target", "Waypoint list" },
     Week    = { "Week", "Week button" },
-    Loot    = { "Loot", "Loot list" },
+    Loot    = { "Loot", "Loot list", "Loot rolls" },
     General = { "Talking head", "Server info", "Gold", "Bag overview", "Main menu", "Dungeon queue", "Quest book" },
 }
 
@@ -211,7 +211,7 @@ D.PAGE_FRAMES = {
 -- what is data, not settings. Positions are never touched - "Reset all
 -- positions" on the Devices page does that. The game reloads right after,
 -- and each module fills what is missing with its defaults as it loads.
-local LOOT_KEYS = { autoSellJunk = true, autoRepair = true, repairGuild = true, fastLoot = true, lootWindow = true,
+local LOOT_KEYS = { autoSellJunk = true, autoRepair = true, repairGuild = true, fastLoot = true, lootWindow = true, lootRolls = true,
                     mailHelper = true, restock = true }
 local function GroupKey(k) return k == "showParty" or k:find("^party") ~= nil end
 local function RaidKey(k) return k == "showRaid" or k:find("^raid") ~= nil end
@@ -574,6 +574,10 @@ panel:AddTab("General", {
             f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
                 "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
         end
+        if D.ApplyRankMarks then
+            f:Checkbox("Elite, rare and boss marks", db, "rankMarks", function() D.ApplyRankMarks() end,
+                "A diamond before the name of an elite (gold), a rare (silver with a star), a rare elite (gold with a star) and a boss (red with a crown) - on the Final Fantasy XIV nameplates, the enemy list and the Final Fantasy target and focus bars.")
+        end
         if D.ApplyQuestBook then
             f:Checkbox("Quest book", db, "questBook", function() D.ApplyQuestBook() end,
                 "A searchable book of every quest your characters know: each one they had in their quest log, and each one they completed - the names of those load in the background. Sorted by kind (dungeon, raid, daily ...), marked done for this character and how many others. The game has no list of all quests, so the book grows as you play. /questbook opens it.")
@@ -666,6 +670,8 @@ EventUtil.ContinueOnAddOnLoaded("DeckUI", function()
             end, "Takes everything the moment a corpse opens, without the loot window flickering up. Switches the game's own auto loot on as well; holding the auto loot key (Shift) loots by hand.")
             f:Checkbox("DeckUI's loot window", db, "lootWindow", function() D.ApplyLootWindow() end,
                 "Replaces Blizzard's loot window. With auto loot a short list shows what you took. Move both with /deck unlock.")
+            f:Checkbox("DeckUI's loot rolls", db, "lootRolls", function() D.ApplyLootRolls() end,
+                "Group loot rolls as one list in DeckUI's look: each item with its time left and Need, Greed (or Transmog) and Pass. Greyed when your character cannot pick it; the tooltip says why. Blizzard's roll frames are only faded and keep working underneath. Move it with the page's Move button.")
 
             if D.ApplyRestock then
                 f:Checkbox("Restock at merchants", db, "restock", function() D.ApplyRestock() end,
@@ -772,7 +778,7 @@ end
 -- the debug commands of files a game's .toc may leave out
 local DEBUG_COMMANDS = {
     bars = "PrintBars", layout = "PrintLayout", ah = "PrintAuction", plates = "PlatesDebug",
-    targetarrow = "TargetArrowDebug", softtarget = "PrintSoftTarget",
+    targetarrow = "TargetArrowDebug", softtarget = "PrintSoftTarget", rolls = "PrintLootRolls",
 }
 
 SLASH_DECKUI1 = "/deck"

@@ -19,7 +19,9 @@ editmode.lua
 damagemeter.lua
 merchant.lua
 loot.lua
+lootroll.lua
 softtarget.lua
+rankmark.lua
 targetarrow.lua
 nameplates.lua
 talkinghead.lua

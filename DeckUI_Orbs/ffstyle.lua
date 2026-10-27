@@ -246,6 +246,47 @@ local function BuildPlayer(self, unit)
 end
 
 -------------------------------------------------------------------
+-- Rank mark: elite, rare or boss before the target's and focus's name
+-------------------------------------------------------------------
+-- The hub draws the diamond (DeckUI/rankmark.lua); here it sits where the
+-- name starts and pushes the name right by its width. self.DeckRank =
+-- { mark, name, x, y, width } - width only for names with a fixed width.
+local function UpdateRank(self, event, unit)
+    local e = self.DeckRank
+    local own = self.__unit or self.unit
+    if not own or (unit and unit ~= own) then return end
+    local shown = e.mark:SetRank(D.UnitRank(own))
+    local w = shown and e.mark:GetWidth() + 4 or 0
+    e.mark:ClearAllPoints()
+    e.mark:SetPoint("CENTER", self, "TOPLEFT", e.x + (w - 4) / 2, e.y - 7)
+    e.name:SetPoint("TOPLEFT", self, "TOPLEFT", e.x + w, e.y)
+    if e.width then e.name:SetWidth(e.width - w) end
+end
+
+oUF:AddElement("DeckRank", UpdateRank, function(self)
+    if not self.DeckRank then return end
+    if not C_EventUtils or C_EventUtils.IsEventValid("UNIT_CLASSIFICATION_CHANGED") then
+        self:RegisterEvent("UNIT_CLASSIFICATION_CHANGED", UpdateRank)
+    end
+    return true
+end, function(self)
+    if not self.DeckRank then return end
+    if not C_EventUtils or C_EventUtils.IsEventValid("UNIT_CLASSIFICATION_CHANGED") then
+        self:UnregisterEvent("UNIT_CLASSIFICATION_CHANGED", UpdateRank)
+    end
+    self.DeckRank.mark:Hide()
+end)
+
+local rankFrames = {}
+local function Rank(self, name, x, y, width)
+    self.DeckRank = { mark = D.RankMark(self, 13), name = name, x = x, y = y, width = width }
+    rankFrames[#rankFrames + 1] = self
+end
+D.OnRankMarks(function()
+    for _, f in ipairs(rankFrames) do UpdateRank(f) end
+end)
+
+-------------------------------------------------------------------
 -- Target: the wide bar
 -------------------------------------------------------------------
 local function BuildTarget(self, unit)
@@ -257,6 +298,7 @@ local function BuildTarget(self, unit)
     name:SetPoint("TOPLEFT", 8, -4)
     name:SetWidth(TARGET_W - 90)
     self:Tag(name, "[difficulty][level]|r [raidcolor][name]")
+    Rank(self, name, 8, -4, TARGET_W - 90)
 
     local hp = Text(self, 14, "RIGHT")
     hp:SetPoint("TOPRIGHT", -8, -4)
@@ -733,6 +775,7 @@ local function BuildTargetXIV(self, unit)
     name:SetPoint("TOPLEFT", 2, 0)
     name:SetWidth(W - 90)
     self:Tag(name, "[difficulty]Lv. [level]|r [raidcolor][name]")
+    Rank(self, name, 2, 0, W - 90)
 
     local health = PillBar(self, W, 10)
     health:SetPoint("TOPLEFT", 0, -19)
@@ -807,6 +850,7 @@ local function BuildFocusXIV(self, unit)
     name:SetPoint("TOPLEFT", 2, -10)
     name:SetPoint("RIGHT", hp, "LEFT", -4, 0)
     self:Tag(name, "[difficulty]Lv. [level]|r [raidcolor][name]")
+    Rank(self, name, 2, -10)
     local health = PillBar(self, W, 5)
     health:SetPoint("TOPLEFT", 0, -26)
     health.colorClass = true

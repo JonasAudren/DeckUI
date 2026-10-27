@@ -21,7 +21,9 @@ actionbars.lua
 editmode.lua
 merchant.lua
 loot.lua
+lootroll.lua
 softtarget.lua
+rankmark.lua
 targetarrow.lua
 nameplates.lua
 infobars.lua

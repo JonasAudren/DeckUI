@@ -73,6 +73,9 @@ local function NewPlate()
     level:SetPoint("BOTTOMLEFT", bar, "TOPLEFT", 0, 2)
     level:SetTextColor(0.9, 0.85, 0.7)
     f.level = level
+    -- elite, rare or boss: a diamond before the level (rankmark.lua)
+    f.rank = D.RankMark(f, 12)
+    f.rank:SetPoint("RIGHT", level, "LEFT", -3, 0)
     local marker = f:CreateTexture(nil, "OVERLAY")
     marker:SetSize(12, 12)
     marker:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
@@ -135,6 +138,8 @@ local function Fill(f)
     end
     f.level:SetText(level)
     f.level:SetTextColor(c[1], c[2], c[3])
+    local rank = f.rank:SetRank(D.UnitRank(unit)) and f.rank:GetWidth() + 3 or 0
+    f.level:SetPoint("BOTTOMLEFT", f.bar, "TOPLEFT", rank, 2)
     f.bar:SetMinMaxValues(0, UnitHealthMax(unit))
     f.bar:SetValue(UnitHealth(unit))
     local tapped = Ask(UnitIsTapDenied(unit))
@@ -204,7 +209,8 @@ ev:SetScript("OnEvent", function(_, event, unit)
         Remove(unit)
     elseif event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
         UpdateHealth(unit)
-    elseif event == "UNIT_NAME_UPDATE" or event == "UNIT_FACTION" or event == "UNIT_LEVEL" then
+    elseif event == "UNIT_NAME_UPDATE" or event == "UNIT_FACTION" or event == "UNIT_LEVEL"
+        or event == "UNIT_CLASSIFICATION_CHANGED" then
         if unit and unit:find("^nameplate") then Add(unit) end
     elseif event == "RAID_TARGET_UPDATE" then
         for _, f in pairs(active) do Fill(f) end
@@ -222,8 +228,8 @@ function D.ApplyPlates()
     if DeckUIDB.xivPlates then
         for _, e in ipairs({ "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UNIT_HEALTH",
                              "UNIT_MAXHEALTH", "UNIT_NAME_UPDATE", "UNIT_FACTION", "UNIT_LEVEL",
-                             "RAID_TARGET_UPDATE" }) do
-            ev:RegisterEvent(e)
+                             "RAID_TARGET_UPDATE", "UNIT_CLASSIFICATION_CHANGED" }) do
+            if not C_EventUtils or C_EventUtils.IsEventValid(e) then ev:RegisterEvent(e) end
         end
         All(Add)
     else
@@ -235,6 +241,7 @@ end
 local login = CreateFrame("Frame")
 login:RegisterEvent("PLAYER_LOGIN")
 login:SetScript("OnEvent", function() D.ApplyPlates() end)
+D.OnRankMarks(function() for _, f in pairs(active) do Fill(f) end end)
 
 function D.PlatesDebug()
     local plates, ours = 0, 0

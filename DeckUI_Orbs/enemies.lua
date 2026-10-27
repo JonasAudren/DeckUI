@@ -121,6 +121,7 @@ for i = 1, MAX_ROWS do
     marker:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
     marker:Hide()
     row.marker = marker
+    row.rank = D.RankMark(row, 11)
 
     local name = Text(row, 12)
     name:SetPoint("TOPLEFT", 22, -3)
@@ -152,15 +153,23 @@ local function Fill(row, unit)
     row.bar:SetStatusBarColor(c[1], c[2], c[3])
     row.aggro:SetAlphaFromBoolean(UnitIsUnit(unit .. "target", "player"), 1, 0)
     row.lit:SetAlphaFromBoolean(UnitIsUnit(unit, "target"), 1, 0)
+    -- raid marker, then the rank diamond (rankmark.lua), then the name
+    local x = 22
     local index = Ask(GetRaidTargetIndex(unit))
     if index then
         SetRaidTargetIconTexture(row.marker, index)
         row.marker:Show()
-        row.name:SetPoint("TOPLEFT", 38, -3)
+        x = x + 16
     else
         row.marker:Hide()
-        row.name:SetPoint("TOPLEFT", 22, -3)
     end
+    row.rank:ClearAllPoints()
+    if row.rank:SetRank(D.UnitRank(unit)) then
+        local w = row.rank:GetWidth()
+        row.rank:SetPoint("CENTER", row, "TOPLEFT", x + w / 2, -9)
+        x = x + w + 4
+    end
+    row.name:SetPoint("TOPLEFT", x, -3)
     row:Show()
 end
 
@@ -229,6 +238,7 @@ local function ShowPreview(on)
             row.aggro:SetAlpha(i == 1 and 1 or 0)
             row.lit:SetAlpha(i == 2 and 1 or 0)
             row.marker:Hide()
+            row.rank:Hide()
             row.name:SetPoint("TOPLEFT", 22, -3)
             row:Show()
         else

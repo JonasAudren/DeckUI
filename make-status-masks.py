@@ -139,3 +139,34 @@ os.makedirs(HUB_OUT, exist_ok=True)
 with open(os.path.join(HUB_OUT, "target_arrow.tga"), "wb") as f:
     f.write(header + pixels)
 print("target arrow written to " + HUB_OUT)
+
+
+# The rank mark on enemies (DeckUI/rankmark.lua): FFXIV-like emblems before a name -
+# a diamond badge, and a star (rare) or a crown (boss) laid on it. White on
+# transparent; the addon tints them and lays a larger black diamond behind as the edge.
+import math
+
+DIAMOND = [(32, 2), (62, 32), (32, 62), (2, 32)]
+STAR = []
+for k in range(10):
+    r = 22 if k % 2 == 0 else 9
+    a = -math.pi / 2 + k * math.pi / 5
+    STAR.append((32 + r * math.cos(a), 34 + r * math.sin(a)))
+CROWN = [(12, 46), (12, 20), (22, 32), (32, 14), (42, 32), (52, 20), (52, 46)]
+
+
+def shape(name, poly):
+    out = bytearray()
+    for y in range(N):
+        for x in range(N):
+            hits = sum(inside(x + (sx + 0.5) / 4, y + (sy + 0.5) / 4, poly) for sx in range(4) for sy in range(4))
+            a = int(round(hits / 16 * 255))
+            v = 255 if a > 0 else 0
+            out += bytes((v, v, v, a))
+    with open(os.path.join(HUB_OUT, name), "wb") as f:
+        f.write(header + out)
+
+
+for name, poly in (("rank_diamond.tga", DIAMOND), ("rank_star.tga", STAR), ("rank_crown.tga", CROWN)):
+    shape(name, poly)
+print("rank marks written to " + HUB_OUT)
