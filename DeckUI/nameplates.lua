@@ -28,6 +28,8 @@ local BAR_ENEMY = { 0.9, 0.25, 0.25 }
 local NAME_NEUTRAL = { 1, 0.9, 0.4 }
 local BAR_NEUTRAL = { 0.95, 0.8, 0.2 }
 local TAPPED = { 0.55, 0.55, 0.55 }
+local LEVEL_PLAIN = { 0.9, 0.85, 0.7 }
+local LEVEL_SKULL = { 1, 0.1, 0.1 }
 
 local function Secret(v) return issecretvalue and issecretvalue(v) end
 local function Ask(v)
@@ -119,8 +121,20 @@ local function Fill(f)
     f.name:SetText(UnitName(unit))
     -- a boss's level reads -1; FFXIV writes "??" there
     local level = UnitLevel(unit)
-    if not Secret(level) and level <= 0 then level = "??" end
+    -- coloured by how hard it is for you, as Blizzard colours levels
+    -- (owner's wish, 2026-10-27): grey, green, yellow, orange, red - and
+    -- red for "??". A secret level keeps the plain colour.
+    local c = LEVEL_PLAIN
+    if not Secret(level) then
+        if level <= 0 then
+            level, c = "??", LEVEL_SKULL
+        elseif GetCreatureDifficultyColor then
+            local d = GetCreatureDifficultyColor(level)
+            if d then c = { d.r, d.g, d.b } end
+        end
+    end
     f.level:SetText(level)
+    f.level:SetTextColor(c[1], c[2], c[3])
     f.bar:SetMinMaxValues(0, UnitHealthMax(unit))
     f.bar:SetValue(UnitHealth(unit))
     local tapped = Ask(UnitIsTapDenied(unit))
