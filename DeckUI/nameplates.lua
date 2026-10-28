@@ -224,7 +224,34 @@ local function All(fn)
     end
 end
 
+-- Room between the plates (owner 2026-10-28: ours sat on top of each
+-- other in a pack). The engine stacks and spaces plates by its own CVars:
+-- nameplateMotion 1 = stacking, nameplateOverlapV = how much of a plate's
+-- height the next may cover. With our plates on and DeckUIDB.plateSpace
+-- (on by default) both are set, and the player's own values go back when
+-- either is switched off (kept in DeckUIDB.plateCVars until then).
+local SPACED = { nameplateMotion = "1", nameplateOverlapV = "1.8" }
+
+local function ApplySpacing(on)
+    if on then
+        if not DeckUIDB.plateCVars then
+            DeckUIDB.plateCVars = {}
+            for k in pairs(SPACED) do DeckUIDB.plateCVars[k] = GetCVar(k) end
+        end
+        for k, v in pairs(SPACED) do
+            if GetCVar(k) ~= v then SetCVar(k, v) end
+        end
+    elseif DeckUIDB.plateCVars then
+        for k, v in pairs(DeckUIDB.plateCVars) do
+            if v then SetCVar(k, v) end
+        end
+        DeckUIDB.plateCVars = nil
+    end
+end
+
 function D.ApplyPlates()
+    if DeckUIDB.plateSpace == nil then DeckUIDB.plateSpace = true end
+    ApplySpacing(DeckUIDB.xivPlates and DeckUIDB.plateSpace and true or false)
     if DeckUIDB.xivPlates then
         for _, e in ipairs({ "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UNIT_HEALTH",
                              "UNIT_MAXHEALTH", "UNIT_NAME_UPDATE", "UNIT_FACTION", "UNIT_LEVEL",
@@ -251,4 +278,8 @@ function D.PlatesDebug()
     end)
     print(("DeckUI nameplates: %s, %d nameplate units, %d drawn by DeckUI, %d in the pool."):format(
         DeckUIDB.xivPlates and "on" or "off", plates, ours, #pool))
+    print(("  spacing %s: nameplateMotion %s, nameplateOverlapV %s%s"):format(
+        DeckUIDB.plateSpace and "on" or "off", tostring(GetCVar("nameplateMotion")), tostring(GetCVar("nameplateOverlapV")),
+        DeckUIDB.plateCVars and (" (yours: %s / %s)"):format(tostring(DeckUIDB.plateCVars.nameplateMotion),
+            tostring(DeckUIDB.plateCVars.nameplateOverlapV)) or ""))
 end

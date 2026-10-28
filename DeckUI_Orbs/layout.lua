@@ -33,6 +33,7 @@ ns.DEFAULTS = {
     showRaid        = false,       -- compact raid grid (raid.lua); replaces Blizzard's raid frames
     groupStyle      = "panel",     -- party and raid: "panel" (dark panels) | "xiv" (capsule bars), /reload
     style           = "orbs",      -- player/target: "orbs", "ff" or "ffxiv" (ffstyle.lua), /reload
+    bossStyle       = "auto",      -- bosses: "auto" (follows style), "orbs", "ff" or "xiv"; /reload
     enemyList       = false,       -- FFXIV's enemy list from the nameplate units (enemies.lua)
     -- player, target and target of target in the Final Fantasy styles, each on
     -- a page of its own (owner's wish 2026-10-28); all need a /reload since
@@ -686,10 +687,11 @@ oUF:Factory(function(self)
         pet:SetPoint("CENTER", player, "CENTER", -55, -45)
     end
 
-    if ff then
-        -- FFXIV's enemy list (ffstyle.lua)
+    if ns.BossLook() ~= "orbs" then
+        -- FFXIV's enemy list (ffstyle.lua), on panels or as capsules -
+        -- a choice of its own since 2026-10-28, so orbs may have it too
         ns.bossHolder, ns.bossFrames = ns.SpawnFFBosses(self)
-        ns.bossStyle, ns.bossStep, ns.bossAnchor = "DeckFFBoss", ns.FF_BOSS_STEP, "TOPLEFT"
+        ns.bossStyle, ns.bossStep, ns.bossAnchor = ns.BossStyleName(), ns.FF_BOSS_STEP, "TOPLEFT"
     else
         -- boss orbs: a column on the right side, anchored to one movable holder
         self:SetActiveStyle("DeckOrbsBoss")

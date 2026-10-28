@@ -104,6 +104,18 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   pages share a table, `keep` for data like the week's characters - never positions, then
   reloads so every module refills its defaults). `/deck <page>` opens a page (`D.FindPage`).
   **A new frame or page needs its entry in `D.PAGE_FRAMES` / `D.PAGE_RESET`.**
+  **Sub-pages** (menu review 2026-10-28, the Overview had eighteen checkboxes): `D.PAGE_PARENT[key]
+  = parent` lists a page indented under its parent, and **only while the parent or a sibling is on
+  show** (`SubShown` in `LayoutSidebar`, re-run from `ShowTab`); a parent wears ">" / "v" at the
+  right. The sidebar is a scroll frame (mouse wheel, the page on show kept in view) - the window
+  itself cannot grow, 540 is what the Deck's 800-pixel screen allows.
+  Hub sub-pages: Screen / Targets / Windows under the Overview (panel.lua, DeckUIDB keys per page in
+  `SCREEN_KEYS` ...). Module sub-pages register with the module (`D.RegisterModule` in its
+  config.lua, with their own `D.PAGE_FRAMES` / `D.PAGE_RESET` entries set there where the hub cannot
+  know the keys): Player, Target, Target of target, Your debuffs, Buff bar, Enemies and bosses under
+  "Player and target"; Controller under the Cross hotbar; Minimap and World map under Maps; Extras
+  under Tooltip. The parent page keeps the module switch and what is left; `/deck <name>` finds
+  sub-pages by their sidebar name too.
 - **Questions to the player go through `D.Dialog`** (`DeckUI/widgets.lua`: text, two buttons,
   optionally a money input), **never `StaticPopup_Show`** - and never a Blizzard function that
   shows one (`QuestMapQuestOptions_AbandonQuest`). StaticPopup1..4 are shared by the whole
@@ -220,6 +232,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   post-hook (hooked once, kept in our own table), alpha 1 again on NAME_PLATE_UNIT_REMOVED and
   when switched off - the plate still takes clicks and the engine still places it. Plates
   GetNamePlateForUnit does not hand out keep Blizzard's look. `/deck plates`.
+  **Spacing** (`DeckUIDB.plateSpace`, on; owner 2026-10-28, plates sat on each other in a pack; not
+  yet tested): with our plates on, the CVars `nameplateMotion` = 1 (stacking) and `nameplateOverlapV`
+  = 1.8 are set, the player's own values kept in `DeckUIDB.plateCVars` and put back when either
+  option goes off. The engine places the plates, so this is the only lever; `/deck plates` prints both.
 - **Talking head as a subtitle** (`DeckUI/talkinghead.lua`, `DeckUIDB.talkingHead` /
   `talkingHeadInstances`, Overview page, off by default; not yet tested in game; replaces
   Plumber's "Talking Head", 2026-10-08). Blizzard's `TalkingHeadFrame` only loses
@@ -245,6 +261,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   under a hidden parent and gives it its old parent back when unticked; the overview's click
   still reaches the parked backpack button.
   Movable "Server info", "Gold", "Bag overview".
+- **Quest book in Mists** (`DeckUI/questbook.lua`): its tooltip scanner for the names of quests never
+  seen in a log (`SetHyperlink("quest:id")` on a hidden GameTooltip, five a second) is **off unless
+  `DeckUIDB.questBookScan`** (Windows page, Mists only; 2026-10-28). The Mists client crashed nine
+  times on 27/28.10 (ACCESS_VIOLATION, same address) while it ran, mostly at loot; the loot window
+  was guarded first and the crash stayed. Not proven - watch `_classic_\Errors`.
   While the server info shows, the minimap's mail letter is **faded** (alpha 0 held by a SetAlpha
   post-hook, mouse off; `MiniMapMailFrame` in Mists, `MinimapCluster.IndicatorFrame.MailFrame` in
   retail - shown and hidden by Blizzard, a layout child in retail) and the server info's tooltip names
@@ -511,7 +532,11 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   (`SetAlphaFromBoolean(UnitIsUnit(bossNtarget, "player"))` - a secret boolean for the
   engine), the cast below with oUF's `Shield` as a grey veil when not interruptible, your
   debuffs to the right. Holder "Boss frames (FF)". `/orbs boss` = test mode (five frames of
-  your target, in whichever boss style is active).
+  your target, in whichever boss style is active). **The bosses' look is a choice of its own**
+  since 2026-10-28 (`DeckOrbsDB.bossStyle`: auto / orbs / ff / xiv, "Boss look" on the Orbs page,
+  /reload; `ns.BossLook()`, `ns.BossStyleName()`): "xiv" is `BuildBossXIV` / style `DeckXIVBoss`, the
+  same rows as capsule bars without a panel; auto follows the player's style (ffxiv -> xiv). Not yet
+  tested in game.
   **A third style "ffxiv"** (2026-10-09, owner's screenshot of FFXIV's parameter bar; not yet
   tested in game): no panel, capsule bars (`PillBar`: dark edge, track, gloss/shade gradients
   over the colour), HP and MP side by side with large numbers under them; the target one long

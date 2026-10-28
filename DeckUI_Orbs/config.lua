@@ -63,7 +63,17 @@ D.RegisterModule("Orbs", {
             D.NeedReload("orbs:buffDuration", v ~= loaded.buff)
         end, "Longer buffs (food, flasks, raid buffs) stay off your frame. Needs a reload.")
 
-        f:Label("Buff bar")
+        f:Hint("Your frames, the enemies and the bosses, the buff bar and your debuffs have pages of their own below.")
+    end,
+})
+
+-- The buff bar, and the enemies with the bosses: sub-pages of "Player and
+-- target" since the menu review (2026-10-28), which found that page at
+-- ten checkboxes and six sliders.
+D.RegisterModule("BuffBar", {
+    title = "Buff bar",
+    build = function(c)
+        local f = D.Flow(c)
         local count = function(v) return tostring(v) end
         local px = function(v) return v .. " px" end
         for _, key in ipairs({ "buffBar", "buffSize", "buffPerRow" }) do
@@ -82,7 +92,14 @@ D.RegisterModule("Orbs", {
             ns.DeviceDB().buffPerRow = v
             D.NeedReload("orbs:buffPerRow", v ~= loaded.buffPerRow)
         end, "Buffs per row, up to two rows; debuffs: eight on the left.")
+    end,
+})
 
+D.RegisterModule("Enemies", {
+    title = "Enemies and bosses",
+    build = function(c)
+        local f = D.Flow(c)
+        c.widgets = c.widgets or {}
         f:Label("Enemy list")
         f:Checkbox("Enemy list", db, "enemyList", ns.SetEnemyList,
             "Final Fantasy XIV's list of the enemies fighting you or your group: a square that turns red while one targets you, its marker, name and health; your target lit. For reading - a click does not target. Built from the nameplates, so enemy nameplates must be on. Move it with Move below; /orbs enemies shows what it sees.")
@@ -90,6 +107,15 @@ D.RegisterModule("Orbs", {
         f:Label("Focus and bosses")
         f:Checkbox("Focus frame", db, "showFocus", ns.SetFocusShown)
         f:Checkbox("Boss frames (hide Blizzard's)", db, "showBoss", ns.SetBossShown)
+        loaded.bossStyle = loaded.bossStyle or DeckOrbsDB.bossStyle or "auto"
+        f:Cycles({ label = "Boss look", values = { "auto", "orbs", "ff", "xiv" },
+            names = { auto = "Follows the style", orbs = "Orbs", ff = "Final Fantasy", xiv = "Final Fantasy XIV" },
+            tip = "The bosses apart from your own style: orbs, or Final Fantasy XIV's enemy list - on dark panels, or as capsule bars without a box. Needs a reload.",
+            get = function() return DeckOrbsDB.bossStyle or "auto" end,
+            set = function(v)
+                DeckOrbsDB.bossStyle = v
+                D.NeedReload("orbs:bossStyle", v ~= loaded.bossStyle)
+            end })
         local bossBtn = f:Button("Test boss frames", function(b)
             ns.SetBossTest(not ns.bossTestOn)
             C_Timer.After(0, function() b:Refresh() end)

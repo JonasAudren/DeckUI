@@ -53,33 +53,59 @@ close:SetPoint("TOPRIGHT", 2, 2)
 -- Groups and names of the pages
 -------------------------------------------------------------------
 D.PAGE_GROUPS = {
-    { title = "General",   pages = { "General", "Devices" } },
-    { title = "Units",     pages = { "Orbs", "FramePlayer", "FrameTarget", "FrameToT", "Debuffs", "Group", "Raid" } },
-    { title = "Actions",   pages = { "Cross", "Bars", "Spec" } },
-    { title = "World",     pages = { "Quests", "Map", "Nav" } },
+    { title = "General",   pages = { "General", "Screen", "Targets", "Windows", "Devices" } },
+    { title = "Units",     pages = { "Orbs", "FramePlayer", "FrameTarget", "FrameToT", "Debuffs", "BuffBar", "Enemies", "Group", "Raid" } },
+    { title = "Actions",   pages = { "Cross", "CrossController", "Bars", "Spec" } },
+    { title = "World",     pages = { "Quests", "Map", "MapMinimap", "MapWorld", "Nav" } },
     { title = "Inventory", pages = { "Bags", "Loot" } },
-    { title = "Info",      pages = { "Tooltip", "Week" } },
+    { title = "Info",      pages = { "Tooltip", "TooltipExtras", "Week" } },
 }
 -- the sidebar's name where the module's title is too short to say it
 D.PAGE_NAMES = {
     Orbs = "Player and target", Cross = "Cross hotbar", Spec = "Specialization",
     Nav = "Navigation", Map = "Maps", Week = "Week overview", Bars = "Action bars",
     Debuffs = "Your debuffs", FramePlayer = "Player", FrameTarget = "Target", FrameToT = "Target of target",
+    BuffBar = "Buff bar", Enemies = "Enemies and bosses", CrossController = "Controller",
+    MapMinimap = "Minimap", MapWorld = "World map", TooltipExtras = "Extras",
 }
--- a page shown indented under another, as part of it (owner's wish
--- 2026-10-28: the frames and the debuffs under "Player and target")
+-- A page shown indented under another, as part of it, and listed only
+-- while that parent or a sibling is on show (owner's wish 2026-10-28, the
+-- menu review: the Overview had eighteen checkboxes, Player and target
+-- as many plus six sliders). A sub-page of a module registers with the
+-- module, so a module that is off shows only its stand-in.
 D.PAGE_PARENT = {
+    Screen = "General", Targets = "General", Windows = "General",
     FramePlayer = "Orbs", FrameTarget = "Orbs", FrameToT = "Orbs", Debuffs = "Orbs",
+    BuffBar = "Orbs", Enemies = "Orbs",
+    CrossController = "Cross",
+    MapMinimap = "Map", MapWorld = "Map",
+    TooltipExtras = "Tooltip",
 }
 
 -------------------------------------------------------------------
 -- Sidebar
 -------------------------------------------------------------------
-local side = CreateFrame("Frame", nil, panel)
-side:SetPoint("TOPLEFT", 8, -40)
-side:SetPoint("BOTTOMLEFT", 8, 8)
-side:SetWidth(SIDE_W)
-D.FlatBox(side, 0.6, 0.2)
+local sideBox = CreateFrame("Frame", nil, panel)
+sideBox:SetPoint("TOPLEFT", 8, -40)
+sideBox:SetPoint("BOTTOMLEFT", 8, 8)
+sideBox:SetWidth(SIDE_W)
+D.FlatBox(sideBox, 0.6, 0.2)
+
+-- The entries live on a list inside a scroll frame: with the sub-pages
+-- unfolded the sidebar outgrew the window (2026-10-28), and the window
+-- cannot grow - 540 is what the Deck's 800-pixel screen allows. The mouse
+-- wheel scrolls it, and the page on show is always brought into view.
+local sideScroll = CreateFrame("ScrollFrame", nil, sideBox)
+sideScroll:SetPoint("TOPLEFT", 0, -2)
+sideScroll:SetPoint("BOTTOMRIGHT", 0, 2)
+local side = CreateFrame("Frame", nil, sideScroll)
+side:SetSize(SIDE_W, 10)
+sideScroll:SetScrollChild(side)
+sideScroll:EnableMouseWheel(true)
+sideScroll:SetScript("OnMouseWheel", function(self, delta)
+    local max = math.max(0, side:GetHeight() - self:GetHeight())
+    self:SetVerticalScroll(math.max(0, math.min(max, self:GetVerticalScroll() - delta * 42)))
+end)
 
 panel.tabs     = {}   -- key -> sidebar entry (the old name, kept for callers)
 panel.contents = {}
@@ -120,12 +146,37 @@ local function NewEntry(key)
     b:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
     b:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.05)
     b:SetScript("OnClick", function() panel:ShowTab(key) end)
+    -- a page with sub-pages wears a small chevron at the right: ">" while
+    -- they are folded, "v" while they show (owner's wish, 2026-10-28)
+    b.fold = b:CreateFontString(nil, "OVERLAY")
+    b.fold:SetFont(D.FONT, 11, "OUTLINE")
+    b.fold:SetPoint("RIGHT", -8, 0)
+    b.fold:SetTextColor(0.6, 0.6, 0.6)
+    b.fold:Hide()
     return b
+end
+
+-- does any registered page hang under this one?
+local function HasSubPages(key)
+    for sub, parent in pairs(D.PAGE_PARENT) do
+        if parent == key and panel.tabs[sub] then return true end
+    end
+    return false
 end
 
 local function PageName(key)
     local content = panel.contents[key]
     return D.PAGE_NAMES[key] or (content and content.def.title) or key
+end
+
+-- A sub-page (D.PAGE_PARENT) is listed only while its parent, or one of
+-- its siblings, is the page on show - so the sidebar stays short however
+-- many there are (2026-10-28, the menu review: twenty pages and growing).
+local function SubShown(key)
+    local parent = D.PAGE_PARENT[key]
+    if not parent then return true end
+    local cur = panel.current
+    return cur == parent or D.PAGE_PARENT[cur] == parent
 end
 
 local function LayoutSidebar()
@@ -137,7 +188,7 @@ local function LayoutSidebar()
     local function Group(name, keys)
         local any = false
         for _, key in ipairs(keys) do
-            if panel.tabs[key] and not placed[key] then
+            if panel.tabs[key] and not placed[key] and SubShown(key) then
                 if not any then
                     Heading(name, y)
                     y = y - 16
@@ -151,6 +202,13 @@ local function LayoutSidebar()
                 b.text:SetPoint("LEFT", sub and 26 or 14, 0)
                 b.text:SetFont(D.FONT, sub and 12 or 13, "OUTLINE")
                 b.text:SetText(PageName(key))
+                if HasSubPages(key) then
+                    local open = panel.current == key or D.PAGE_PARENT[panel.current] == key
+                    b.fold:SetText(open and "v" or ">")
+                    b.fold:Show()
+                else
+                    b.fold:Hide()
+                end
                 b:Show()
                 placed[key] = true
                 y = y - 21
@@ -160,6 +218,19 @@ local function LayoutSidebar()
     end
     for _, group in ipairs(D.PAGE_GROUPS) do Group(group.title, group.pages) end
     Group("More", panel.tabOrder)   -- whatever no group names
+    side:SetHeight(-y + 4)
+    -- the page on show stays in sight: scroll just enough to reach it
+    local b = panel.current and panel.tabs[panel.current]
+    local seen = sideScroll:GetHeight()
+    if b and seen and seen > 0 then
+        local top = -select(5, b:GetPoint(1))      -- its offset from the list's top edge
+        local cur = sideScroll:GetVerticalScroll()
+        if top + 21 > cur + seen then
+            sideScroll:SetVerticalScroll(top + 21 - seen)
+        elseif top < cur then
+            sideScroll:SetVerticalScroll(top)
+        end
+    end
 end
 
 -------------------------------------------------------------------
@@ -199,10 +270,12 @@ end
 
 -- the frames each page moves, by the key D.MakeMovable got
 D.PAGE_FRAMES = {
-    Orbs    = { "Focus", "Boss frames", "Boss frames (FF)", "Buffs", "EXP bar", "Cast bar", "Focus (FF)", "Enemy list" },
+    Orbs    = { "EXP bar", "Cast bar" },
     FramePlayer = { "Player", "Player (FF)" },
     FrameTarget = { "Target", "Target (FF)" },
     Debuffs = { "Debuffs" },
+    BuffBar = { "Buffs" },
+    Enemies = { "Focus", "Focus (FF)", "Boss frames", "Boss frames (FF)", "Enemy list" },
     Group   = { "Party" },
     Raid    = { "Raid" },
     Cross   = { "Cross Hotbar", "Leave vehicle", "Assist indicator" },
@@ -215,7 +288,8 @@ D.PAGE_FRAMES = {
     Nav     = { "Compass", "Navigation target", "Waypoint list" },
     Week    = { "Week", "Week button" },
     Loot    = { "Loot", "Loot list", "Loot rolls" },
-    General = { "Talking head", "Server info", "Gold", "Bag overview", "Main menu", "Dungeon queue", "Quest book" },
+    Screen  = { "Server info", "Gold", "Bag overview", "Main menu" },
+    Windows = { "Talking head", "Dungeon queue", "Quest book" },
 }
 
 -- What "Defaults" clears on each page: the SavedVariables table by name,
@@ -232,10 +306,26 @@ local function DotKey(k) return k:find("^dot") ~= nil end
 local function PlayerKey(k) return k:find("^player") ~= nil end
 local function TargetKey(k) return k:find("^target") ~= nil end
 local function ToTKey(k) return k:find("^tot") ~= nil end
+local BUFFBAR_KEYS = { buffBar = true, buffSize = true, buffPerRow = true }
+local ENEMY_KEYS = { enemyList = true, showFocus = true, showBoss = true, bossStyle = true }
+local function BuffBarKey(k) return BUFFBAR_KEYS[k] == true end
+local function EnemyKey(k) return ENEMY_KEYS[k] == true end
+-- the Overview's three sub-pages share DeckUIDB with everything else of the hub
+local SCREEN_KEYS = { infoServer = true, infoParts = true, infoGold = true, infoBags = true, hideBagBar = true, mainMenu = true }
+local TARGET_KEYS = { targetArrow = true, xivPlates = true, plateSpace = true, rankMarks = true,
+                      softTargetName = true, softTargetCast = true }
+local WINDOW_KEYS = { questBook = true, questBookScan = true, lfgWindow = true, charPanel = true, talkingHead = true,
+                      talkingHeadInstances = true, styleDamageMeter = true }
 D.PAGE_RESET = {
     Orbs    = { db = "DeckOrbsDB", match = function(k)
-        return not (GroupKey(k) or RaidKey(k) or DotKey(k) or PlayerKey(k) or TargetKey(k) or ToTKey(k))
+        return not (GroupKey(k) or RaidKey(k) or DotKey(k) or PlayerKey(k) or TargetKey(k) or ToTKey(k)
+                    or BuffBarKey(k) or EnemyKey(k))
     end },
+    BuffBar = { db = "DeckOrbsDB", match = BuffBarKey },
+    Enemies = { db = "DeckOrbsDB", match = EnemyKey },
+    Screen  = { db = "DeckUIDB", match = function(k) return SCREEN_KEYS[k] end },
+    Targets = { db = "DeckUIDB", match = function(k) return TARGET_KEYS[k] end },
+    Windows = { db = "DeckUIDB", match = function(k) return WINDOW_KEYS[k] end },
     FramePlayer = { db = "DeckOrbsDB", match = PlayerKey },
     FrameTarget = { db = "DeckOrbsDB", match = TargetKey },
     FrameToT    = { db = "DeckOrbsDB", match = ToTKey },
@@ -419,6 +509,7 @@ function panel:ShowTab(key)
     scroll:SetVerticalScroll(0)
     pageTitle:SetText(PageName(key))
     self.current = key
+    LayoutSidebar()   -- this page's sub-pages unfold, the others' fold
     if D.UpdateModuleSwitch then D.UpdateModuleSwitch() end
     D.UpdateFooter()
 end
@@ -575,36 +666,102 @@ panel:AddTab("General", {
         f:Label("Interface")
         f:Checkbox("Show minimap button", db, "showMinimap", function(v) D.SetMinimapShown(v) end,
             "Left click opens these settings, Shift-click the week overview.")
-        -- Each option below lives in a file of its own, and a game's .toc
-        -- lists only the files that work there (Mists of Pandaria has no
-        -- damage meter, no talking head) - an option shows when its file
-        -- has loaded.
-        if D.SetDamageMeterStyled then
-            f:Checkbox("Damage meter in DeckUI's look", db, "styleDamageMeter", D.SetDamageMeterStyled,
-                "Blizzard's damage meter with flat bars and DeckUI's font. Its numbers stay Blizzard's.")
+        f:Hint("Everything else of the hub sits on the pages below: Screen (FFXIV's pieces around the screen), Targets (nameplates, marks, the arrow), Windows.")
+
+        f:Gap(8)
+        -- the error collector (errors.lua), with how many it holds
+        local errBtn = f:Button("Lua errors", function() D.ShowErrors() end,
+            "Every Lua error since login, from any addon, ready to copy. Also /deck errors.")
+        function errBtn:Refresh() self:SetText(("Lua errors (%d)"):format(D.ErrorCount())) end
+        table.insert(c.widgets, errBtn)
+    end,
+})
+
+-- The Overview's three sub-pages (the menu review, 2026-10-28). Each
+-- option below lives in a file of its own, and a game's .toc lists only
+-- the files that work there (Mists of Pandaria has no damage meter, no
+-- talking head) - an option shows when its file has loaded.
+local hubDB = function() return DeckUIDB end
+
+panel:AddTab("Screen", {
+    title = "Screen",
+    build = function(c)
+        local db, f = hubDB, D.Flow(c)
+        f:Hint("Final Fantasy XIV's pieces around the screen. Each is movable with Move below.")
+        if D.ApplyInfoBars then
+            f:Label("Server info")
+            f:Checkbox("Server info", db, "infoServer", function() D.ApplyInfoBars() end,
+                "Final Fantasy XIV's line at the top right: your realm, a letter when mail waits, your latency and the time. Move it with Move below.")
+            -- what the server line shows, each value on its own switch
+            local onOff = { [true] = "on", [false] = "off" }
+            local function Part(key)
+                return { label = D.INFO_PART_NAMES[key], values = { true, false }, names = onOff,
+                         get = function() return D.InfoParts()[key] end,
+                         set = function(v) D.InfoParts()[key] = v; D.ApplyInfoBars() end }
+            end
+            for i = 1, #D.INFO_PARTS, 2 do
+                f:Cycles(Part(D.INFO_PARTS[i]), Part(D.INFO_PARTS[i + 1]))
+            end
+            f:Label("Gold and bags")
+            f:Checkbox("Gold", db, "infoGold", function() D.ApplyInfoBars() end,
+                "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
+            f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,
+                "FFXIV's inventory overview: a block of dots per bag, bright for a used slot, dark for a free one, the free slots as a number. A click opens your bags. In combat it appears or goes once the fight ends.")
+            f:Checkbox("Hide Blizzard's bag buttons", db, "hideBagBar", function() D.ApplyInfoBars() end,
+                "The backpack and bag slots at the bottom right go out of sight - the bag overview above takes their place. Your bag key still opens the bags; untick to have them back.")
         end
-        if D.SetSoftTargetName then
-            f:Checkbox("Name of the interact target", db, "softTargetName", D.SetSoftTargetName,
-                "With the interact key, the object it would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it. Needs the interact key on (Options > Gameplay > Controls); switching this on turns on the icon for objects. /deck softtarget shows both settings.")
-            f:Checkbox("Ring while casting on it", db, "softTargetCast", function() end,
-                "Fills around the icon while you cast or gather. The game does not say which object a cast is for, so it shows for any cast while a name is up.")
+        if D.ApplyMainMenu then
+            f:Label("Main menu")
+            f:Checkbox("Main menu as round buttons", db, "mainMenu", function() D.ApplyMainMenu() end,
+                "Final Fantasy XIV's main menu: the game's menu buttons (character, talents, group finder, game menu, ...) as a row of round buttons with a gold ring, which turns bright while a button has news. They open what Blizzard's open; Blizzard's own row goes out of sight. In combat it switches once the fight ends.")
         end
-        if D.ApplyTargetArrow then
-            f:Checkbox("Arrow over your target", db, "targetArrow", function() D.ApplyTargetArrow() end,
-                "Final Fantasy XIV's marker: an arrowhead bobbing over your target's nameplate - red for an enemy, green for a friend, gold when the game does not say. It needs the target's nameplate, so it shows only where nameplates do. /deck targetarrow shows what it sees.")
-        end
+    end,
+})
+
+panel:AddTab("Targets", {
+    title = "Targets",
+    build = function(c)
+        local db, f = hubDB, D.Flow(c)
+        f:Hint("What marks enemies and your target in the world.")
         if D.ApplyPlates then
+            f:Label("Nameplates")
             f:Checkbox("Enemy nameplates like Final Fantasy XIV", db, "xivPlates", function() D.ApplyPlates() end,
                 "Over each enemy only its level, marker and name and a thin red health bar under the name. Blizzard's plate stays underneath, invisible - clicking it still targets. Where the game keeps a plate to itself, Blizzard's look stays. /deck plates shows how many it draws.")
+            f:Checkbox("Keep the nameplates apart", db, "plateSpace", function() D.ApplyPlates() end,
+                "With the FFXIV nameplates on: the game stacks plates instead of letting them overlap, with room between them (its nameplateMotion and nameplateOverlapV settings). Your own values come back when this or the nameplates are switched off.")
         end
         if D.ApplyRankMarks then
             f:Checkbox("Elite, rare and boss marks", db, "rankMarks", function() D.ApplyRankMarks() end,
                 "A diamond before the name of an elite (gold), a rare (silver with a star), a rare elite (gold with a star) and a boss (red with a crown) - on the Final Fantasy XIV nameplates, the enemy list and the Final Fantasy target and focus bars.")
         end
+        if D.ApplyTargetArrow then
+            f:Label("Your target")
+            f:Checkbox("Arrow over your target", db, "targetArrow", function() D.ApplyTargetArrow() end,
+                "Final Fantasy XIV's marker: an arrowhead bobbing over your target's nameplate - red for an enemy, green for a friend, gold when the game does not say. It needs the target's nameplate, so it shows only where nameplates do. /deck targetarrow shows what it sees.")
+        end
+        if D.SetSoftTargetName then
+            f:Label("Interact target")
+            f:Checkbox("Name of the interact target", db, "softTargetName", D.SetSoftTargetName,
+                "With the interact key, the object it would use (chest, ore, herb) gets its name below the game's icon - gold in reach, grey out of it. Needs the interact key on (Options > Gameplay > Controls); switching this on turns on the icon for objects. /deck softtarget shows both settings.")
+            f:Checkbox("Ring while casting on it", db, "softTargetCast", function() end,
+                "Fills around the icon while you cast or gather. The game does not say which object a cast is for, so it shows for any cast while a name is up.")
+        end
+    end,
+})
+
+panel:AddTab("Windows", {
+    title = "Windows",
+    build = function(c)
+        local db, f = hubDB, D.Flow(c)
+        f:Hint("Windows of DeckUI's own, and Blizzard's restyled.")
         if D.ApplyQuestBook then
             f:Checkbox("Quest book", db, "questBook", function() D.ApplyQuestBook() end,
                 "A searchable book of every quest your characters know: each one they had in their quest log, and each one they completed - the names of those load in the background. Sorted by kind (dungeon, raid, daily ...), marked done for this character and how many others. The game has no list of all quests, so the book grows as you play. /questbook opens it.")
             f:Button("Open the quest book", function() D.ToggleQuestBook() end)
+            if D.IsMists then
+                f:Checkbox("Load names of quests never seen (may crash the game)", db, "questBookScan", function() end,
+                    "Mists has no call to load a quest by its number, so the book asks a hidden tooltip for each unknown quest, which makes the client fetch it from the server. The client crashed several times while that ran, so it is off: those quests show their number until you meet them.")
+            end
         end
         if D.ApplyLFGWindow then
             f:Checkbox("Dungeon queue as a window", db, "lfgWindow", function() D.ApplyLFGWindow() end,
@@ -620,39 +777,10 @@ panel:AddTab("General", {
             f:Checkbox("Its text in instances too", db, "talkingHeadInstances", function() end,
                 "Off: in dungeons and raids you only hear the voice.")
         end
-        if D.ApplyInfoBars then
-            f:Checkbox("Server info", db, "infoServer", function() D.ApplyInfoBars() end,
-                "Final Fantasy XIV's line at the top right: your realm, a letter when mail waits, your latency and the time. Move it with Move below.")
-            -- what the server line shows, each value on its own switch
-            local onOff = { [true] = "on", [false] = "off" }
-            local function Part(key)
-                return { label = D.INFO_PART_NAMES[key], values = { true, false }, names = onOff,
-                         get = function() return D.InfoParts()[key] end,
-                         set = function(v) D.InfoParts()[key] = v; D.ApplyInfoBars() end }
-            end
-            for i = 1, #D.INFO_PARTS, 2 do
-                f:Cycles(Part(D.INFO_PARTS[i]), Part(D.INFO_PARTS[i + 1]))
-            end
-            f:Checkbox("Gold", db, "infoGold", function() D.ApplyInfoBars() end,
-                "The gold you carry, with a coin, like FFXIV's gil box. The full amount on mouse-over.")
-            f:Checkbox("Bag overview", db, "infoBags", function() D.ApplyInfoBars() end,
-                "FFXIV's inventory overview: a block of dots per bag, bright for a used slot, dark for a free one, the free slots as a number. A click opens your bags. In combat it appears or goes once the fight ends.")
+        if D.SetDamageMeterStyled then
+            f:Checkbox("Damage meter in DeckUI's look", db, "styleDamageMeter", D.SetDamageMeterStyled,
+                "Blizzard's damage meter with flat bars and DeckUI's font. Its numbers stay Blizzard's.")
         end
-        if D.ApplyMainMenu then
-            f:Checkbox("Main menu as round buttons", db, "mainMenu", function() D.ApplyMainMenu() end,
-                "Final Fantasy XIV's main menu: the game's menu buttons (character, talents, group finder, game menu, ...) as a row of round buttons with a gold ring, which turns bright while a button has news. They open what Blizzard's open; Blizzard's own row goes out of sight. In combat it switches once the fight ends.")
-        end
-        if D.ApplyInfoBars then
-            f:Checkbox("Hide Blizzard's bag buttons", db, "hideBagBar", function() D.ApplyInfoBars() end,
-                "The backpack and bag slots at the bottom right go out of sight - the bag overview above takes their place. Your bag key still opens the bags; untick to have them back.")
-        end
-
-        f:Gap(8)
-        -- the error collector (errors.lua), with how many it holds
-        local errBtn = f:Button("Lua errors", function() D.ShowErrors() end,
-            "Every Lua error since login, from any addon, ready to copy. Also /deck errors.")
-        function errBtn:Refresh() self:SetText(("Lua errors (%d)"):format(D.ErrorCount())) end
-        table.insert(c.widgets, errBtn)
     end,
 })
 

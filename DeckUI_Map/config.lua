@@ -13,15 +13,35 @@ local function Store(key, apply)
     end
 end
 
--- Moved to D.Flow 2026-10-02: explanations as tooltips.
+local px  = function(v) return tostring(v) end
+local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
+
+-- Moved to D.Flow 2026-10-02: explanations as tooltips. Since 2026-10-28 the
+-- minimap and the world map have sub-pages of their own (the hub lists them
+-- under Map); this page stays, the module's switch sits on it.
 D.RegisterModule("Map", {
     title = "Map",
     build = function(c)
-        local px  = function(v) return tostring(v) end
-        local pct = function(v) return math.floor(v * 100 + 0.5) .. "%" end
+        local f = D.Flow(c)
+        f:Hint("The minimap and the world map have pages of their own below.")
+    end,
+})
+
+-- The keys each sub-page writes, per-device ones included (Defaults matches
+-- them against the device tables too). The CVars on the world map page live
+-- in the game's config, not in DeckMapDB.
+local MINIMAP_KEYS = { minimapSize = true, round = true, zoneText = true, clock = true, coordinates = true,
+                       buttonsOnHover = true }
+local WORLD_KEYS = { worldMapScale = true, questLogClosed = true, mapControlsOnHover = true }
+D.PAGE_FRAMES.Map = {}
+D.PAGE_RESET.Map = { db = "DeckMapDB", match = function(k) return not (MINIMAP_KEYS[k] or WORLD_KEYS[k]) end }
+
+D.RegisterModule("MapMinimap", {
+    title = "Minimap",
+    build = function(c)
         local f = D.Flow(c)
 
-        f:Hint("Drag the minimap by its frame and the world map by the strip along its top edge; /deckmap reset brings both back.")
+        f:Hint("Drag the minimap by its frame; /deckmap reset brings it back.")
 
         f:Label("Minimap (this device)")
         f:Slider("Size", 120, 280, 5, px, device, "minimapSize", Store("minimapSize", ns.ApplyMinimapSize))
@@ -33,6 +53,17 @@ D.RegisterModule("Map", {
             "Blank in places where the game gives no position.")
         f:Checkbox("Buttons only under the mouse", db, "buttonsOnHover", ns.ApplyHover,
             "Tracking, calendar, the addon list and the zoom buttons appear while the mouse is over the minimap.")
+    end,
+})
+D.PAGE_FRAMES.MapMinimap = { "Minimap" }
+D.PAGE_RESET.MapMinimap = { db = "DeckMapDB", match = function(k) return MINIMAP_KEYS[k] == true end }
+
+D.RegisterModule("MapWorld", {
+    title = "World map",
+    build = function(c)
+        local f = D.Flow(c)
+
+        f:Hint("Drag the world map by the strip along its top edge; /deckmap reset brings it back.")
 
         f:Label("World map")
         -- Mists' map cannot be scaled (worldmap.lua, ApplyWorldMapScale)
@@ -55,3 +86,5 @@ D.RegisterModule("Map", {
         end
     end,
 })
+D.PAGE_FRAMES.MapWorld = { "World map" }
+D.PAGE_RESET.MapWorld = { db = "DeckMapDB", match = function(k) return WORLD_KEYS[k] == true end }

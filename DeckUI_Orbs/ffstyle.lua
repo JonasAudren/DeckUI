@@ -1005,6 +1005,89 @@ end
 
 oUF:RegisterStyle("DeckFFPlayer", BuildPlayer)
 oUF:RegisterStyle("DeckFFTarget", BuildTarget)
+-- Bosses in the "ffxiv" look (owner's wish 2026-10-28; "Boss look" on the
+-- Orbs page picks it apart from the player's style): the enemy list's
+-- rows as capsule bars without a panel, like the XIV player and target.
+local function BuildBossXIV(self, unit)
+    self:SetSize(BOSS_W, BOSS_H)
+    Clicks(self)
+
+    local marker = self:CreateTexture(nil, "OVERLAY")
+    marker:SetSize(14, 14)
+    marker:SetPoint("TOPLEFT", 4, -2)
+    self.RaidTargetIndicator = marker
+
+    local name = Text(self, 13)
+    name:SetPoint("TOPLEFT", 22, -2)
+    name:SetWidth(BOSS_W - 22 - 60)
+    self:Tag(name, "[name]")
+
+    local hp = Text(self, 13, "RIGHT")
+    hp:SetPoint("TOPRIGHT", -2, -2)
+    self:Tag(hp, ns.HP_TAGS[DeckOrbsDB.hpText] or ns.HP_TAGS.percent)
+    self.hpText = hp
+
+    local health = PillBar(self, BOSS_W - 8, 7)
+    health:SetPoint("TOPLEFT", 4, -20)
+    health.colorReaction = true
+    health.colorTapped = true
+    self.Health = health
+
+    local arrow = Text(self, 10)
+    arrow:SetPoint("TOPLEFT", 4, -29)
+    arrow:SetText("|cffaaaaaa»|r")
+    local targetName = Text(self, 10)
+    targetName:SetPoint("LEFT", arrow, "RIGHT", 3, 0)
+    targetName:SetWidth(BOSS_W - 26)
+    targetName:SetTextColor(0.85, 0.85, 0.85)
+    self.DeckBossTargetArrow = arrow
+    self.DeckBossTargetName = targetName
+
+    -- the aggro mark stands just left of the row, there being no panel edge
+    local aggro = self:CreateTexture(nil, "OVERLAY")
+    aggro:SetColorTexture(0.9, 0.15, 0.15, 1)
+    aggro:SetPoint("TOPLEFT", -5, -2)
+    aggro:SetPoint("BOTTOMLEFT", -5, 2)
+    aggro:SetWidth(3)
+    aggro:SetAlpha(0)
+    self.DeckBossAggro = aggro
+
+    local cast = PillBar(self, BOSS_W - 8, 6)
+    cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 4, -2)
+    cast:SetStatusBarColor(1, 0.55, 0.2)
+    local shield = cast:CreateTexture(nil, "OVERLAY")
+    shield:SetAllPoints()
+    shield:SetColorTexture(0.45, 0.45, 0.45, 0.85)
+    shield:SetAlpha(0)
+    cast.Shield = shield
+    local castText = Text(cast, 10)
+    castText:SetPoint("TOPLEFT", cast, "BOTTOMLEFT", 2, -1)
+    castText:SetWidth(BOSS_W - 12)
+    castText:SetTextColor(1, 0.85, 0.3)
+    cast.Text = castText
+    self.Castbar = cast
+
+    if self.CreateAuras then
+        local size = 18
+        local auras = self:CreateAuras({
+            layout        = ns.FLOW.Horizontal,
+            layoutLimit   = 4 * (size + 2),
+            initialAnchor = "LEFT",
+            growthX       = "RIGHT",
+            growthY       = "DOWN",
+        })
+        auras:SetSize(4 * (size + 2), size)
+        auras:SetPoint("LEFT", self, "RIGHT", 4, 0)
+        auras.size = size
+        auras.elementSpacing = 2
+        auras.showCount = true
+        auras.PostCreateButton = StyleTargetAura
+        auras:AddGroup("HARMFUL|PLAYER", { maxFrameCount = 4, showDebuffBorder = true })
+        table.insert(ns.auraContainers, auras)
+    end
+end
+
+oUF:RegisterStyle("DeckXIVBoss", BuildBossXIV)
 oUF:RegisterStyle("DeckFFToT", BuildToT)
 oUF:RegisterStyle("DeckFFPet", BuildPet)
 oUF:RegisterStyle("DeckFFBoss", BuildBoss)
@@ -1023,10 +1106,24 @@ function ns.FFStyle(part)
     return (DeckOrbsDB.style == "ffxiv" and "DeckXIV" or "DeckFF") .. part
 end
 
--- layout.lua's Factory, in the "ff" style: the five boss rows under one
+-- The bosses' look, a choice of its own (DeckOrbsDB.bossStyle, Orbs page,
+-- /reload): "orbs", "ff" (the enemy list on panels) or "xiv" (capsules);
+-- "auto" follows the player's style.
+function ns.BossLook()
+    local s = DeckOrbsDB.bossStyle or "auto"
+    if s ~= "auto" then return s end
+    if DeckOrbsDB.style == "ffxiv" then return "xiv" end
+    if DeckOrbsDB.style == "ff" then return "ff" end
+    return "orbs"
+end
+function ns.BossStyleName()
+    return ns.BossLook() == "xiv" and "DeckXIVBoss" or "DeckFFBoss"
+end
+
+-- layout.lua's Factory, for the list looks: the five boss rows under one
 -- movable holder, saved apart from the boss orbs' place.
 function ns.SpawnFFBosses(factory)
-    factory:SetActiveStyle("DeckFFBoss")
+    factory:SetActiveStyle(ns.BossStyleName())
     local holder = CreateFrame("Frame", "DeckFFBossHolder", UIParent)
     holder:SetSize(BOSS_W, 5 * BOSS_STEP)
     holder.defaultPoint = { "RIGHT", UIParent, "RIGHT", -160, 80 }

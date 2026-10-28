@@ -27,6 +27,21 @@ D.RegisterModule("Tooltip", {
             "Needs a short look at their gear, so it shows a moment later - and never in combat.")
         f:Checkbox("Whom the unit is targeting", db, "targetLine", nothing)
         f:Checkbox("IDs while Shift is held", db, "ids", nothing, "Item, spell and NPC IDs.")
+    end,
+})
+
+-- The extra lines moved to a sub-page of their own on 2026-10-28 (the hub
+-- lists it under Tooltip); the Tooltip frame stays with the parent.
+local EXTRAS_KEYS = { questItems = true, knowledge = true, chestKeys = true, reputation = true, ensembles = true,
+                      ahPrice = true }
+D.PAGE_RESET.Tooltip = { db = "DeckTooltipDB", match = function(k) return not EXTRAS_KEYS[k] end }
+
+D.RegisterModule("TooltipExtras", {
+    title = "Extras",
+    build = function(c)
+        local f = D.Flow(c)
+
+        f:Hint("Lines of our own at the end of a tooltip.")
 
         f:Label("Extras")
         f:Checkbox("Items that start a quest: the quest", db, "questItems", nothing)
@@ -45,3 +60,4 @@ D.RegisterModule("Tooltip", {
             "The cheapest buyout per piece from your last auction house scan (scanned when you open the auction house), and for a stack in your bags its whole value. Gear shares one price across its item levels.")
     end,
 })
+D.PAGE_RESET.TooltipExtras = { db = "DeckTooltipDB", match = function(k) return EXTRAS_KEYS[k] == true end }
