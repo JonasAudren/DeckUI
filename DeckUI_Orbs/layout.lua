@@ -34,6 +34,24 @@ ns.DEFAULTS = {
     groupStyle      = "panel",     -- party and raid: "panel" (dark panels) | "xiv" (capsule bars), /reload
     style           = "orbs",      -- player/target: "orbs", "ff" or "ffxiv" (ffstyle.lua), /reload
     enemyList       = false,       -- FFXIV's enemy list from the nameplate units (enemies.lua)
+    -- player, target and target of target in the Final Fantasy styles, each on
+    -- a page of its own (owner's wish 2026-10-28); all need a /reload since
+    -- oUF builds a frame once. Widths and bar heights are per device (below).
+    playerAuras     = "above",     -- your buffs and debuffs: "above" | "below" | "off"
+    playerAuraSize  = 22,
+    playerBuffMax   = 10,
+    playerDebuffMax = 8,
+    targetDebuffs   = "below",     -- its debuffs (yours, or all): "below" | "above" | "off"
+    targetBuffs     = "below",     -- its buffs: "below" | "above" | "off"
+    targetBuffsRight = true,       -- buffs from the right edge; off = on their own line
+    targetAuraSize  = 22,
+    targetDebuffMax = 8,
+    targetBuffMax   = 6,
+    totDebuffs      = false,       -- your debuffs under the target of target
+    dotTracker      = false,       -- your debuffs on target and focus, per spec (debuffs.lua)
+    dotAttach       = false,       -- those rows bare at the target / focus frame instead of a window
+    dotAbove        = false,       -- with dotAttach: above the frame instead of below
+    dotNames        = true,        -- the debuff's name beside its icon; off = capsule only
     xivCastCenter   = false,       -- "ffxiv" style: your cast in the screen's middle; /reload
     buffBar         = false,       -- own buff bar in FF style (buffs.lua), replaces Blizzard's; /reload
     -- raid grid (raid.lua, Raid tab); sizes and arrangement are per device
@@ -349,11 +367,34 @@ end
 -- groups side by side are 700 pixels wide, so the Deck starts smaller)
 local DEVICE_DEFAULTS = {
     deck = { partyScale = 1, partyAcross = false, raidScale = 0.85, raidW = 84, raidH = 34, raidRows = false,
-             buffSize = 24, buffPerRow = 10 },
+             buffSize = 24, buffPerRow = 10, dotScale = 100 },
     pc   = { partyScale = 1, partyAcross = false, raidScale = 1,    raidW = 96, raidH = 36, raidRows = false,
-             buffSize = 30, buffPerRow = 12 },
+             buffSize = 30, buffPerRow = 12, dotScale = 100 },
 }
 function ns.DeviceDB() return D.DeviceDB(DeckOrbsDB, DEVICE_DEFAULTS) end
+
+-- The FF frames' width and bar height per device, as a percentage of the
+-- style's own numbers (owner 2026-10-28: 100% = the Final Fantasy look as
+-- shipped; the XIV bars are a little wider). <prefix>Width / <prefix>Bar.
+local FRAME_BASE = {
+    ff   = { player = { 260, 8 }, target = { 380, 9 },  tot = { 140, 6 } },
+    ffxiv = { player = { 300, 8 }, target = { 420, 10 }, tot = { 150, 6 } },
+}
+function ns.FrameSizeDB()
+    local d = ns.DeviceDB()
+    for _, p in ipairs({ "player", "target", "tot" }) do
+        if d[p .. "Width"] == nil then d[p .. "Width"] = 100 end
+        if d[p .. "Bar"] == nil then d[p .. "Bar"] = 100 end
+    end
+    return d
+end
+-- width and bar height in pixels for a frame ("player", "target", "tot")
+function ns.FrameSize(prefix)
+    local d = ns.FrameSizeDB()
+    local base = (FRAME_BASE[DeckOrbsDB.style] or FRAME_BASE.ff)[prefix]
+    return math.floor(base[1] * d[prefix .. "Width"] / 100 + 0.5),
+           math.max(2, math.floor(base[2] * d[prefix .. "Bar"] / 100 + 0.5))
+end
 
 function ns.SetScale(value)
     ns.DeviceDB().scale = value
@@ -692,6 +733,9 @@ SlashCmdList.DECKORBS = function(msg)
     elseif msg == "enemies" then
         -- the enemy list's filter, unit by unit (enemies.lua)
         ns.EnemyDebug()
+    elseif msg == "dots" then
+        -- the debuff window's list and what the target carries (debuffs.lua)
+        ns.DotDebug()
     elseif msg == "bosses" then
         -- what the boss frames see: the units, our frames, Blizzard's
         print(("DeckUI Orbs bosses: style %s, show %s, frames %d, holder %s"):format(

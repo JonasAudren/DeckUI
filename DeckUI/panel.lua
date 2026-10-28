@@ -54,7 +54,7 @@ close:SetPoint("TOPRIGHT", 2, 2)
 -------------------------------------------------------------------
 D.PAGE_GROUPS = {
     { title = "General",   pages = { "General", "Devices" } },
-    { title = "Units",     pages = { "Orbs", "Group", "Raid" } },
+    { title = "Units",     pages = { "Orbs", "FramePlayer", "FrameTarget", "FrameToT", "Debuffs", "Group", "Raid" } },
     { title = "Actions",   pages = { "Cross", "Bars", "Spec" } },
     { title = "World",     pages = { "Quests", "Map", "Nav" } },
     { title = "Inventory", pages = { "Bags", "Loot" } },
@@ -64,6 +64,12 @@ D.PAGE_GROUPS = {
 D.PAGE_NAMES = {
     Orbs = "Player and target", Cross = "Cross hotbar", Spec = "Specialization",
     Nav = "Navigation", Map = "Maps", Week = "Week overview", Bars = "Action bars",
+    Debuffs = "Your debuffs", FramePlayer = "Player", FrameTarget = "Target", FrameToT = "Target of target",
+}
+-- a page shown indented under another, as part of it (owner's wish
+-- 2026-10-28: the frames and the debuffs under "Player and target")
+D.PAGE_PARENT = {
+    FramePlayer = "Orbs", FrameTarget = "Orbs", FrameToT = "Orbs", Debuffs = "Orbs",
 }
 
 -------------------------------------------------------------------
@@ -140,6 +146,10 @@ local function LayoutSidebar()
                 local b = panel.tabs[key]
                 b:ClearAllPoints()
                 b:SetPoint("TOPLEFT", 4, y)
+                local sub = D.PAGE_PARENT[key] ~= nil
+                b.text:ClearAllPoints()
+                b.text:SetPoint("LEFT", sub and 26 or 14, 0)
+                b.text:SetFont(D.FONT, sub and 12 or 13, "OUTLINE")
                 b.text:SetText(PageName(key))
                 b:Show()
                 placed[key] = true
@@ -189,7 +199,10 @@ end
 
 -- the frames each page moves, by the key D.MakeMovable got
 D.PAGE_FRAMES = {
-    Orbs    = { "Player", "Target", "Focus", "Boss frames", "Player (FF)", "Target (FF)", "Boss frames (FF)", "Buffs", "EXP bar", "Cast bar", "Focus (FF)", "Enemy list" },
+    Orbs    = { "Focus", "Boss frames", "Boss frames (FF)", "Buffs", "EXP bar", "Cast bar", "Focus (FF)", "Enemy list" },
+    FramePlayer = { "Player", "Player (FF)" },
+    FrameTarget = { "Target", "Target (FF)" },
+    Debuffs = { "Debuffs" },
     Group   = { "Party" },
     Raid    = { "Raid" },
     Cross   = { "Cross Hotbar", "Leave vehicle", "Assist indicator" },
@@ -215,8 +228,18 @@ local LOOT_KEYS = { autoSellJunk = true, autoRepair = true, repairGuild = true, 
                     mailHelper = true, restock = true }
 local function GroupKey(k) return k == "showParty" or k:find("^party") ~= nil end
 local function RaidKey(k) return k == "showRaid" or k:find("^raid") ~= nil end
+local function DotKey(k) return k:find("^dot") ~= nil end
+local function PlayerKey(k) return k:find("^player") ~= nil end
+local function TargetKey(k) return k:find("^target") ~= nil end
+local function ToTKey(k) return k:find("^tot") ~= nil end
 D.PAGE_RESET = {
-    Orbs    = { db = "DeckOrbsDB", match = function(k) return not GroupKey(k) and not RaidKey(k) end },
+    Orbs    = { db = "DeckOrbsDB", match = function(k)
+        return not (GroupKey(k) or RaidKey(k) or DotKey(k) or PlayerKey(k) or TargetKey(k) or ToTKey(k))
+    end },
+    FramePlayer = { db = "DeckOrbsDB", match = PlayerKey },
+    FrameTarget = { db = "DeckOrbsDB", match = TargetKey },
+    FrameToT    = { db = "DeckOrbsDB", match = ToTKey },
+    Debuffs = { db = "DeckOrbsDB", match = DotKey },
     Group   = { db = "DeckOrbsDB", match = GroupKey },
     Raid    = { db = "DeckOrbsDB", match = RaidKey },
     Cross   = { db = "DeckCrossDB", match = function(k) return k ~= "bars" and k ~= "barScale" and k ~= "barAlpha" end },

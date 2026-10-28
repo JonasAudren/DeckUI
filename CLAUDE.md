@@ -164,7 +164,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   LOOT_READY before they are taken - not the chat lines, which can be secret. The list has its
   own place ("Loot list"); a `D.OnUnlock` callback shows window and list with a sample
   while unlocked, since both are hidden otherwise and could not be grabbed. Take all is
-  also the binding DECKUI_LOOT_ALL. The one Blizzard call that writes elsewhere is
+  also the binding DECKUI_LOOT_ALL. **No slot call outside an open loot** (`lootOpen`: LOOT_READY/OPENED
+  to LOOT_CLOSED, a LOOT_OPENED after the close ignored, slots taken once per loot, the window hides
+  itself when the loot is gone): Mists crashed the client (ACCESS_VIOLATION, 2026-10-27/28) with our
+  window still up after the loot had closed - fixed 2026-10-28 on that suspicion, not yet confirmed.
+  It crashed once more (a bind-on-pickup item from a satchel, its row still shown): **a slot is read
+  only while `LootSlotHasItem(slot)`** - Blizzard's Mists LootFrame asks that before every
+  GetLootSlotInfo. In Mists LootFrame keeps LOOT_CLOSED, whose handler hides the LOOT_BIND question. The one Blizzard call that writes elsewhere is
   `HandleModifiedItemClick` on a modified click (chat link, dressing room).
 - **Loot rolls** (`DeckUI/lootroll.lua`, `DeckUIDB.lootRolls`, "Loot and merchant" page, off, live;
   tested in game (Mists) 2026-10-27, retail not yet; owner's wish 2026-10-27). Both games still roll (retail too, Transmog
@@ -239,6 +245,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   under a hidden parent and gives it its old parent back when unticked; the overview's click
   still reaches the parked backpack button.
   Movable "Server info", "Gold", "Bag overview".
+  While the server info shows, the minimap's mail letter is **faded** (alpha 0 held by a SetAlpha
+  post-hook, mouse off; `MiniMapMailFrame` in Mists, `MinimapCluster.IndicatorFrame.MailFrame` in
+  retail - shown and hidden by Blizzard, a layout child in retail) and the server info's tooltip names
+  the senders (`GetLatestThreeSenders`; owner's wish 2026-10-28, not yet tested in game).
 - **Main menu as FFXIV's round buttons** (`DeckUI/mainmenu.lua`, `DeckUIDB.mainMenu`, off,
   undone by unticking; tested in game 2026-10-09, then made 24 px with 1 px gaps). A row of
   round buttons (disc, gold ring, Blizzard's `UI-HUD-MicroMenu-<textureName>-Up` atlas masked
@@ -534,6 +544,51 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   of player/party1-4; in a raid UnitAffectingCombat) treats a **secret** answer as "show it".
   Movable "Enemy list", sample rows while unlocked; `/orbs enemies` prints each nameplate
   unit's answers (plain or secret).
+- **Player, Target and Target of target pages** (DeckUI_Orbs/config.lua, keys `FramePlayer` /
+  `FrameTarget` / `FrameToT`, indented under "Player and target" via `D.PAGE_PARENT`; owner's wish
+  2026-10-28; not yet tested in game). They shape the **Final Fantasy frames** (the orbs keep their
+  size slider): width and bar height per device **as a percentage of the style's own numbers**
+  (`ns.FrameSizeDB()` keeps `playerWidth`, `playerBar`, `targetWidth`, ... at 100 by default;
+  `ns.FrameSize(prefix)` turns them into pixels from `FRAME_BASE`, 260/380/140 for "ff" and
+  300/420/150 for "ffxiv"; owner's wish 2026-10-28: 100% = as shipped), and shared in `ns.DEFAULTS`: `playerAuras` (above/below/off, size, buff and debuff
+  max), `targetDebuffs` / `targetBuffs` (below/above/off each), `targetBuffsRight` (same line from the
+  right edge, else a line of their own), `targetAuraSize`, `targetDebuffMax`/`BuffMax`, `totDebuffs`.
+  **Everything needs a /reload** (oUF builds a frame once): each widget reports to the reload bar
+  against the value the session was built with (`Snap`/`Need`). ffstyle.lua reads them in
+  `PlayerAuras`, `TargetAuraRows` (sets `frame.DeckBelow` / `DeckAbove` = the outermost aura line on
+  each side, which debuffs.lua hangs past) and `ToTDebuffs`; `AuraRow(..., fromRight, max)` caps a
+  line at `max` icons. Move: Player/Target pages move "Player"/"Player (FF)" and "Target"/"Target
+  (FF)"; Defaults clear the `player*`, `target*`, `tot*` keys.
+- **Your debuffs** (`DeckUI_Orbs/debuffs.lua`, `DeckOrbsDB.dotTracker`, off, live; not yet tested in
+  game; owner's wish 2026-10-28 - a class's own view of its DoTs and poisons). A window of its own,
+  movable "Debuffs": a column for the target, a smaller one for the focus (spec list only). Rows
+  have fixed places from `LISTS[specID]` (Mists spell IDs, checked against wago `wow_classic`
+  SpellName 2026-10-28); a row shows only when `IsPlayerSpell(known or id)`, so talents sort
+  themselves out. Auras are matched **by name** (the client's name for the list's ID): missing =
+  empty capsule with a red edge (**only while `UnitAffectingCombat("player")`** - out of combat
+  only running debuffs show; owner saw "Censure --" at every mob), the last 30% gold with a tick where it starts, the player's other
+  debuffs on the target below (sorted by name, up to four). A rogue's weapon poisons are `self`
+  rows read from his own buffs. A secret aura name (retail in combat) turns the rows grey, never
+  red. Polled every 0.1 s while on; `/orbs dots` prints spec, list, known and what the target carries.
+  **While on, the spec's listed debuffs leave the target frame's debuff icons**
+  (`ns.ApplyDotExclusion`: `excludeSpellIDs` of the whole list plus the poisons' target debuffs
+  through `SetAuraGroupCandidateFilters` on every `ns.targetDebuffs` entry, cleared when off; both
+  the AuraContainer and `auras_mists.lua` honour it live). The "other" debuffs shown below the list
+  are excluded too, by the spell IDs `Scan` read - re-applied only when that set changes.
+  Width per device: `ns.DeviceDB().dotScale` (percent of 240, slider 50-175 = the XIV target bar;
+  `ns.ApplyDotWidth` resizes columns and rows live, the focus column keeps 170/240 of it).
+  `dotNames` (on, live, `ns.ApplyDotNames`): off, the capsule takes the name's room and the
+  row's tooltip names the debuff. Settings on a page of their own, "Your debuffs" (key `Debuffs`, registered in DeckUI_Orbs/config.lua),
+  shown indented under "Player and target" through `D.PAGE_PARENT` (panel.lua); Move/Defaults have
+  their own entries (`dot*` keys of DeckOrbsDB).
+  `DeckOrbsDB.dotAttach` (off, live, `ns.ApplyDotLayout`): the window's frame and title (`c.chrome`)
+  hidden, the target column anchored at `DeckFFTarget` / `DeckOrbsTarget`, the focus column at
+  `DeckXIVFocus` / `DeckOrbsFocus` - only anchored, nothing on the unit frames changes. Below or
+  above (`dotAbove`), clear of what hangs there: under an FF bar below its status icon line (the
+  debuff container from `ns.targetDebuffs` whose parent is the frame; since 2026-10-28 the target's
+  buffs are a second container of their own on the same line, from the right edge growing left -
+  `TargetAuraRows`, `AuraRow(..., fromRight)` - so 8 debuffs left and 6 buffs right never slide),
+  under an orb or the FF focus 22 px for name/cast text; above an FF bar 6 px, an orb 22.
 - **Buff bar** (`DeckUI_Orbs/buffs.lua`, `DeckOrbsDB.buffBar`, off by default, needs a /reload;
   tested in game 2026-10-08, the combat switch included; owner's wish the same day - Blizzard's buffs grew too long in combat and
   ran into the minimap on the Deck). An oUF frame for "player" with two aura containers laid

@@ -21,8 +21,8 @@ local oUF = ns.oUF
 -------------------------------------------------------------------
 local WHITE = "Interface\\Buttons\\WHITE8x8"
 
-local PLAYER_W = 260
-local TARGET_W = 380
+-- player, target and target of target take their width and bar height
+-- from their pages (ns.FrameSizeDB); the pet keeps the old ToT width
 local TOT_W = 140
 
 -- a fill and four one-pixel lines, anchored only (never BackdropTemplate)
@@ -97,13 +97,16 @@ local function StyleTargetAura(element, button, options)
     if debuff and ns.DispelStrip then ns.DispelStrip(button) end
 end
 
-local function AuraRow(self, width, size, point, relPoint, y)
+-- fromRight: the row starts at the frame's right edge and grows left (the
+-- target's buffs, kept apart from its debuffs - owner 2026-10-28)
+local function AuraRow(self, width, size, point, relPoint, y, fromRight, max)
     local count = math.floor(width / (size + 3))
+    if max and max < count then count = max end
     local auras = self:CreateAuras({
         layout        = ns.FLOW.Horizontal,
         layoutLimit   = count * (size + 3),
-        initialAnchor = "LEFT",
-        growthX       = "RIGHT",
+        initialAnchor = fromRight and "RIGHT" or "LEFT",
+        growthX       = fromRight and "LEFT" or "RIGHT",
         growthY       = "DOWN",
     })
     auras:SetSize(count * (size + 3), size)
@@ -175,12 +178,43 @@ local function Label(self, text, y)
     return fs
 end
 
+-- Your buffs and debuffs at the player bar, as the Player page says
+-- (DeckOrbsDB.playerAuras: above the bar, below its cast, or off; icon
+-- size and how many). belowY: where the first line goes under the frame,
+-- past whatever cast hangs there. The buff bar (buffs.lua) replaces both.
+local function PlayerAuras(self, W, belowY)
+    if not self.CreateAuras or DeckOrbsDB.buffBar then return end
+    local pos = DeckOrbsDB.playerAuras or "above"
+    if pos == "off" then return end
+    local S = DeckOrbsDB.playerAuraSize or 22
+    local above = pos ~= "below"
+    local point, rel = above and "BOTTOMLEFT" or "TOPLEFT", above and "TOPLEFT" or "BOTTOMLEFT"
+    local y1 = above and 4 or belowY
+    local y2 = above and (y1 + S + 4) or (y1 - S - 4)
+    local bMax, dMax = DeckOrbsDB.playerBuffMax or 10, DeckOrbsDB.playerDebuffMax or 8
+    local buffs = AuraRow(self, W, S, point, rel, y1, false, bMax)
+    buffs:AddGroup("HELPFUL", { maxFrameCount = bMax, candidateFilters = { maxDuration = DeckOrbsDB.buffMaxDuration } })
+    local debuffs = AuraRow(self, W, S, point, rel, y2, false, dMax)
+    debuffs:AddGroup("HARMFUL", { maxFrameCount = dMax, showDebuffBorder = true })
+end
+
+-- your debuffs under the target of target (DeckOrbsDB.totDebuffs)
+local function ToTDebuffs(self, W, y)
+    if not (self.CreateAuras and DeckOrbsDB.totDebuffs) then return end
+    local auras = AuraRow(self, W, 18, "TOPLEFT", "BOTTOMLEFT", y, false, 6)
+    auras.PostCreateButton = StyleTargetAura
+    auras:AddGroup("HARMFUL|PLAYER", { maxFrameCount = 6, showDebuffBorder = true })
+end
+
 local function BuildPlayer(self, unit)
-    self:SetSize(PLAYER_W, 64)
+    local W, hb = ns.FrameSize("player")
+    local ph = math.max(3, math.floor(hb * 0.6 + 0.5))   -- the resource bar, thinner
+    local powerY = 19 + hb + 18                          -- the MP line sits between the bars
+    self:SetSize(W, powerY + ph + 14)
     Clicks(self)
     Panel(self)
 
-    local inner = PLAYER_W - 16
+    local inner = W - 16
 
     Label(self, "HP", -5)
     local hp = Text(self, 13, "RIGHT")
@@ -188,18 +222,18 @@ local function BuildPlayer(self, unit)
     self:Tag(hp, ns.HP_TAGS[DeckOrbsDB.hpText] or ns.HP_TAGS.percent)
     self.hpText = hp
 
-    local health = Bar(self, inner, 8)
+    local health = Bar(self, inner, hb)
     health:SetPoint("TOPLEFT", 8, -19)
     health.colorHealth = true
     self.Health = health
 
-    local ppLabel = Label(self, "MP", -31)
+    local ppLabel = Label(self, "MP", -(19 + hb + 4))
     local pp = Text(self, 13, "RIGHT")
-    pp:SetPoint("TOPRIGHT", -8, -30)
+    pp:SetPoint("TOPRIGHT", -8, -(19 + hb + 3))
     self:Tag(pp, "[deck:ppshort]")
 
-    local power = Bar(self, inner, 5)
-    power:SetPoint("TOPLEFT", 8, -45)
+    local power = Bar(self, inner, ph)
+    power:SetPoint("TOPLEFT", 8, -powerY)
     power.colorPower = true
     power.PostUpdateColor = BrighterMana
     -- the label names the resource: MP, or Rage, Energy, ...
@@ -226,23 +260,62 @@ local function BuildPlayer(self, unit)
     self.Runes = runes
 
     -- your cast: a bar right below, with the spell's name on it
-    local cast = Bar(self, PLAYER_W, 10)
+    local cast = Bar(self, W, 10)
     cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -6)
     cast:SetStatusBarColor(1, 0.85, 0.3)
     local castText = Text(cast, 11)
     castText:SetPoint("LEFT", 4, 0)
-    castText:SetWidth(PLAYER_W - 8)
+    castText:SetWidth(W - 8)
     cast.Text = castText
     self.Castbar = cast
 
-    -- with the buff bar on (buffs.lua) it shows them instead
-    if self.CreateAuras and not DeckOrbsDB.buffBar then
-        -- your buffs above the bar, debuffs above them
-        local buffs = AuraRow(self, PLAYER_W, 22, "BOTTOMLEFT", "TOPLEFT", 4)
-        buffs:AddGroup("HELPFUL", { candidateFilters = { maxDuration = DeckOrbsDB.buffMaxDuration } })
-        local debuffs = AuraRow(self, PLAYER_W, 22, "BOTTOMLEFT", "TOPLEFT", 30)
-        debuffs:AddGroup("HARMFUL", { showDebuffBorder = true })
+    PlayerAuras(self, W, -20)   -- below: past the cast bar
+end
+
+-- The target's status icons under its cast, in one line: your debuffs (or
+-- all of them) from the left edge, its buffs from the right edge - two
+-- containers, so each side keeps its place when the other is empty
+-- (owner 2026-10-28; before, one row held both and the buffs slid left).
+-- Eight debuffs and six buffs fit side by side in either bar's width.
+-- Since the Target page (2026-10-28) each has its side (DeckOrbsDB.targetDebuffs /
+-- targetBuffs: "below" the cast, "above" the bar, "off"), the buffs from the
+-- right edge (targetBuffsRight) or on a line of their own, icon size and
+-- counts. self.DeckBelow / DeckAbove name the outermost line on each side,
+-- for whatever else wants to hang there (debuffs.lua).
+local function TargetAuraRows(self, width)
+    if not self.CreateAuras then return end
+    local S = DeckOrbsDB.targetAuraSize or 22
+    local dPos, bPos = DeckOrbsDB.targetDebuffs or "below", DeckOrbsDB.targetBuffs or "below"
+    local right = DeckOrbsDB.targetBuffsRight ~= false
+    local dMax, bMax = DeckOrbsDB.targetDebuffMax or 8, DeckOrbsDB.targetBuffMax or 6
+    local lines, last = { below = 0, above = 0 }, {}
+    -- the next line on a side: under the cast and its text, or over the bar
+    local function Place(side, fromRight)
+        local n = lines[side]
+        local y = side == "below" and (-28 - n * (S + 4)) or (4 + n * (S + 4))
+        local p, rp = side == "below" and "TOP" or "BOTTOM", side == "below" and "BOTTOM" or "TOP"
+        local edge = fromRight and "RIGHT" or "LEFT"
+        return p .. edge, rp .. edge, y
     end
+    if dPos ~= "off" and dMax > 0 then
+        local point, rel, y = Place(dPos, false)
+        local debuffs = AuraRow(self, width, S, point, rel, y, false, dMax)
+        debuffs.PostCreateButton = StyleTargetAura
+        local filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL"
+        local key = debuffs:AddGroup(filter, { maxFrameCount = dMax, showDebuffBorder = true })
+        table.insert(ns.targetDebuffs, { container = debuffs, key = key })
+        last[dPos] = debuffs
+        -- buffs on the same side share the line only from the other edge
+        if not right then lines[dPos] = 1 end
+    end
+    if bPos ~= "off" and bMax > 0 then
+        local point, rel, y = Place(bPos, right)
+        local buffs = AuraRow(self, width, S, point, rel, y, right, bMax)
+        buffs.PostCreateButton = StyleTargetAura
+        buffs:AddGroup("HELPFUL", { maxFrameCount = bMax, showStealableBorder = true })
+        if lines[bPos] > 0 or not last[bPos] then last[bPos] = buffs end
+    end
+    self.DeckBelow, self.DeckAbove = last.below, last.above
 end
 
 -------------------------------------------------------------------
@@ -290,22 +363,23 @@ end)
 -- Target: the wide bar
 -------------------------------------------------------------------
 local function BuildTarget(self, unit)
-    self:SetSize(TARGET_W, 34)
+    local W, hb = ns.FrameSize("target")
+    self:SetSize(W, 21 + hb + 4)
     Clicks(self)
     Panel(self)
 
     local name = Text(self, 14)
     name:SetPoint("TOPLEFT", 8, -4)
-    name:SetWidth(TARGET_W - 90)
+    name:SetWidth(W - 90)
     self:Tag(name, "[difficulty][level]|r [raidcolor][name]")
-    Rank(self, name, 8, -4, TARGET_W - 90)
+    Rank(self, name, 8, -4, W - 90)
 
     local hp = Text(self, 14, "RIGHT")
     hp:SetPoint("TOPRIGHT", -8, -4)
     self:Tag(hp, ns.HP_TAGS[DeckOrbsDB.hpText] or ns.HP_TAGS.percent)
     self.hpText = hp
 
-    local health = Bar(self, TARGET_W - 16, 9)
+    local health = Bar(self, W - 16, hb)
     health:SetPoint("TOPLEFT", 8, -21)
     health.colorClass = true
     health.colorReaction = true
@@ -313,45 +387,39 @@ local function BuildTarget(self, unit)
     health.colorDisconnected = true
     self.Health = health
 
-    local cast = Bar(self, TARGET_W - 16, 8)
+    local cast = Bar(self, W - 16, 8)
     cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 8, -3)
     cast:SetStatusBarColor(1, 0.55, 0.2)
     local castText = Text(cast, 11)
     castText:SetPoint("TOPLEFT", cast, "BOTTOMLEFT", 0, -1)
-    castText:SetWidth(TARGET_W - 16)
+    castText:SetWidth(W - 16)
     castText:SetTextColor(1, 0.85, 0.3)
     cast.Text = castText
     self.Castbar = cast
 
-    if self.CreateAuras then
-        -- status icons under the cast: your debuffs (or all of them), then buffs
-        local auras = AuraRow(self, TARGET_W, 22, "TOPLEFT", "BOTTOMLEFT", -28)
-        auras.PostCreateButton = StyleTargetAura
-        local filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL"
-        local key = auras:AddGroup(filter, { maxFrameCount = 8, showDebuffBorder = true })
-        table.insert(ns.targetDebuffs, { container = auras, key = key })
-        auras:AddGroup("HELPFUL", { maxFrameCount = 6, showStealableBorder = true })
-    end
+    TargetAuraRows(self, W)
 end
 
 -------------------------------------------------------------------
 -- Target of target: a small bar beside the target, name after a chevron
 -------------------------------------------------------------------
 local function BuildToT(self, unit)
-    self:SetSize(TOT_W, 34)
+    local W, hb = ns.FrameSize("tot")
+    self:SetSize(W, 22 + hb + 6)
     Clicks(self)
     Panel(self, 0.6)
 
     local name = Text(self, 12)
     name:SetPoint("TOPLEFT", 6, -5)
-    name:SetWidth(TOT_W - 12)
+    name:SetWidth(W - 12)
     self:Tag(name, "|cffaaaaaa»|r [raidcolor][name]")
 
-    local health = Bar(self, TOT_W - 12, 6)
+    local health = Bar(self, W - 12, hb)
     health:SetPoint("TOPLEFT", 6, -22)
     health.colorClass = true
     health.colorReaction = true
     self.Health = health
+    ToTDebuffs(self, W, -4)
 end
 
 -------------------------------------------------------------------
@@ -689,9 +757,9 @@ local function CenterCast()
 end
 
 local function BuildPlayerXIV(self, unit)
-    local W = XIV_PLAYER_W
+    local W, hb = ns.FrameSize("player")
     local half = math.floor((W - 10) / 2)
-    self:SetSize(W, 58)
+    self:SetSize(W, 50 + hb)
     Clicks(self)
 
     local name = Text(self, 12)
@@ -700,7 +768,7 @@ local function BuildPlayerXIV(self, unit)
     name:SetTextColor(1, 0.82, 0.55)
     self:Tag(name, "[name]")
 
-    local health = PillBar(self, half, 8)
+    local health = PillBar(self, half, hb)
     health:SetPoint("TOPLEFT", 0, -17)
     health.colorHealth = true
     self.Health = health
@@ -708,7 +776,7 @@ local function BuildPlayerXIV(self, unit)
     self:Tag(hp, ns.HP_TAGS[DeckOrbsDB.hpText] or ns.HP_TAGS.percent)
     self.hpText = hp
 
-    local power = PillBar(self, half, 8)
+    local power = PillBar(self, half, hb)
     power:SetPoint("TOPRIGHT", 0, -17)
     power.colorPower = true
     power.PostUpdateColor = PinkMana
@@ -726,7 +794,7 @@ local function BuildPlayerXIV(self, unit)
     -- class resources under the numbers
     local anchor = CreateFrame("Frame", nil, self)
     anchor:SetSize(W, 1)
-    anchor:SetPoint("TOPLEFT", 0, -46)
+    anchor:SetPoint("TOPLEFT", 0, -(38 + hb))
     local points = PointBars(self, MAX_POINTS, W)
     points.PostUpdate = function(element, cur, max, hasMaxChanged)
         if hasMaxChanged or not element.laidOut then
@@ -753,17 +821,14 @@ local function BuildPlayerXIV(self, unit)
         self.Castbar = cast
     end
 
-    if self.CreateAuras and not DeckOrbsDB.buffBar then
-        local buffs = AuraRow(self, W, 22, "BOTTOMLEFT", "TOPLEFT", 4)
-        buffs:AddGroup("HELPFUL", { candidateFilters = { maxDuration = DeckOrbsDB.buffMaxDuration } })
-        local debuffs = AuraRow(self, W, 22, "BOTTOMLEFT", "TOPLEFT", 30)
-        debuffs:AddGroup("HARMFUL", { showDebuffBorder = true })
-    end
+    -- below: past the cast capsule and its text, or just the gap when the
+    -- cast sits in the screen's middle
+    PlayerAuras(self, W, DeckOrbsDB.xivCastCenter and -6 or -30)
 end
 
 local function BuildTargetXIV(self, unit)
-    local W = XIV_TARGET_W
-    self:SetSize(W, 30)
+    local W, hb = ns.FrameSize("target")
+    self:SetSize(W, 20 + hb)
     Clicks(self)
 
     local hp = Text(self, 14, "RIGHT")
@@ -777,7 +842,7 @@ local function BuildTargetXIV(self, unit)
     self:Tag(name, "[difficulty]Lv. [level]|r [raidcolor][name]")
     Rank(self, name, 2, 0, W - 90)
 
-    local health = PillBar(self, W, 10)
+    local health = PillBar(self, W, hb)
     health:SetPoint("TOPLEFT", 0, -19)
     health.colorClass = true
     health.colorReaction = true
@@ -795,19 +860,13 @@ local function BuildTargetXIV(self, unit)
     cast.Text = castText
     self.Castbar = cast
 
-    if self.CreateAuras then
-        local auras = AuraRow(self, W, 22, "TOPLEFT", "BOTTOMLEFT", -28)
-        auras.PostCreateButton = StyleTargetAura
-        local filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL"
-        local key = auras:AddGroup(filter, { maxFrameCount = 8, showDebuffBorder = true })
-        table.insert(ns.targetDebuffs, { container = auras, key = key })
-        auras:AddGroup("HELPFUL", { maxFrameCount = 6, showStealableBorder = true })
-    end
+    TargetAuraRows(self, W)
 end
 
--- target of target and pet: a name (and the pet's health) over a short capsule
-local function BuildSmallXIV(self, withHp)
-    self:SetSize(XIV_TOT_W, 30)
+-- target of target and pet: a name (and the pet's health) over a short
+-- capsule; W and hb from the Target of target page for the former
+local function BuildSmallXIV(self, withHp, W, hb)
+    self:SetSize(W, 21 + hb + 3)
     Clicks(self)
     local name = Text(self, 12)
     name:SetPoint("TOPLEFT", 2, 0)
@@ -818,7 +877,7 @@ local function BuildSmallXIV(self, withHp)
         name:SetPoint("RIGHT", hp, "LEFT", -4, 0)
         self:Tag(name, "[raidcolor][name]")
     else
-        name:SetWidth(XIV_TOT_W - 4)
+        name:SetWidth(W - 4)
         self:Tag(name, "[raidcolor][name]")
         -- FFXIV's double chevron between the target's bar and this one
         local chevron = Text(self, 20, "CENTER")
@@ -827,7 +886,7 @@ local function BuildSmallXIV(self, withHp)
         chevron:SetTextColor(0.55, 0.8, 1)
     end
     -- level with the target's bar (its centre 24 px down)
-    local health = PillBar(self, XIV_TOT_W, 6)
+    local health = PillBar(self, W, hb)
     health:SetPoint("TOPLEFT", 0, -21)
     return health
 end
@@ -878,14 +937,16 @@ function ns.SpawnXIVFocus(factory)
 end
 
 local function BuildToTXIV(self, unit)
-    local health = BuildSmallXIV(self, false)
+    local W, hb = ns.FrameSize("tot")
+    local health = BuildSmallXIV(self, false, W, hb)
     health.colorClass = true
     health.colorReaction = true
     self.Health = health
+    ToTDebuffs(self, W, -4)
 end
 
 local function BuildPetXIV(self, unit)
-    local health = BuildSmallXIV(self, true)
+    local health = BuildSmallXIV(self, true, XIV_TOT_W, 6)
     health.colorHealth = true
     health.colorDisconnected = true
     self.Health = health

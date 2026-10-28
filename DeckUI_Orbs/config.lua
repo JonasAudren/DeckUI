@@ -100,6 +100,122 @@ D.RegisterModule("Orbs", {
     end,
 })
 
+-- Player, Target and Target of target: a page each under "Player and
+-- target" (owner's wish 2026-10-28) for the Final Fantasy frames' width,
+-- bar height and where their buffs and debuffs go. oUF builds a frame once,
+-- so every change here reports to the reload bar; `loaded` keeps what this
+-- session was built with, so a value put back clears the request.
+local function Snap(k, get) if loaded[k] == nil then loaded[k] = get() end end
+local function Need(k, v) D.NeedReload("orbs:" .. k, v ~= loaded[k]) end
+local px = function(v) return math.floor(v + 0.5) .. " px" end
+local count = function(v) return tostring(v) end
+local SIDES, SIDE_NAMES = { "below", "above", "off" }, { below = "Below", above = "Above", off = "Off" }
+
+local function Side(label, key, tip)
+    return { label = label, values = SIDES, names = SIDE_NAMES, tip = tip .. " Needs a reload.",
+             get = function() return DeckOrbsDB[key] or "below" end,
+             set = function(v) DeckOrbsDB[key] = v; Need(key, v) end }
+end
+
+local function Plain(key)
+    return function(v) DeckOrbsDB[key] = v; Need(key, v) end
+end
+
+-- width and bar height as a percentage of the style's own numbers: 100%
+-- is the Final Fantasy look as shipped (owner, 2026-10-28)
+local pct = function(v) return math.floor(v + 0.5) .. "%" end
+local function SizeSliders(f, prefix)
+    local sz = ns.FrameSizeDB
+    Snap(prefix .. "Width", function() return sz()[prefix .. "Width"] end)
+    Snap(prefix .. "Bar", function() return sz()[prefix .. "Bar"] end)
+    f:Label("Size (this device)")
+    f:Slider("Width", 50, 200, 5, pct, sz, prefix .. "Width", function(v)
+        sz()[prefix .. "Width"] = v
+        Need(prefix .. "Width", v)
+    end, "100% is the style's own width. Needs a reload.")
+    f:Slider("Bar height", 50, 250, 10, pct, sz, prefix .. "Bar", function(v)
+        sz()[prefix .. "Bar"] = v
+        Need(prefix .. "Bar", v)
+    end, "The health bar's thickness, 100% as shipped; the frame grows with it. Needs a reload.")
+end
+
+D.RegisterModule("FramePlayer", {
+    title = "Player",
+    build = function(c)
+        local f = D.Flow(c)
+        for _, k in ipairs({ "playerAuras", "playerAuraSize", "playerBuffMax", "playerDebuffMax" }) do
+            Snap(k, function() return DeckOrbsDB[k] end)
+        end
+        f:Hint("Your parameter bar in the Final Fantasy styles; the orbs keep their size slider on Player and target. Everything here needs a reload.")
+        SizeSliders(f, "player")
+        f:Label("Buffs and debuffs")
+        f:Cycles(Side("Auras", "playerAuras",
+            "Your buffs in a line above the bar with your debuffs over them, the same below its cast, or not at the bar at all. The buff bar on Player and target replaces them while it is on."))
+        f:Slider("Icon size", 14, 32, 1, px, db, "playerAuraSize", Plain("playerAuraSize"), "Needs a reload.")
+        f:Slider("Buffs at most", 0, 20, 1, count, db, "playerBuffMax", Plain("playerBuffMax"),
+            "In one line - as many as the width holds. Needs a reload.")
+        f:Slider("Debuffs at most", 0, 20, 1, count, db, "playerDebuffMax", Plain("playerDebuffMax"), "Needs a reload.")
+    end,
+})
+
+D.RegisterModule("FrameTarget", {
+    title = "Target",
+    build = function(c)
+        local f = D.Flow(c)
+        for _, k in ipairs({ "targetDebuffs", "targetBuffs", "targetBuffsRight", "targetAuraSize", "targetDebuffMax", "targetBuffMax" }) do
+            Snap(k, function() return DeckOrbsDB[k] end)
+        end
+        f:Hint("The target bar in the Final Fantasy styles. Everything here needs a reload.")
+        SizeSliders(f, "target")
+        f:Label("Buffs and debuffs")
+        f:Cycles(
+            Side("Debuffs", "targetDebuffs", "Its debuffs - yours, or all of them (Player and target) - below the cast, above the bar, or off."),
+            Side("Buffs", "targetBuffs", "Its buffs below the cast, above the bar, or off."))
+        f:Checkbox("Buffs from the right edge", db, "targetBuffsRight", function(v) Need("targetBuffsRight", v) end,
+            "The buffs start at the bar's right edge and grow left, so they share a line with the debuffs without meeting them. Off, they take a line of their own from the left. Needs a reload.")
+        f:Slider("Icon size", 14, 32, 1, px, db, "targetAuraSize", Plain("targetAuraSize"), "Needs a reload.")
+        f:Slider("Debuffs at most", 0, 16, 1, count, db, "targetDebuffMax", Plain("targetDebuffMax"), "Needs a reload.")
+        f:Slider("Buffs at most", 0, 16, 1, count, db, "targetBuffMax", Plain("targetBuffMax"), "Needs a reload.")
+    end,
+})
+
+D.RegisterModule("FrameToT", {
+    title = "Target of target",
+    build = function(c)
+        local f = D.Flow(c)
+        Snap("totDebuffs", function() return DeckOrbsDB.totDebuffs end)
+        f:Hint("The small bar beside the target in the Final Fantasy styles. It sits at the target bar, so it has no place of its own. Everything here needs a reload.")
+        SizeSliders(f, "tot")
+        f:Label("Debuffs")
+        f:Checkbox("Your debuffs under it", db, "totDebuffs", function(v) Need("totDebuffs", v) end,
+            "A line of your debuffs on the target's target, up to six. Needs a reload.")
+    end,
+})
+
+-- Your debuffs have a page of their own under "Player and target" (owner's
+-- wish 2026-10-28, easier to find; D.PAGE_PARENT indents it there).
+D.RegisterModule("Debuffs", {
+    title = "Debuffs",
+    build = function(c)
+        local f = D.Flow(c)
+        f:Hint("The debuffs your specialization keeps up - DoTs, bleeds, a rogue's poisons - one capsule each, for your target and your focus. /orbs dots shows what it sees.")
+        f:Label("Your debuffs")
+        f:Checkbox("Show your debuffs (DoTs, poisons)", db, "dotTracker", ns.SetDotTracker,
+            "One capsule per debuff: a column for your target, a smaller one for your focus. A missing one is an empty capsule with a red edge; the bar turns gold in its last 30%, where refreshing loses nothing. Your other debuffs follow below; a rogue also sees his weapon poisons. What runs here as a bar leaves the target frame's debuff icons.")
+        f:Slider("Width (this device)", 50, 175, 5, pct, ns.DeviceDB, "dotScale", function(v)
+            ns.DeviceDB().dotScale = v
+            ns.ApplyDotWidth()
+        end, "How wide the rows are: 100% as shipped (240 px), 175% the width of the Final Fantasy XIV target bar. The focus column takes a share of it.")
+        f:Checkbox("Show the names", db, "dotNames", function() ns.ApplyDotNames() end,
+            "The debuff's name between icon and capsule. Off, the capsule takes that room and the icon says which debuff it is - hover it for the name.")
+        f:Label("Place")
+        f:Checkbox("At the target frame, no window", db, "dotAttach", function() ns.ApplyDotLayout() end,
+            "Instead of a window of their own, the rows hang bare at your target frame, and the focus column at your focus frame - clear of the frame's own buffs and debuffs. Otherwise move the window with Move below.")
+        f:Checkbox("Above the frame instead of below", db, "dotAbove", function() ns.ApplyDotLayout() end,
+            "With the debuffs at the target frame: above it rather than below.")
+    end,
+})
+
 -- The party list has a tab of its own: the Orbs tab is full, and the
 -- window cannot grow on the Deck's 800-pixel screen. The raid frames got
 -- theirs when they gained their settings (2026-10-02).

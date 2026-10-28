@@ -24,4 +24,5 @@ party.lua
 raid.lua
 buffs.lua
 enemies.lua
+debuffs.lua
 config.lua
