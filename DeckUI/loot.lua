@@ -32,8 +32,26 @@ local function AutoLoot()
     return GetCVarBool("autoLootDefault") ~= IsModifiedClick("AUTOLOOTTOGGLE")
 end
 
+-- Whether a loot is open right now: LOOT_READY/LOOT_OPENED to LOOT_CLOSED.
+-- Every slot call goes through this. Mists crashed the client
+-- (ACCESS_VIOLATION, seven times on 27/28.10) with our window still up after
+-- the loot had closed (owner saw it, 2026-10-28) - a click, a tooltip or a
+-- refill then asks about slots of a loot that is gone.
+local lootOpen = false
+
+-- A slot is only read while it holds something: Blizzard's LootFrame asks
+-- LootSlotHasItem before GetLootSlotInfo (Mists' LootFrame.lua, read
+-- 2026-10-28), and a slot taken a moment ago - a bind-on-pickup item from a
+-- satchel - stayed in our window and was read again; the client crashed.
+local function HasItem(slot)
+    return lootOpen and slot and slot <= GetNumLootItems() and LootSlotHasItem(slot) and true or false
+end
+
 local function TakeAll()
-    for slot = GetNumLootItems(), 1, -1 do LootSlot(slot) end
+    if not lootOpen then return end
+    for slot = GetNumLootItems(), 1, -1 do
+        if HasItem(slot) then LootSlot(slot) end
+    end
 end
 
 -------------------------------------------------------------------
@@ -83,7 +101,7 @@ local rows = {}
 
 local function RowOnEnter(self)
     local slot = self.slot
-    if not slot then return end
+    if not HasItem(slot) then return end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     local kind = GetLootSlotType(slot)
     if kind == Enum.LootSlotType.Item then
@@ -97,7 +115,7 @@ local function RowOnEnter(self)
 end
 
 local function RowOnClick(self)
-    if not self.slot then return end
+    if not HasItem(self.slot) then return end
     if IsModifiedClick() then
         HandleModifiedItemClick(GetLootSlotLink(self.slot))
     else
@@ -147,8 +165,11 @@ end
 
 local function Fill()
     local shown = 0
-    for slot = 1, GetNumLootItems() do
-        local texture, name, quantity, currencyID, quality, locked, isQuestItem, _, _, isCoin = GetLootSlotInfo(slot)
+    for slot = 1, lootOpen and GetNumLootItems() or 0 do
+        local texture, name, quantity, currencyID, quality, locked, isQuestItem, isCoin, _
+        if HasItem(slot) then
+            texture, name, quantity, currencyID, quality, locked, isQuestItem, _, _, isCoin = GetLootSlotInfo(slot)
+        end
         if currencyID and CurrencyContainerUtil then
             name, texture, quantity, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyID, quantity, name, texture, quality)
         end
@@ -190,12 +211,24 @@ end
 
 -- an empty window has nothing to say: ending the loot closes it
 local function Refresh()
-    if Fill() == 0 then CloseLoot() end
+    if Fill() == 0 and lootOpen then CloseLoot() end
 end
 
+-- closed by the player (X, Escape): that ends the loot. Hidden because the
+-- loot closed: nothing to end - CloseLoot inside LOOT_CLOSED is not asked for
 win:SetScript("OnHide", function()
     GameTooltip_Hide()
-    CloseLoot()
+    if lootOpen then CloseLoot() end
+end)
+
+-- the window never outlives its loot: twice a second it checks the loot is
+-- still open (unlocked, it stays as a sample to drag)
+local sinceCheck = 0
+win:SetScript("OnUpdate", function(self, dt)
+    sinceCheck = sinceCheck + dt
+    if sinceCheck < 0.5 then return end
+    sinceCheck = 0
+    if not lootOpen and not D.IsUnlocked("Loot") then self:Hide() end
 end)
 
 -------------------------------------------------------------------
@@ -205,7 +238,10 @@ local function ApplyWindow()
     if not LootFrame then return end
     if DeckUIDB.lootWindow then
         LootFrame:UnregisterEvent("LOOT_OPENED")
-        LootFrame:UnregisterEvent("LOOT_CLOSED")
+        -- Mists' LOOT_CLOSED also hides the bind-on-pickup question
+        -- (LootFrame_Close: StaticPopup_Hide("LOOT_BIND")), which must not
+        -- outlive its loot; the frame itself was never shown
+        if not D.IsMists then LootFrame:UnregisterEvent("LOOT_CLOSED") end
     else
         LootFrame:RegisterEvent("LOOT_OPENED")
         LootFrame:RegisterEvent("LOOT_CLOSED")
@@ -303,8 +339,11 @@ end)
 -- what the slots hold right now, before anything is taken
 local function CaptureSlots()
     local now = GetTime()
-    for slot = 1, GetNumLootItems() do
-        local texture, name, quantity, currencyID, quality, _, _, _, _, isCoin = GetLootSlotInfo(slot)
+    for slot = 1, lootOpen and GetNumLootItems() or 0 do
+        local texture, name, quantity, currencyID, quality, isCoin, _
+        if HasItem(slot) then
+            texture, name, quantity, currencyID, quality, _, _, _, _, isCoin = GetLootSlotInfo(slot)
+        end
         if currencyID and CurrencyContainerUtil then
             name, texture, quantity, quality = CurrencyContainerUtil.GetCurrencyContainerInfo(currencyID, quantity, name, texture, quality)
         end
@@ -328,8 +367,9 @@ end
 -------------------------------------------------------------------
 -- Events
 -------------------------------------------------------------------
-local lootOpen = false
 local captured = false   -- this loot already went into the feed
+local taken = false      -- this loot's slots were already asked for once
+local closed = false     -- LOOT_CLOSED came after this loot's LOOT_READY
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
 ev:RegisterEvent("LOOT_READY")
@@ -367,13 +407,21 @@ ev:SetScript("OnEvent", function(_, event)
     if not DeckUIDB then return end
 
     if event == "LOOT_READY" then
+        -- fires again while a loot is open; a new loot starts after a close
+        if not lootOpen then lootOpen, closed, captured, taken = true, false, false, false end
         local auto = AutoLoot()
         if auto and DeckUIDB.lootWindow and not captured then
             captured = true
             CaptureSlots()
         end
-        if DeckUIDB.fastLoot and auto then TakeAll() end
+        if DeckUIDB.fastLoot and auto and not taken then
+            taken = true
+            TakeAll()
+        end
     elseif event == "LOOT_OPENED" then
+        -- fast loot can empty a corpse before LOOT_OPENED arrives: a loot
+        -- that closed already is not opened again
+        if closed then return end
         lootOpen = true
         if not DeckUIDB.lootWindow then return end
         if AutoLoot() then
@@ -381,8 +429,13 @@ ev:SetScript("OnEvent", function(_, event)
                 captured = true
                 CaptureSlots()
             end
-            -- the slots are being taken; the window only for what stays behind
-            TakeAll()
+            -- the slots are being taken (once - asking twice for a slot that
+            -- cannot be taken, a full quest item, only repeats the refusal);
+            -- the window only for what stays behind
+            if not taken then
+                taken = true
+                TakeAll()
+            end
             C_Timer.After(0.3, function()
                 if lootOpen and Fill() > 0 then win:Show() end
             end)
@@ -392,7 +445,7 @@ ev:SetScript("OnEvent", function(_, event)
             CloseLoot()
         end
     elseif event == "LOOT_CLOSED" then
-        lootOpen, captured = false, false
+        lootOpen, closed, captured, taken = false, true, false, false
         win:Hide()
     elseif win:IsShown() then
         -- LOOT_SLOT_CLEARED / LOOT_SLOT_CHANGED

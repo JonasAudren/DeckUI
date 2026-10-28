@@ -455,13 +455,18 @@ end
 -------------------------------------------------------------------
 local ev = CreateFrame("Frame")
 
+-- CANCEL_ALL_LOOT_ROLLS is retail's only: Mists 5.5.4 throws on it, and the
+-- error ended ApplyLootRolls before rolls already open were read in
+local EVENTS = {}
+for _, e in ipairs({ "START_LOOT_ROLL", "CANCEL_LOOT_ROLL", "CANCEL_ALL_LOOT_ROLLS" }) do
+    if not C_EventUtils or C_EventUtils.IsEventValid(e) then EVENTS[#EVENTS + 1] = e end
+end
+
 function D.ApplyLootRolls()
     local on = DeckUIDB.lootRolls and true or false
     SetBlizzardFaded(on)
     if on then
-        ev:RegisterEvent("START_LOOT_ROLL")
-        ev:RegisterEvent("CANCEL_LOOT_ROLL")
-        ev:RegisterEvent("CANCEL_ALL_LOOT_ROLLS")
+        for _, e in ipairs(EVENTS) do ev:RegisterEvent(e) end
         -- rolls already open (switched on mid-roll, or a /reload)
         wipe(rolls)
         if GetActiveLootRollIDs then
@@ -472,9 +477,7 @@ function D.ApplyLootRolls()
             end
         end
     else
-        ev:UnregisterEvent("START_LOOT_ROLL")
-        ev:UnregisterEvent("CANCEL_LOOT_ROLL")
-        ev:UnregisterEvent("CANCEL_ALL_LOOT_ROLLS")
+        for _, e in ipairs(EVENTS) do ev:UnregisterEvent(e) end
         wipe(rolls)
     end
     Draw()
