@@ -4,9 +4,7 @@ A compact, controller-friendly interface for World of Warcraft on the **Steam De
 
 DeckUI is a hub with nine load-on-demand modules; switch each one on or off on its own page in `/deck`.
 
-**New in 2.1.1: a settings window that folds.** Pages with many options have sub-pages that open under them, the bosses take whichever look you like, and the FFXIV nameplates keep their distance.
-
-**New in 2.1: your debuffs as bars.** A window with the DoTs, bleeds and poisons your specialization keeps up, one capsule each – what is missing shows red, the last 30% gold – for your target and your focus. And the Final Fantasy frames can now be shaped: width, bar height, where buffs and debuffs go. See "DeckUI Orbs" below.
+**New in 2.1: your debuffs as bars, and frames shaped to your liking.** A window with the DoTs, bleeds and poisons your specialization keeps up, one capsule each – what is missing shows red, the last 30% gold – for your target and your focus. The Final Fantasy frames can be shaped: width, bar height, where buffs and debuffs go; the bosses take whichever look you like. The settings window folds into sub-pages, and the FFXIV nameplates keep their distance. See "DeckUI Orbs" below.
 
 **New in 2.0: Mists of Pandaria Classic.** The same download runs in **Retail (Midnight)** and in **MoP Classic** – see "In Mists of Pandaria Classic" below for what each game gets.
 
