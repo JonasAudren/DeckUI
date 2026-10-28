@@ -8,6 +8,42 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.1.0
+
+Your debuffs as bars, the Final Fantasy frames shaped to your liking, and a
+fix for a client crash while looting in Mists of Pandaria Classic.
+
+**Both games**
+
+- **Your debuffs as capsule bars.** A window with the debuffs your
+  specialization keeps up - a warlock's DoTs, a rogue's poisons, bleeds -
+  one bar each, in a fixed order: a column for your target and a smaller one
+  for your focus. A missing one is an empty bar with a red edge while you
+  fight; the bar turns gold in its last 30%, where refreshing loses nothing;
+  your other debuffs follow below, and a rogue sees his weapon poisons.
+  What runs here as a bar leaves the target frame's icons. Options: bare rows
+  at the target frame instead of a window, above or below it; names off for
+  a narrower view; the width. New page "Your debuffs" under "Player and
+  target"; /orbs dots says what it sees. Lists cover Mists' specializations;
+  in retail the window shows your other debuffs until the lists follow.
+- **Player, Target and Target of target pages.** The Final Fantasy frames
+  can be shaped: width and bar height as a percentage of the shipped look
+  (per device), where buffs and debuffs go (above, below or off, each), the
+  icon size and how many. The target's buffs now sit from the right edge,
+  apart from its debuffs. Under "Player and target"; changes take a reload.
+- **Mail senders in the server info.** With the server info on, its tooltip
+  names who the unread mail is from, and the letter at the minimap goes.
+
+**Mists of Pandaria Classic**
+
+- **Fixed a client crash while looting** (ACCESS_VIOLATION): the loot window
+  could outlive the loot it showed - a bind-on-pickup item from a satchel,
+  a full quest item - and the next click or tooltip asked the game about
+  loot that was gone. Every loot call now checks the loot is still open and
+  the slot still holds something.
+- **Fixed an error when switching the loot roll window on or off** (an event
+  that only retail has).
+
 ## 2.0.4
 
 The week overview in Mists of Pandaria Classic now keeps track of your
