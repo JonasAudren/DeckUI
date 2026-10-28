@@ -8,7 +8,8 @@ local D = DeckUI
 -- page, all off by default and undone by unticking - hidden at once, their
 -- events and timers stopped, nothing of Blizzard's touched.
 --   Server info (DeckUIDB.infoServer): realm, a letter when mail waits,
---     latency and the time, on a dark band ("Server-Info").
+--     latency and the time, on a dark band ("Server-Info"). Its tooltip
+--     names the senders; the minimap's letter is faded meanwhile.
 --   Gold (DeckUIDB.infoGold): the gold you carry with a coin ("Gil").
 --   Bag overview (DeckUIDB.infoBags): one block of dots per bag, bright
 --     for a used slot, dark for a free one ("Inventarschema"). A click
@@ -169,7 +170,14 @@ Tooltip(server, function(tip)
     tip:AddDoubleLine("Latency home / world", ("%d / %d ms"):format(home or 0, world or 0), 1, 1, 1, 1, 1, 1)
     local h, m = GetGameTime()
     tip:AddDoubleLine("Realm time", ("%02d:%02d"):format(h, m), 1, 1, 1, 1, 1, 1)
-    if HasNewMail() then tip:AddLine("Mail is waiting.", 1, 0.82, 0) end
+    if HasNewMail() then
+        -- who it is from, as the minimap's letter told it (Blizzard's
+        -- MinimapMailFrameUpdate, the same three senders in both games)
+        local senders = { GetLatestThreeSenders() }
+        tip:AddLine(" ")
+        tip:AddLine(#senders > 0 and (HAVE_MAIL_FROM or "Unread mail from:") or (HAVE_MAIL or "You have unread mail"), 1, 0.82, 0)
+        for _, name in ipairs(senders) do tip:AddLine("  " .. name, 1, 1, 1) end
+    end
 
     local share, addonMs = AddonShare()
     if addonMs then
@@ -345,8 +353,43 @@ local function SetBagBarHidden(hide)
     end
 end
 
+-- The minimap's letter goes while the server info shows (owner's wish
+-- 2026-10-28): the letter and the senders are there. Faded, never hidden
+-- or moved - Blizzard shows and hides it on every mail change, and in
+-- retail it sits in the indicator frame's layout beside crafting orders.
+-- Alpha 0 is held by a SetAlpha post-hook, the mouse goes off, and both
+-- come back when the server info is switched off.
+local mailFaded = false
+local mailHooked, mailMouse = {}, {}
+local function MinimapMail()
+    if D.IsMists then return _G.MiniMapMailFrame end
+    return MinimapCluster and MinimapCluster.IndicatorFrame and MinimapCluster.IndicatorFrame.MailFrame
+end
+
+local function SetMinimapMailFaded(state)
+    mailFaded = state
+    local f = MinimapMail()
+    -- never faded: nothing of Blizzard's to give back
+    if not f or (not state and not mailHooked[f]) then return end
+    if not mailHooked[f] then
+        mailHooked[f] = true
+        hooksecurefunc(f, "SetAlpha", function(self, alpha)
+            if mailFaded and alpha ~= 0 then self:SetAlpha(0) end
+        end)
+    end
+    if state then
+        if mailMouse[f] == nil then mailMouse[f] = f:IsMouseEnabled() end
+        f:EnableMouse(false)
+    elseif mailMouse[f] ~= nil then
+        f:EnableMouse(mailMouse[f])
+        mailMouse[f] = nil
+    end
+    f:SetAlpha(state and 0 or 1)
+end
+
 function D.ApplyInfoBars()
     server:SetShown(DeckUIDB.infoServer and true or false)
+    SetMinimapMailFaded(DeckUIDB.infoServer and true or false)
     if server:IsShown() then UpdateServer() end
     gold:SetShown(DeckUIDB.infoGold and true or false)
     if InCombatLockdown() then
