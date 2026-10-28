@@ -150,6 +150,18 @@ local function Step()
         end
         return
     end
+    -- Mists: the tooltip scanner is off unless asked for (Windows page,
+    -- DeckUIDB.questBookScan). A quest link the client cannot resolve makes
+    -- it fetch the quest from the server, five times a second, for
+    -- hundreds of quests - and the client crashed (ACCESS_VIOLATION) nine
+    -- times on 27/28.10 while this ran, mostly at loot, which fetches item
+    -- data the same way. Not proven, but the loot window was ruled out
+    -- first; names of quests never seen in a log stay numbers meanwhile.
+    if not C_QuestLog.RequestLoadQuestByID and not DeckUIDB.questBookScan then
+        wipe(queue)
+        wipe(queued)
+        return
+    end
     local id = table.remove(queue)
     if not id then return end
     queued[id] = nil
