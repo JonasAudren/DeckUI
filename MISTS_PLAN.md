@@ -1,6 +1,6 @@
 # DeckUI für Mists of Pandaria Classic – Migrationsplan
 
-Stand: 25.10.2026 · Grundlage: DeckUI 1.7.1 (Retail 12.1.5) · Ziel-Client: **MoP Classic 5.5.4, Build 70579**
+Stand: 25.10.2026 · Grundlage: DeckUI 1.7.1 (Retail 12.1.5) · Ziel-Client: **MoP Classic 5.5.4, Build 70631** (seit 28.10.2026; geplant auf 70579, UI-Code gleich)
 Noch nichts am Addon geändert – dies ist nur der Plan plus vorbereitete Werkzeuge (`tools/mists/`).
 
 ---
@@ -45,8 +45,8 @@ Abschnitt 3a und sind unten eingearbeitet. Die wichtigsten:
 
 | Quelle | Inhalt |
 |---|---|
-| Installierter Client | `C:\Spiele\World of Warcraft\_classic_`, Produkt `wow_classic`, **5.5.4.70579** (`.build.info`) |
-| Blizzards UI-Code MoP | Gethe/wow-ui-source, Branch `classic`, Commit `eb90f45fdf` = exakt 5.5.4 (70579) |
+| Installierter Client | `C:\Spiele\World of Warcraft\_classic_`, Produkt `wow_classic`, **5.5.4.70631** (`.build.info`, Update am 28.10.2026; vorher 70579) |
+| Blizzards UI-Code MoP | Gethe/wow-ui-source, Branch `classic`, Commit `eb90f45fdf` = exakt 5.5.4 (70579); `e5d9b3a22c` = 70631 ändert nur `version.txt` |
 | Blizzards UI-Code Retail | Branch `live`, 12.1.5 (70448) – zum Vergleich |
 | Spieldaten MoP | wago.tools `?branch=wow_classic` liefert 5.5.4.70579 (z. B. Tapferkeit 396, Eroberung 390, Zeitlose Münzen 777, Kriegsgeschmiedetes Siegel 776) |
 | Interface-Nummer | **50504** (5.5.4 → 5|05|04; andere installierte MoP-Addons nutzen 50504) |
