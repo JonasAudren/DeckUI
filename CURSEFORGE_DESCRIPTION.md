@@ -4,6 +4,8 @@ A compact, controller-friendly interface for World of Warcraft on the **Steam De
 
 DeckUI is a hub with nine load-on-demand modules; switch each one on or off on its own page in `/deck`.
 
+**New in 2.1: your debuffs as bars.** A window with the DoTs, bleeds and poisons your specialization keeps up, one capsule each – what is missing shows red, the last 30% gold – for your target and your focus. And the Final Fantasy frames can now be shaped: width, bar height, where buffs and debuffs go. See "DeckUI Orbs" below.
+
 **New in 2.0: Mists of Pandaria Classic.** The same download runs in **Retail (Midnight)** and in **MoP Classic** – see "In Mists of Pandaria Classic" below for what each game gets.
 
 **New in 1.7: Final Fantasy XIV's look** – capsule bars for you and your target, FFXIV's hotbars, nameplates, enemy list, scenario guide, round minimap and main menu, all as options to tick. And the Steam Deck now sets itself up again by itself after you played on the PC.
@@ -22,6 +24,8 @@ The module list below describes Retail.
 - Or **in Final Fantasy style**: HP/MP bars with numbers for you, a wide target bar at the top with cast, status icons and the target's target – and the bosses as FFXIV's **enemy list**: health, whom the boss is after, a red edge while it is you, its cast (grey when it cannot be interrupted) and your debuffs
 - Or **closer still to Final Fantasy XIV** (new in 1.7): rounded glossy bars without a box, HP and MP side by side with large numbers, the target as one long bar with its own target beside it, the focus as FFXIV's small focus box – and **FFXIV's experience bar** in place of Blizzard's (class, level and EXP; at the level cap the reputation you watch). Your cast can move to the **middle of the screen** with its icon and the time left
 - **Enemy list** (optional): the enemies fighting you or your group, one row each – a square that turns red while it targets you, raid marker, name and health, your current target lit
+- **Your debuffs as bars** (optional, new in 2.1): the debuffs your specialization keeps up – a warlock's DoTs, a rogue's poisons, bleeds – one capsule bar each in a fixed order, a column for your target and a smaller one for your focus. A missing one is an empty bar with a red edge while you fight, the bar turns gold in its last 30% where refreshing loses nothing, your other debuffs follow below, and a rogue sees his weapon poisons. What runs here as a bar leaves the target frame's icons. As a window of its own, or bare rows above or below the target frame; names on or off; width to taste. Page "Your debuffs" under "Player and target"
+- **Player, Target and Target of target pages** (new in 2.1): the Final Fantasy frames shaped to your liking – width and bar height as a percentage of the shipped look, buffs and debuffs above, below or off, each, their icon size and how many; the target's buffs sit from the right edge, apart from its debuffs
 
 ## Group – party list and raid frames
 - **Party list in Final Fantasy XIV style**: class icon, role, health and resource bars, your buffs and all debuffs (dispellable ones marked), your target highlighted, faded out of range – stacked or side by side
