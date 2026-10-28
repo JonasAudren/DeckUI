@@ -8,6 +8,34 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.1.1
+
+A tidier settings window, the bosses in whichever look you like, and
+another step against the client crash in Mists of Pandaria Classic.
+
+**Both games**
+
+- **The settings window folds.** Pages with many options now have
+  sub-pages, listed under their page only while it is open - a ">" marks a
+  page that has some - and the sidebar scrolls. The Overview keeps the
+  modules and the error list; Screen, Targets and Windows take the rest.
+  Player and target gains Buff bar and Enemies and bosses; the Cross hotbar
+  a Controller page; Maps a Minimap and a World map page; Tooltip an Extras
+  page. Every option is still there, with Move and Defaults per page.
+- **Boss look of its own.** The bosses as orbs, as Final Fantasy's enemy
+  list on dark panels, or as capsule bars without a box - whatever your own
+  frames look like. Enemies and bosses page; takes a reload.
+- **Room between nameplates.** With the FFXIV nameplates on, the game stacks
+  its plates instead of letting them overlap, with space between them. Your
+  own nameplate settings come back when you switch it off. Targets page.
+
+**Mists of Pandaria Classic**
+
+- **The quest book no longer loads names in the background.** The client
+  crashed while it fetched quests it had never seen; those quests show
+  their number until you meet them. A switch on the Windows page brings the
+  loading back if you want to risk it.
+
 ## 2.1.0
 
 Your debuffs as bars, the Final Fantasy frames shaped to your liking, and a

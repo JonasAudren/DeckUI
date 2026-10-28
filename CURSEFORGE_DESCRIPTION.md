@@ -4,6 +4,8 @@ A compact, controller-friendly interface for World of Warcraft on the **Steam De
 
 DeckUI is a hub with nine load-on-demand modules; switch each one on or off on its own page in `/deck`.
 
+**New in 2.1.1: a settings window that folds.** Pages with many options have sub-pages that open under them, the bosses take whichever look you like, and the FFXIV nameplates keep their distance.
+
 **New in 2.1: your debuffs as bars.** A window with the DoTs, bleeds and poisons your specialization keeps up, one capsule each – what is missing shows red, the last 30% gold – for your target and your focus. And the Final Fantasy frames can now be shaped: width, bar height, where buffs and debuffs go. See "DeckUI Orbs" below.
 
 **New in 2.0: Mists of Pandaria Classic.** The same download runs in **Retail (Midnight)** and in **MoP Classic** – see "In Mists of Pandaria Classic" below for what each game gets.
@@ -25,6 +27,7 @@ The module list below describes Retail.
 - Or **closer still to Final Fantasy XIV** (new in 1.7): rounded glossy bars without a box, HP and MP side by side with large numbers, the target as one long bar with its own target beside it, the focus as FFXIV's small focus box – and **FFXIV's experience bar** in place of Blizzard's (class, level and EXP; at the level cap the reputation you watch). Your cast can move to the **middle of the screen** with its icon and the time left
 - **Enemy list** (optional): the enemies fighting you or your group, one row each – a square that turns red while it targets you, raid marker, name and health, your current target lit
 - **Your debuffs as bars** (optional, new in 2.1): the debuffs your specialization keeps up – a warlock's DoTs, a rogue's poisons, bleeds – one capsule bar each in a fixed order, a column for your target and a smaller one for your focus. A missing one is an empty bar with a red edge while you fight, the bar turns gold in its last 30% where refreshing loses nothing, your other debuffs follow below, and a rogue sees his weapon poisons. What runs here as a bar leaves the target frame's icons. As a window of its own, or bare rows above or below the target frame; names on or off; width to taste. Page "Your debuffs" under "Player and target"
+- **Boss look of your own** (new in 2.1.1): the bosses as orbs, as Final Fantasy's enemy list on dark panels, or as capsule bars without a box - apart from what your own frames look like
 - **Player, Target and Target of target pages** (new in 2.1): the Final Fantasy frames shaped to your liking – width and bar height as a percentage of the shipped look, buffs and debuffs above, below or off, each, their icon size and how many; the target's buffs sit from the right edge, apart from its debuffs
 
 ## Group – party list and raid frames
@@ -116,7 +119,7 @@ The module list below describes Retail.
 - The auction house window itself can wear DeckUI's dark, flat look (optional)
 
 ## Final Fantasy XIV around the screen (optional, new in 1.7)
-- **Enemy nameplates** like FFXIV's: level, marker and name with a thin red health bar under it – Blizzard's plate stays underneath, so clicking still targets
+- **Enemy nameplates** like FFXIV's: level, marker and name with a thin red health bar under it – Blizzard's plate stays underneath, so clicking still targets; the game keeps them apart instead of letting them overlap (new in 2.1.1, switchable)
 - **An arrow over your target**, bobbing, red for enemies and green for friends
 - **Main menu as round buttons** with a gold ring that lights up when a button has news
 - **Server info**: realm, frame rate, addon CPU share, memory, latency, waiting mail and the time – each value on its own switch, the busiest addons on mouse-over
@@ -149,7 +152,7 @@ All ten modules run in MoP Classic too, from the same download. What differs is 
 Everything was played on the PC. The Steam Deck parts are all there in MoP but **not yet tested on the Steam Deck** – please report what does not work.
 
 ## The settings window
-`/deck` opens one window with the pages in a sidebar, grouped by theme, and every page scrolls. Each module is switched on or off at the top of its own page; modules that are off are listed in grey and say what they do. Explanations sit in the tooltips, and a bar at the bottom says when a change needs a reload – with a button that does it. At the bottom of every page, **Move** unlocks just that page's frames and **Defaults** puts its settings back. `/deck raid`, `/deck bags`, `/deck week` and so on open a page directly.
+`/deck` opens one window with the pages in a sidebar, grouped by theme, and every page scrolls. Pages with many options have sub-pages, which open under the page while it is on show (a ">" marks a page that has some). Each module is switched on or off at the top of its own page; modules that are off are listed in grey and say what they do. Explanations sit in the tooltips, and a bar at the bottom says when a change needs a reload – with a button that does it. At the bottom of every page, **Move** unlocks just that page's frames and **Defaults** puts its settings back. `/deck raid`, `/deck bags`, `/deck week` and so on open a page directly.
 
 ## Steam Deck and PC
 DeckUI detects the device automatically (1280x800 screen or an active gamepad = Steam Deck) and switches input accordingly. Override it in `/deck` → Devices → Device, or with `/deck deck`, `/deck pc` and `/deck auto`.
