@@ -114,11 +114,23 @@ local function RowOnEnter(self)
     GameTooltip:Show()
 end
 
+-- A tooltip set with SetLootItem keeps pointing at its slot. Rows are
+-- reused, so after a slot is taken its row stays shown for the next one
+-- and the tooltip would go on reading a slot that is gone - Mists crashed
+-- the client on exactly that click (2026-10-29, tenth time). Blizzard's
+-- LootFrame hides the button, which takes the tooltip with it. Ours drops
+-- the tooltip before every take and every refill.
+local function DropTooltip()
+    local owner = GameTooltip:GetOwner()
+    if owner and (owner == win or owner:GetParent() == win) then GameTooltip:Hide() end
+end
+
 local function RowOnClick(self)
     if not HasItem(self.slot) then return end
     if IsModifiedClick() then
         HandleModifiedItemClick(GetLootSlotLink(self.slot))
     else
+        DropTooltip()
         LootSlot(self.slot)
     end
 end
@@ -164,6 +176,7 @@ local function NewLook(link)
 end
 
 local function Fill()
+    DropTooltip()
     local shown = 0
     for slot = 1, lootOpen and GetNumLootItems() or 0 do
         local texture, name, quantity, currencyID, quality, locked, isQuestItem, isCoin, _
@@ -209,9 +222,15 @@ local function Fill()
     return shown
 end
 
--- an empty window has nothing to say: ending the loot closes it
+-- an empty window has nothing to say: ending the loot closes it - a frame
+-- later, never inside the engine's own LOOT_SLOT_CLEARED (2026-10-29: the
+-- loot was ended while the client was still clearing its slot)
 local function Refresh()
-    if Fill() == 0 and lootOpen then CloseLoot() end
+    if Fill() == 0 and lootOpen then
+        C_Timer.After(0, function()
+            if lootOpen and Fill() == 0 then CloseLoot() end
+        end)
+    end
 end
 
 -- closed by the player (X, Escape): that ends the loot. Hidden because the
@@ -442,7 +461,9 @@ ev:SetScript("OnEvent", function(_, event)
         elseif Fill() > 0 then
             win:Show()
         else
-            CloseLoot()
+            C_Timer.After(0, function()
+                if lootOpen and Fill() == 0 then CloseLoot() end
+            end)
         end
     elseif event == "LOOT_CLOSED" then
         lootOpen, closed, captured, taken = false, true, false, false

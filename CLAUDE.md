@@ -182,7 +182,10 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   window still up after the loot had closed - fixed 2026-10-28 on that suspicion, not yet confirmed.
   It crashed once more (a bind-on-pickup item from a satchel, its row still shown): **a slot is read
   only while `LootSlotHasItem(slot)`** - Blizzard's Mists LootFrame asks that before every
-  GetLootSlotInfo. In Mists LootFrame keeps LOOT_CLOSED, whose handler hides the LOOT_BIND question. The one Blizzard call that writes elsewhere is
+  GetLootSlotInfo. Crash number ten (2026-10-29, a click on a row, the quest book scanner off): **the
+  tooltip is dropped before every `LootSlot` and every refill** - `SetLootItem` keeps pointing at its slot,
+  and a reused row kept a tooltip of a slot already taken; and `CloseLoot` never runs inside a loot event
+  (one frame later). Held in the owner's first test the same day. In Mists LootFrame keeps LOOT_CLOSED, whose handler hides the LOOT_BIND question. The one Blizzard call that writes elsewhere is
   `HandleModifiedItemClick` on a modified click (chat link, dressing room).
 - **Loot rolls** (`DeckUI/lootroll.lua`, `DeckUIDB.lootRolls`, "Loot and merchant" page, off, live;
   tested in game (Mists) 2026-10-27, retail not yet; owner's wish 2026-10-27). Both games still roll (retail too, Transmog
