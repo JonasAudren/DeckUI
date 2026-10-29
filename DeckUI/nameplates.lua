@@ -232,20 +232,68 @@ end
 -- either is switched off (kept in DeckUIDB.plateCVars until then).
 local SPACED = { nameplateMotion = "1", nameplateOverlapV = "1.8" }
 
+-- The CVars alone were not enough (2026-10-29): the engine stacks by the
+-- plate's own size, and ours is wider than Blizzard's. Reading a plate's
+-- position is no way out - plates are restricted regions, GetCenter fails
+-- ("Can't measure restricted regions", taint). So the plate size the engine
+-- stacks by (C_NamePlate.SetNamePlateSize, what oUF's nameplate driver
+-- sets) is made ours plus a margin, out of combat; the player's size goes
+-- back with the CVars (DeckUIDB.plateCVars.size). Blizzard's own driver
+-- sets the size again when the display changes, so ours is re-applied
+-- after each of its calls. Friendly plates share the size.
+local SIZE_W, SIZE_H = W + 16, 24
+local sizing, wantSize
+
+local function SetSize(w, h)
+    if not (C_NamePlate and C_NamePlate.SetNamePlateSize) then return end
+    if InCombatLockdown() then
+        wantSize = { w, h }
+        return
+    end
+    wantSize = nil
+    sizing = true
+    pcall(C_NamePlate.SetNamePlateSize, w, h)
+    sizing = false
+end
+
+local sizeEv = CreateFrame("Frame")
+sizeEv:RegisterEvent("PLAYER_REGEN_ENABLED")
+sizeEv:SetScript("OnEvent", function()
+    if wantSize then SetSize(wantSize[1], wantSize[2]) end
+end)
+
+if C_NamePlate and C_NamePlate.SetNamePlateSize then
+    hooksecurefunc(C_NamePlate, "SetNamePlateSize", function()
+        if sizing or not (DeckUIDB and DeckUIDB.plateCVars) then return end
+        C_Timer.After(0, function()
+            if DeckUIDB.plateCVars then SetSize(SIZE_W, SIZE_H) end
+        end)
+    end)
+end
+
 local function ApplySpacing(on)
     if on then
-        if not DeckUIDB.plateCVars then
-            DeckUIDB.plateCVars = {}
-            for k in pairs(SPACED) do DeckUIDB.plateCVars[k] = GetCVar(k) end
+        local saved = DeckUIDB.plateCVars
+        if not saved then
+            saved = {}
+            for k in pairs(SPACED) do saved[k] = GetCVar(k) end
+            DeckUIDB.plateCVars = saved
+        end
+        if not saved.size and C_NamePlate and C_NamePlate.GetNamePlateSize then
+            local w, h = C_NamePlate.GetNamePlateSize()
+            if w and h then saved.size = { w, h } end
         end
         for k, v in pairs(SPACED) do
             if GetCVar(k) ~= v then SetCVar(k, v) end
         end
+        SetSize(SIZE_W, SIZE_H)
     elseif DeckUIDB.plateCVars then
-        for k, v in pairs(DeckUIDB.plateCVars) do
-            if v then SetCVar(k, v) end
-        end
+        local saved = DeckUIDB.plateCVars
         DeckUIDB.plateCVars = nil
+        for k in pairs(SPACED) do
+            if saved[k] then SetCVar(k, saved[k]) end
+        end
+        if saved.size then SetSize(saved.size[1], saved.size[2]) end
     end
 end
 
@@ -282,4 +330,13 @@ function D.PlatesDebug()
         DeckUIDB.plateSpace and "on" or "off", tostring(GetCVar("nameplateMotion")), tostring(GetCVar("nameplateOverlapV")),
         DeckUIDB.plateCVars and (" (yours: %s / %s)"):format(tostring(DeckUIDB.plateCVars.nameplateMotion),
             tostring(DeckUIDB.plateCVars.nameplateOverlapV)) or ""))
+    if C_NamePlate and C_NamePlate.GetNamePlateSize then
+        local w, h = C_NamePlate.GetNamePlateSize()
+        local saved = DeckUIDB.plateCVars and DeckUIDB.plateCVars.size
+        print(("  plate size %s x %s (ours %d x %d%s)%s"):format(tostring(w), tostring(h), SIZE_W, SIZE_H,
+            saved and (", yours %s x %s"):format(tostring(saved[1]), tostring(saved[2])) or "",
+            wantSize and ", waiting for the end of combat" or ""))
+    else
+        print("  plate size: no C_NamePlate.GetNamePlateSize in this client")
+    end
 end
