@@ -638,7 +638,16 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   read 2026-10-08; its filters are exclude/includeSpellIDs, dispel types, boss/role/priority
   flags, isFromPlayerOrPlayerPet, maxDuration - which drops permanent auras too). Right click
   cancels (`cancelButton`). `BuffFrame`/`DebuffFrame` are parked under a hidden parent (Edit
-  Mode never re-parents them). The player orb / FF bar drops its own auras while it is on.
+  Mode never re-parents them). **Temporary weapon enchants** (imbues, oils, stones; 2026-10-30,
+  not yet tested in game) are item enchantment slots of the buff container, laid out first so
+  they lead the buffs at the right edge: retail's `AddItemEnchantment` / `SetItemEnchantmentLayout`
+  (Blizzard_AuraContainer, read 2026-10-30; the button fed like an aura's), in Mists the stand-in
+  reads `GetWeaponEnchantInfo` on WEAPON_ENCHANT_CHANGED / WEAPON_SLOT_CHANGED (`ns.MistsEnchantSlots`;
+  no right-click cancel there, `CancelItemTempEnchantment` is protected). Blizzard's parked frame
+  had taken them with it. The container **sizes itself** to its content once a group is added
+  (`OnLayoutComplete`), so a `SetSize` on it only matters before; the engine applies
+  `initializeFrame` before the button's access restrictions, so `PostCreateButton` may still
+  create textures on buttons made later in the session. The player orb / FF bar drops its own auras while it is on.
   Movable "Buffs"; icon height and buffs per row per device (`buffSize`, `buffPerRow`); 8 debuffs.
 - **Party list** (`DeckUI_Orbs/party.lua`, `DeckOrbsDB.showParty`, off by default, needs a
   /reload; tested in game 2026-10-01): FFXIV-style rows on oUF's group header - Blizzard's
