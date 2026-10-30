@@ -18,6 +18,8 @@ local _, ns = ...
 --    SetTooltipAnchorPoint, SetHideTooltipInCombat
 --  candidate filters: maxDuration (drops permanent auras, as retail's
 --    does), includeSpellIDs, excludeSpellIDs, isFromPlayerOrPlayerPet
+--  weapon enchants: AddItemEnchantment / SetItemEnchantmentLayout (the
+--    buff bar, buffs.lua) from GetWeaponEnchantInfo, laid out first
 --
 -- The data is C_UnitAuras.GetAuraDataByIndex, which Mists has; tooltip and
 -- cancel are what Blizzard's own buff buttons there call (SetUnitAura,
@@ -26,6 +28,13 @@ local _, ns = ...
 -- UNIT_AURA once per frame at most.
 -------------------------------------------------------------------
 ns.MistsFlowAxis = { Horizontal = "H", Vertical = "V" }
+
+-- Temporary weapon enchants (buffs.lua, WeaponEnchants): slot numbers of our
+-- own, Mists has no AuraContainerItemEnchantmentSlot. The number is the item
+-- index GetWeaponEnchantInfo counts (1 main hand, 2 off hand, 3 ranged - no
+-- such slot in Mists, read as nil) and 15 + it the inventory slot.
+ns.MistsEnchantSlots = { MainHand = 1, OffHand = 2, Ranged = 3 }
+local ENCHANT_RETURNS = 4   -- per item: hasEnchant, expiration (ms), charges, enchantID
 
 local DEBUFF_BORDER = "Interface\\Buttons\\UI-Debuff-Overlays"   -- oUF 1.x's border
 local NO_DISPEL = CreateColor(0.8, 0, 0)
@@ -65,15 +74,22 @@ function buttonMixin:SetCancelAuraButtons(buttons)
 end
 
 local function OnEnter(self)
-    if not self.mIndex or (self.mTipHideInCombat and InCombatLockdown()) then return end
+    if self.mTipHideInCombat and InCombatLockdown() then return end
+    if not (self.mIndex or self.mInvSlot) then return end
     GameTooltip:SetOwner(self, self.mTipAnchor or "ANCHOR_BOTTOMLEFT", self.mTipX or 0, self.mTipY or 0)
-    GameTooltip:SetUnitAura(self.mUnit, self.mIndex, self.mFilter)
+    if self.mInvSlot then
+        GameTooltip:SetInventoryItem("player", self.mInvSlot)   -- a weapon enchant: the weapon's tooltip
+    else
+        GameTooltip:SetUnitAura(self.mUnit, self.mIndex, self.mFilter)
+    end
 end
 
 local function OnLeave()
     GameTooltip:Hide()
 end
 
+-- A weapon enchant (mIndex nil) is not cancelled: CancelItemTempEnchantment
+-- is a protected call, Blizzard's own buff frame alone may make it.
 local function OnClick(self)
     if self.mCancel and self.mIndex and not InCombatLockdown() and self.mFilter:find("HELPFUL") then
         CancelUnitBuff(self.mUnit, self.mIndex, self.mFilter)
@@ -95,7 +111,7 @@ local function UpdateTime(self, now)
 end
 
 local function Paint(self, aura, unit, index, filter)
-    self.mUnit, self.mIndex, self.mFilter = unit, index, filter
+    self.mUnit, self.mIndex, self.mFilter, self.mInvSlot = unit, index, filter, nil
     if self.mIcon then self.mIcon:SetTexture(aura.icon) end
 
     local count = aura.applications
@@ -144,6 +160,22 @@ local function Paint(self, aura, unit, index, filter)
     self:Show()
 end
 
+-- a temporary weapon enchant as a status: the weapon's icon, the charges
+-- as count, the time left below; no swipe - the game tells only what is
+-- left, not how long it was
+local function PaintEnchant(self, invSlot, expiration, charges)
+    self.mUnit, self.mIndex, self.mFilter, self.mInvSlot = nil, nil, nil, invSlot
+    if self.mIcon then self.mIcon:SetTexture(GetInventoryItemTexture("player", invSlot)) end
+    if self.mCount then self.mCount:SetText((charges and charges > 1) and charges or "") end
+    if self.mCooldown then self.mCooldown:Clear() end
+    self.mExpires = (expiration and expiration > 0) and (GetTime() + expiration / 1000) or nil
+    if self.mTime then
+        if self.mExpires then UpdateTime(self, GetTime()) else self.mTime:SetText("") end
+    end
+    for _, d in ipairs(self.mDispel or {}) do d.texture:Hide() end
+    self:Show()
+end
+
 -------------------------------------------------------------------
 -- The container
 -------------------------------------------------------------------
@@ -166,6 +198,30 @@ function containerMixin:AddAuraSlot(key, filter, options)
     options = options or {}
     options.maxFrameCount = 1
     self:AddAuraGroup(key, filter, options)
+end
+
+-- Temporary weapon enchants, one pseudo-group laid out before the aura
+-- groups (retail's default placement). Only for "player"; the enchant
+-- events are Blizzard's own buff frame's. hidePermanent is moot here:
+-- GetWeaponEnchantInfo knows temporary enchants only.
+function containerMixin:AddItemEnchantment(slot, options)
+    options = options or {}
+    local g = self.mEnchants
+    if not g then
+        g = { options = { initializeFrame = options.initializeFrame, layout = {} }, buttons = {}, slots = {} }
+        self.mEnchants = g
+        for _, event in ipairs({ "WEAPON_ENCHANT_CHANGED", "WEAPON_SLOT_CHANGED" }) do
+            pcall(self.RegisterEvent, self, event)
+        end
+        pcall(self.RegisterUnitEvent, self, "UNIT_INVENTORY_CHANGED", "player")
+    end
+    g.slots[#g.slots + 1] = slot
+    self:MarkDirty()
+end
+
+function containerMixin:SetItemEnchantmentLayout(layout)
+    if self.mEnchants then self.mEnchants.options.layout = layout or {} end
+    self:MarkDirty()
 end
 
 function containerMixin:SetAuraGroupCandidateFilters(key, filters)
@@ -293,6 +349,26 @@ function containerMixin:UpdateAllAuras()
     self.mDirty = false
     local unit = self.mUnit
     local shown = {}
+    local g = self.mEnchants
+    if g then
+        local n = 0
+        if self.mEnabled and unit == "player" then
+            local info = { GetWeaponEnchantInfo() }
+            for _, slot in ipairs(g.slots) do
+                local at = ENCHANT_RETURNS * (slot - 1)
+                if info[at + 1] then
+                    n = n + 1
+                    local b = self:Button(g, n)
+                    PaintEnchant(b, 15 + slot, info[at + 2], info[at + 3])
+                    shown[#shown + 1] = { group = g, button = b, newGroup = n == 1 }
+                end
+            end
+        end
+        for i = n + 1, #g.buttons do
+            g.buttons[i]:Hide()
+            g.buttons[i].mInvSlot = nil
+        end
+    end
     for _, group in ipairs(self.mGroups) do
         local list = (self.mEnabled and unit and UnitExists(unit))
             and Collect(unit, group.filter, group.options.candidateFilters, group.options.maxFrameCount) or {}

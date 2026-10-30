@@ -8,6 +8,16 @@ Without a matching section a release falls back to the commit subjects,
 which is duller but never blocks a release. A pre-release reads the section
 of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
+## 2.1.2
+
+**Both games**
+
+- **Weapon enchants in the buff bar.** A shaman's imbues, oils and
+  sharpening stones show at the right end of the buff bar with their time
+  left and charges, where Blizzard's buff frame used to show them - with
+  the bar on they had no place at all. In Mists of Pandaria Classic a right
+  click does not remove one; the game keeps that to its own frame.
+
 ## 2.1.1
 
 A tidier settings window, the bosses in whichever look you like, and

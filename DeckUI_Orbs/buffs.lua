@@ -116,10 +116,32 @@ local function Block(self, w, h, count, rows, anchor)
     auras.width, auras.height = w, h
     auras.elementSpacing = GAP
     auras.lineSpacing = TEXT
+    auras.groupSpacing = GAP   -- between the weapon enchants and the buffs
     auras.showCount = true
     auras.showDuration = true
     auras.PostCreateButton = Style
     return auras
+end
+
+-- Temporary weapon enchants - a shaman's imbues, oils, sharpening stones -
+-- are no auras: Blizzard's buff frame reads them off the weapon slots, so
+-- with it parked they were gone (2026-10-30). The container takes them as
+-- item enchantment slots: in retail Blizzard_AuraContainer's own
+-- AddItemEnchantment (C_PaperDollInfo.GetTemporaryEnchantmentInfo behind
+-- it, the button fed like an aura's), in Mists the stand-in's reading of
+-- GetWeaponEnchantInfo (auras_mists.lua). Laid out before the buffs, so
+-- they sit at the right edge, shaped like a buff; a permanent enchant is
+-- no status (hidePermanent). The buttons come from the same initializer
+-- oUF gave the buff group, which AddGroup leaves in its options table.
+local function WeaponEnchants(auras, initializeFrame)
+    local slots = AuraContainerItemEnchantmentSlot or ns.MistsEnchantSlots
+    if not (auras.AddItemEnchantment and slots and initializeFrame) then return end
+    for _, slot in ipairs({ slots.MainHand, slots.OffHand, slots.Ranged }) do
+        if slot then
+            auras:AddItemEnchantment(slot, { initializeFrame = initializeFrame, hidePermanent = true })
+        end
+    end
+    auras:SetItemEnchantmentLayout({ elementSpacing = GAP, lineSpacing = TEXT, groupSpacing = GAP })
 end
 
 local function BuildBar(self, unit)
@@ -132,14 +154,17 @@ local function BuildBar(self, unit)
     buffs = Block(self, w, h, perRow, BUFF_ROWS, "TOPRIGHT")
     buffs.cancelButton = "RightButtonUp"
     buffs.shape = "up"
-    buffKey = buffs:AddGroup("HELPFUL", {
+    local buffOptions = {
         maxFrameCount = BUFF_ROWS * perRow,
         candidateFilters = InCombatLockdown() and IN_COMBAT or OUT_OF_COMBAT,
-    })
+    }
+    buffKey = buffs:AddGroup("HELPFUL", buffOptions)
 
     local debuffs = Block(self, w, h, DEBUFFS, 1, "TOPLEFT")
     debuffs.shape = "down"
     debuffs:AddGroup("HARMFUL", { maxFrameCount = DEBUFFS, showDebuffBorder = true })
+
+    WeaponEnchants(buffs, buffOptions.initializeFrame)
 end
 
 oUF:RegisterStyle("DeckOrbsBuffBar", BuildBar)
