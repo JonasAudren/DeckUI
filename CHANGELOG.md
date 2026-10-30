@@ -29,6 +29,16 @@ More say over your buffs and debuffs, and the weapon enchants back.
   left and charges, where Blizzard's buff frame used to show them - with
   the bar on they had no place at all. In Mists of Pandaria Classic a right
   click does not remove one; the game keeps that to its own frame.
+- **Nameplates apart sideways, too.** 2.1.1's room between the FFXIV
+  nameplates only took hold for plates above each other; plates further
+  apart sideways now stack as well. Your own nameplate settings still come
+  back when you switch it off.
+
+**Mists of Pandaria Classic**
+
+- **Another step against the client crash while looting.** The loot window
+  drops its tooltip before a slot is taken and never ends a loot inside the
+  loot's own event.
 
 ## 2.1.1
 

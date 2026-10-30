@@ -239,12 +239,12 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   yet tested): with our plates on, the CVars `nameplateMotion` = 1 (stacking) and `nameplateOverlapV`
   = 1.8 are set, the player's own values kept in `DeckUIDB.plateCVars` and put back when either
   option goes off. **That was not enough** (owner 2026-10-29, still on top of each other - the engine
-  stacks by the plate's own size): the option also sets `C_NamePlate.SetNamePlateSize` to ours plus a
-  margin (136 x 24, out of combat, the player's size kept as `plateCVars.size`), re-applied after every
-  call of Blizzard's driver (post-hook on that function). **Never read a plate's position**: plates are
-  restricted regions, `GetCenter` fails ("Can't measure restricted regions", taint - a first fix that
-  laid out our frames itself threw it 2800 times in Mists, 2026-10-29). Not yet tested in game.
-  `/deck plates` prints the CVars and the plate size.
+  stacks by Blizzard's plate, and ours is wider): the option also sets `nameplateOverlapH` = 1.4, so
+  plates further apart sideways stack too (a CVar the client lacks is skipped). Two dead ends the same
+  day: **`C_NamePlate.SetNamePlateSize`** to our size drew a grey band of Blizzard's over our plates; and
+  **never read a plate's position** - plates are restricted regions, `GetCenter` fails ("Can't measure
+  restricted regions", taint; a layout of our own threw it 2800 times in Mists). OverlapH not yet tested
+  in game. `/deck plates` prints the three CVars.
 - **Talking head as a subtitle** (`DeckUI/talkinghead.lua`, `DeckUIDB.talkingHead` /
   `talkingHeadInstances`, Overview page, off by default; not yet tested in game; replaces
   Plumber's "Talking Head", 2026-10-08). Blizzard's `TalkingHeadFrame` only loses
