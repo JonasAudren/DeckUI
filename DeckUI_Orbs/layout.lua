@@ -63,6 +63,7 @@ ns.DEFAULTS = {
     buffBarDebuffs  = true,        -- the debuff block
     buffBarEnchants = true,        -- temporary weapon enchants before the buffs
     buffBarCombatMax = 60,         -- in combat only buffs up to this many seconds; 0 = no limit
+    buffBarCombatHide = false,     -- in combat no buffs at all (debuffs and enchants stay)
     buffBarAllOut   = true,        -- out of combat every buff; off = the limit always
     buffRows        = 2,           -- 1-3 rows of buffs
     buffDebuffMax   = 8,           -- debuffs at most, 0-16

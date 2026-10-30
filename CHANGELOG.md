@@ -16,8 +16,8 @@ More say over your buffs and debuffs, and the weapon enchants back.
 
 - **The buff bar, your way.** On the Buff bar page: buffs, debuffs and
   weapon enchants each on or off; how long a buff may be to show in combat
-  (one minute as before, or no limit), and whether out of combat every buff
-  shows; one to three rows of buffs; how many debuffs. All of that applies at
+  (one minute as before, or no limit), or no buffs in combat at all, and
+  whether out of combat every buff shows; one to three rows of buffs; how many debuffs. All of that applies at
   once. The time below the icons and the dispel colour above a debuff can
   go too, after a reload.
 - **Your buffs and debuffs at the Final Fantasy player bar, each with a

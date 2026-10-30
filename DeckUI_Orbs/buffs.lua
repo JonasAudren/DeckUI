@@ -18,7 +18,8 @@ local oUF = ns.oUF
 --  - in combat only buffs of a minute or less - procs and cooldowns -
 --    by switching the group's candidate filter (maxDuration, which also
 --    drops permanent auras; buffBarCombatMax, 0 = no limit) on
---    PLAYER_REGEN_DISABLED / ENABLED;
+--    PLAYER_REGEN_DISABLED / ENABLED, or none at all (buffBarCombatHide:
+--    the group's frame count goes to 0, the enchants and debuffs stay);
 --  - debuffs always, all of them, with their dispel colour (buffDebuffMax);
 --  - buffs, debuffs and weapon enchants each switchable (buffBarBuffs,
 --    buffBarDebuffs, buffBarEnchants), the buff rows (buffRows); the time
@@ -174,7 +175,8 @@ function ns.ApplyBuffBar(inCombat)
     buffs:SetEnabled(DeckOrbsDB.buffBarBuffs ~= false)
     debuffs:SetEnabled(DeckOrbsDB.buffBarDebuffs ~= false)
     buffs:SetAuraGroupCandidateFilters(buffKey, Filters(inCombat))
-    buffs:SetAuraGroupMaxFrameCount(buffKey, Rows() * perRow)
+    local hideBuffs = inCombat and DeckOrbsDB.buffBarCombatHide
+    buffs:SetAuraGroupMaxFrameCount(buffKey, hideBuffs and 0 or Rows() * perRow)
     debuffs:SetAuraGroupMaxFrameCount(debuffKey, DebuffMax())
     for _, slot in ipairs(enchantSlots) do
         buffs:SetItemEnchantmentEnabled(slot, DeckOrbsDB.buffBarEnchants ~= false)

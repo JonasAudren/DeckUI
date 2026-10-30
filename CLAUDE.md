@@ -639,7 +639,8 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   top rises to a point, a debuff's bottom falls to one; icon, edge and swipe share them), and
   the dispel colour as a short strip above a debuff (`Border` re-anchored, FFXIV's Esuna mark). **Long buffs only out of combat**: the buff group's candidate filter is
   switched with `SetAuraGroupCandidateFilters` on PLAYER_REGEN_DISABLED/ENABLED between `{}`
-  and `{ maxDuration = 60 }` (since 2026-10-30 the Buff bar page's `buffBarCombatMax`, 0 = none, and
+  and `{ maxDuration = 60 }` (since 2026-10-30 the Buff bar page's `buffBarCombatMax`, 0 = none,
+  `buffBarCombatHide` - in combat the buff group's frame count is 0, enchants and debuffs stay - and
   `buffBarAllOut`; **live switches** through `ns.ApplyBuffBar`: `buffBarBuffs` / `buffBarDebuffs`
   (`SetEnabled` on the block), `buffBarEnchants` (`SetItemEnchantmentEnabled`), `buffRows` 1-3 and
   `buffDebuffMax` (`SetAuraGroupMaxFrameCount`; the Mists stand-in has both setters); built in or

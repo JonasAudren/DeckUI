@@ -115,6 +115,8 @@ D.RegisterModule("BuffBar", {
             "Temporary weapon enchants - imbues, oils, sharpening stones - at the right end, before the buffs, with their time left.")
         f:Slider("In combat: buffs up to", 0, 600, 10, seconds, db, "buffBarCombatMax", Live("buffBarCombatMax"),
             "In combat only buffs this short show - procs and cooldowns, not food and flasks. With any limit, permanent buffs stay off too. 0 shows every buff in combat.")
+        f:Checkbox("Hide buffs in combat", db, "buffBarCombatHide", live,
+            "In combat the buffs leave the bar altogether, whatever the limit above says; your debuffs and the weapon enchants stay. They come back when the fight ends.")
         f:Checkbox("Out of combat: every buff", db, "buffBarAllOut", live,
             "Out of combat the limit above is lifted and every buff shows, permanent ones included. Off, the limit holds at all times.")
         f:Slider("Buff rows", 1, 3, 1, count, db, "buffRows", Live("buffRows"),
