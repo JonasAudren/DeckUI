@@ -38,7 +38,10 @@ ns.DEFAULTS = {
     -- player, target and target of target in the Final Fantasy styles, each on
     -- a page of its own (owner's wish 2026-10-28); all need a /reload since
     -- oUF builds a frame once. Widths and bar heights are per device (below).
-    playerAuras     = "above",     -- your buffs and debuffs: "above" | "below" | "off"
+    playerBuffs     = "above",     -- your buffs: "above" | "below" | "off" (was playerAuras for both)
+    playerDebuffs   = "above",     -- your debuffs
+    playerBuffsRight = false,      -- buffs from the right edge, sharing the debuffs' line
+    playerAuraShapes = false,      -- FFXIV's roof and point shapes like the target's, else squares
     playerAuraSize  = 22,
     playerBuffMax   = 10,
     playerDebuffMax = 8,
@@ -55,6 +58,16 @@ ns.DEFAULTS = {
     dotNames        = true,        -- the debuff's name beside its icon; off = capsule only
     xivCastCenter   = false,       -- "ffxiv" style: your cast in the screen's middle; /reload
     buffBar         = false,       -- own buff bar in FF style (buffs.lua), replaces Blizzard's; /reload
+    -- the buff bar's switches (Buff bar page, 2026-10-30), live but for the two look ones
+    buffBarBuffs    = true,        -- the buff block (weapon enchants go with it)
+    buffBarDebuffs  = true,        -- the debuff block
+    buffBarEnchants = true,        -- temporary weapon enchants before the buffs
+    buffBarCombatMax = 60,         -- in combat only buffs up to this many seconds; 0 = no limit
+    buffBarAllOut   = true,        -- out of combat every buff; off = the limit always
+    buffRows        = 2,           -- 1-3 rows of buffs
+    buffDebuffMax   = 8,           -- debuffs at most, 0-16
+    buffBarTime     = true,        -- the time below each icon; /reload
+    buffBarDispel   = true,        -- the dispel colour strip above a debuff; /reload
     -- raid grid (raid.lua, Raid tab); sizes and arrangement are per device
     raidColor       = "ff",        -- health bar: "ff" (FF green) | "class"
     raidHpText      = "none",      -- "none" | "percent" | "short"
@@ -629,6 +642,12 @@ end
 -------------------------------------------------------------------
 oUF:Factory(function(self)
     DeckOrbsDB = DeckOrbsDB or {}
+    -- 2.1.0's one side for the player's buffs and debuffs became one each (2026-10-30)
+    if DeckOrbsDB.playerAuras ~= nil then
+        if DeckOrbsDB.playerBuffs == nil then DeckOrbsDB.playerBuffs = DeckOrbsDB.playerAuras end
+        if DeckOrbsDB.playerDebuffs == nil then DeckOrbsDB.playerDebuffs = DeckOrbsDB.playerAuras end
+        DeckOrbsDB.playerAuras = nil
+    end
     for k, v in pairs(ns.DEFAULTS) do
         if DeckOrbsDB[k] == nil then DeckOrbsDB[k] = v end
     end

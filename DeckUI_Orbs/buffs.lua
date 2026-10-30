@@ -12,12 +12,18 @@ local oUF = ns.oUF
 -- debuffs in a row below. Movable ("Buffs"), sizes per device,
 -- DeckOrbsDB.buffBar, off by default, needs a reload.
 --
--- What shows when (owner's choice):
---  - out of combat every buff, flasks and food included;
+-- What shows when (owner's choice, the numbers his settings since
+-- 2026-10-30 - Buff bar page, all live through ns.ApplyBuffBar):
+--  - out of combat every buff, flasks and food included (buffBarAllOut);
 --  - in combat only buffs of a minute or less - procs and cooldowns -
 --    by switching the group's candidate filter (maxDuration, which also
---    drops permanent auras) on PLAYER_REGEN_DISABLED / ENABLED;
---  - debuffs always, all of them, with their dispel colour.
+--    drops permanent auras; buffBarCombatMax, 0 = no limit) on
+--    PLAYER_REGEN_DISABLED / ENABLED;
+--  - debuffs always, all of them, with their dispel colour (buffDebuffMax);
+--  - buffs, debuffs and weapon enchants each switchable (buffBarBuffs,
+--    buffBarDebuffs, buffBarEnchants), the buff rows (buffRows); the time
+--    text and the dispel strip are built in or not (buffBarTime,
+--    buffBarDispel, a reload).
 -- The icons are the engine's own aura buttons (oUF's CreateAuras), so
 -- durations and counts stay secret-safe; a right click cancels a buff.
 -- With the bar on, the player frame (orb or FF bar) drops its own auras.
@@ -29,12 +35,21 @@ local oUF = ns.oUF
 -- sets its colour, so it stays white); above a debuff a short coloured strip when it can be dispelled -
 -- FFXIV marks what Esuna removes the same way.
 local GAP, TEXT, STRIP = 2, 12, 5   -- between icons; the time below; the strip above
-local BUFF_ROWS, DEBUFFS = 2, 8
-local IN_COMBAT = { maxDuration = 60 }
-local OUT_OF_COMBAT = {}
+local BUFF_ROWS, DEBUFFS = 2, 8     -- the defaults of buffRows and buffDebuffMax
+local NO_FILTER = {}
 
 local bar        -- the oUF frame
-local buffs, buffKey
+local buffs, buffKey, debuffs, debuffKey
+local barW, barH, perRow, lineText   -- the icon size, icons per row and line spacing the bar was built with
+local enchantSlots = {}              -- the enchant slots added, for their switch
+
+-- the buff group's candidate filters for the moment: the combat limit, or
+-- none - a maxDuration also drops permanent auras (Blizzard_AuraContainerUtil)
+local function Filters(inCombat)
+    local max = DeckOrbsDB.buffBarCombatMax or 60
+    if max <= 0 or (not inCombat and DeckOrbsDB.buffBarAllOut ~= false) then return NO_FILTER end
+    return { maxDuration = max }
+end
 
 -- FFXIV's status icons are shaped (owner's close-up, 2026-10-08): a buff's
 -- top edge rises to a point like a roof, a debuff's bottom edge falls to
@@ -111,14 +126,14 @@ local function Block(self, w, h, count, rows, anchor)
         growthX       = anchor == "TOPLEFT" and "RIGHT" or "LEFT",
         growthY       = "DOWN",
     })
-    auras:SetSize(width, rows * (h + TEXT))
+    auras:SetSize(width, rows * (h + lineText))
     auras:SetPoint(anchor, self, anchor, 0, -STRIP)
     auras.width, auras.height = w, h
     auras.elementSpacing = GAP
-    auras.lineSpacing = TEXT
+    auras.lineSpacing = lineText
     auras.groupSpacing = GAP   -- between the weapon enchants and the buffs
     auras.showCount = true
-    auras.showDuration = true
+    auras.showDuration = DeckOrbsDB.buffBarTime ~= false
     auras.PostCreateButton = Style
     return auras
 end
@@ -139,30 +154,60 @@ local function WeaponEnchants(auras, initializeFrame)
     for _, slot in ipairs({ slots.MainHand, slots.OffHand, slots.Ranged }) do
         if slot then
             auras:AddItemEnchantment(slot, { initializeFrame = initializeFrame, hidePermanent = true })
+            table.insert(enchantSlots, slot)
         end
     end
-    auras:SetItemEnchantmentLayout({ elementSpacing = GAP, lineSpacing = TEXT, groupSpacing = GAP })
+    auras:SetItemEnchantmentLayout({ elementSpacing = GAP, lineSpacing = lineText, groupSpacing = GAP })
+end
+
+-- whole numbers: the engine refuses a frame count of 2.0000001 from a slider
+local function Rows() return math.floor((DeckOrbsDB.buffRows or BUFF_ROWS) + 0.5) end
+local function DebuffMax() return math.floor((DeckOrbsDB.buffDebuffMax or DEBUFFS) + 0.5) end
+
+-- The bar's switches, live (Buff bar page): which blocks show, the combat
+-- limit, how many rows and debuffs. The container's setters take effect at
+-- once, in combat too; the bar's own size follows the rows for Move.
+-- inCombat: what the regen events say, else asked.
+function ns.ApplyBuffBar(inCombat)
+    if not (bar and buffs and debuffs) then return end
+    if inCombat == nil then inCombat = InCombatLockdown() end
+    buffs:SetEnabled(DeckOrbsDB.buffBarBuffs ~= false)
+    debuffs:SetEnabled(DeckOrbsDB.buffBarDebuffs ~= false)
+    buffs:SetAuraGroupCandidateFilters(buffKey, Filters(inCombat))
+    buffs:SetAuraGroupMaxFrameCount(buffKey, Rows() * perRow)
+    debuffs:SetAuraGroupMaxFrameCount(debuffKey, DebuffMax())
+    for _, slot in ipairs(enchantSlots) do
+        buffs:SetItemEnchantmentEnabled(slot, DeckOrbsDB.buffBarEnchants ~= false)
+    end
+    bar:SetSize((perRow + DEBUFFS) * (barW + GAP) + 3 * barW, STRIP + Rows() * (barH + lineText))
 end
 
 local function BuildBar(self, unit)
     local dev = ns.DeviceDB()
-    local h, perRow = dev.buffSize or 28, dev.buffPerRow or 12
-    local w = math.floor(h * 0.86 + 0.5)
-    self:SetSize((perRow + DEBUFFS) * (w + GAP) + 3 * w, STRIP + BUFF_ROWS * (h + TEXT))
+    barH, perRow = dev.buffSize or 28, dev.buffPerRow or 12
+    barW = math.floor(barH * 0.86 + 0.5)
+    lineText = DeckOrbsDB.buffBarTime ~= false and TEXT or 2   -- no time text, no room for it
+    local w, h = barW, barH
+    self:SetSize((perRow + DEBUFFS) * (w + GAP) + 3 * w, STRIP + Rows() * (h + lineText))
 
     if not self.CreateAuras then return end
-    buffs = Block(self, w, h, perRow, BUFF_ROWS, "TOPRIGHT")
+    buffs = Block(self, w, h, perRow, 3, "TOPRIGHT")
     buffs.cancelButton = "RightButtonUp"
     buffs.shape = "up"
     local buffOptions = {
-        maxFrameCount = BUFF_ROWS * perRow,
-        candidateFilters = InCombatLockdown() and IN_COMBAT or OUT_OF_COMBAT,
+        maxFrameCount = Rows() * perRow,
+        candidateFilters = Filters(InCombatLockdown()),
     }
     buffKey = buffs:AddGroup("HELPFUL", buffOptions)
 
-    local debuffs = Block(self, w, h, DEBUFFS, 1, "TOPLEFT")
+    -- the debuff block takes the room of eight whatever the count, so the
+    -- bar's width (Move) stays put
+    debuffs = Block(self, w, h, DEBUFFS, 1, "TOPLEFT")
     debuffs.shape = "down"
-    debuffs:AddGroup("HARMFUL", { maxFrameCount = DEBUFFS, showDebuffBorder = true })
+    debuffKey = debuffs:AddGroup("HARMFUL", {
+        maxFrameCount = DebuffMax(),
+        showDebuffBorder = DeckOrbsDB.buffBarDispel ~= false,
+    })
 
     WeaponEnchants(buffs, buffOptions.initializeFrame)
 end
@@ -174,8 +219,7 @@ local combat = CreateFrame("Frame")
 combat:RegisterEvent("PLAYER_REGEN_DISABLED")
 combat:RegisterEvent("PLAYER_REGEN_ENABLED")
 combat:SetScript("OnEvent", function(_, event)
-    if not (buffs and buffKey) then return end
-    buffs:SetAuraGroupCandidateFilters(buffKey, event == "PLAYER_REGEN_DISABLED" and IN_COMBAT or OUT_OF_COMBAT)
+    ns.ApplyBuffBar(event == "PLAYER_REGEN_DISABLED")
 end)
 
 -------------------------------------------------------------------
@@ -202,6 +246,7 @@ oUF:Factory(function(self)
     bar.defaultPoint = { "TOPRIGHT", UIParent, "TOPRIGHT", -250, -20 }
     bar:SetPoint(unpack(bar.defaultPoint))
     D.MakeMovable(bar, "Buffs", DeckOrbsDB)
+    ns.ApplyBuffBar()
     ns.OutOfCombat("parkBuffs", function()
         ParkBlizzard()
         -- the bar's own area is not a button: clicks belong to the icons

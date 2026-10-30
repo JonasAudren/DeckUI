@@ -10,8 +10,20 @@ of the version it leads up to, so `v1.0.1-beta` uses `## 1.0.1`.
 
 ## 2.1.2
 
+More say over your buffs and debuffs, and the weapon enchants back.
+
 **Both games**
 
+- **The buff bar, your way.** On the Buff bar page: buffs, debuffs and
+  weapon enchants each on or off; how long a buff may be to show in combat
+  (one minute as before, or no limit), and whether out of combat every buff
+  shows; one to three rows of buffs; how many debuffs. All of that applies at
+  once. The time below the icons and the dispel colour above a debuff can
+  go too, after a reload.
+- **Your buffs and debuffs at the Final Fantasy player bar, each with a
+  side.** Buffs and debuffs now choose above, below or off on their own; the
+  buffs can start from the right edge and share the debuffs' line; and the
+  icons can take the target's Final Fantasy XIV shapes. Player page.
 - **Weapon enchants in the buff bar.** A shaman's imbues, oils and
   sharpening stones show at the right end of the buff bar with their time
   left and charges, where Blizzard's buff frame used to show them - with

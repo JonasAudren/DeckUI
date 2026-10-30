@@ -584,14 +584,19 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   size slider): width and bar height per device **as a percentage of the style's own numbers**
   (`ns.FrameSizeDB()` keeps `playerWidth`, `playerBar`, `targetWidth`, ... at 100 by default;
   `ns.FrameSize(prefix)` turns them into pixels from `FRAME_BASE`, 260/380/140 for "ff" and
-  300/420/150 for "ffxiv"; owner's wish 2026-10-28: 100% = as shipped), and shared in `ns.DEFAULTS`: `playerAuras` (above/below/off, size, buff and debuff
-  max), `targetDebuffs` / `targetBuffs` (below/above/off each), `targetBuffsRight` (same line from the
+  300/420/150 for "ffxiv"; owner's wish 2026-10-28: 100% = as shipped), and shared in `ns.DEFAULTS`: `playerBuffs` / `playerDebuffs`
+  (above/below/off each; one `playerAuras` for both until 2026-10-30, migrated at load),
+  `playerBuffsRight`, `playerAuraShapes` (the target's FFXIV shapes, `StyleTargetAura`, else squares),
+  size, buff and debuff max, `targetDebuffs` / `targetBuffs` (below/above/off each), `targetBuffsRight` (same line from the
   right edge, else a line of their own), `targetAuraSize`, `targetDebuffMax`/`BuffMax`, `totDebuffs`.
+  **One layout for both bars, `AuraRows(self, width, spec)`** (ffstyle.lua, 2026-10-30): the kinds in
+  `spec.order` (nearest the frame first - the player's buffs, the target's debuffs), a left-edge kind
+  takes a line of its own, a right-edge kind shares the open left line and closes it.
   **Everything needs a /reload** (oUF builds a frame once): each widget reports to the reload bar
   against the value the session was built with (`Snap`/`Need`). ffstyle.lua reads them in
-  `PlayerAuras`, `TargetAuraRows` (sets `frame.DeckBelow` / `DeckAbove` = the outermost aura line on
-  each side, which debuffs.lua hangs past) and `ToTDebuffs`; `AuraRow(..., fromRight, max)` caps a
-  line at `max` icons. Move: Player/Target pages move "Player"/"Player (FF)" and "Target"/"Target
+  `PlayerAuras` and `TargetAuraRows`, both through `AuraRows` (sets `frame.DeckBelow` / `DeckAbove` =
+  the outermost aura line on each side, which debuffs.lua hangs past), and `ToTDebuffs`;
+  `AuraRow(..., fromRight, max)` caps a line at `max` icons. Move: Player/Target pages move "Player"/"Player (FF)" and "Target"/"Target
   (FF)"; Defaults clear the `player*`, `target*`, `tot*` keys.
 - **Your debuffs** (`DeckUI_Orbs/debuffs.lua`, `DeckOrbsDB.dotTracker`, off, live; not yet tested in
   game; owner's wish 2026-10-28 - a class's own view of its DoTs and poisons). A window of its own,
@@ -634,7 +639,13 @@ junctions pointing into this repo. Any `.lua` change is live after `/reload`;
   top rises to a point, a debuff's bottom falls to one; icon, edge and swipe share them), and
   the dispel colour as a short strip above a debuff (`Border` re-anchored, FFXIV's Esuna mark). **Long buffs only out of combat**: the buff group's candidate filter is
   switched with `SetAuraGroupCandidateFilters` on PLAYER_REGEN_DISABLED/ENABLED between `{}`
-  and `{ maxDuration = 60 }` - the container has no `minDuration` (Blizzard_AuraContainerUtil,
+  and `{ maxDuration = 60 }` (since 2026-10-30 the Buff bar page's `buffBarCombatMax`, 0 = none, and
+  `buffBarAllOut`; **live switches** through `ns.ApplyBuffBar`: `buffBarBuffs` / `buffBarDebuffs`
+  (`SetEnabled` on the block), `buffBarEnchants` (`SetItemEnchantmentEnabled`), `buffRows` 1-3 and
+  `buffDebuffMax` (`SetAuraGroupMaxFrameCount`; the Mists stand-in has both setters); built in or
+  not, so a reload: `buffBarTime` (the time text and its line spacing), `buffBarDispel` (the debuff
+  group's `showDebuffBorder`); the page's reset keys are `buffBar*` plus the sizes and counts,
+  panel.lua) - the container has no `minDuration` (Blizzard_AuraContainerUtil,
   read 2026-10-08; its filters are exclude/includeSpellIDs, dispel types, boss/role/priority
   flags, isFromPlayerOrPlayerPet, maxDuration - which drops permanent auras too). Right click
   cancels (`cancelButton`). `BuffFrame`/`DebuffFrame` are parked under a hidden parent (Edit

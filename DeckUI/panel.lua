@@ -306,9 +306,10 @@ local function DotKey(k) return k:find("^dot") ~= nil end
 local function PlayerKey(k) return k:find("^player") ~= nil end
 local function TargetKey(k) return k:find("^target") ~= nil end
 local function ToTKey(k) return k:find("^tot") ~= nil end
-local BUFFBAR_KEYS = { buffBar = true, buffSize = true, buffPerRow = true }
+-- the buff bar's keys: buffBar* plus the sizes and counts (buffMaxDuration stays the Orbs page's)
+local BUFFBAR_KEYS = { buffSize = true, buffPerRow = true, buffRows = true, buffDebuffMax = true }
 local ENEMY_KEYS = { enemyList = true, showFocus = true, showBoss = true, bossStyle = true }
-local function BuffBarKey(k) return BUFFBAR_KEYS[k] == true end
+local function BuffBarKey(k) return BUFFBAR_KEYS[k] == true or k:find("^buffBar") ~= nil end
 local function EnemyKey(k) return ENEMY_KEYS[k] == true end
 -- the Overview's three sub-pages share DeckUIDB with everything else of the hub
 local SCREEN_KEYS = { infoServer = true, infoParts = true, infoGold = true, infoBags = true, hideBagBar = true, mainMenu = true }

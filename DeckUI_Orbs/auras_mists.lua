@@ -11,15 +11,16 @@ local _, ns = ...
 -- ask of the container and its buttons is answered here - only that:
 --  container: the flow layout setters, AddAuraGroup / AddAuraSlot,
 --    SetAuraGroupCandidateFilters, SetAuraGroupFilterString,
---    SetUnit / GetUnit, UpdateAllAuras,
+--    SetAuraGroupMaxFrameCount, SetUnit / GetUnit, UpdateAllAuras,
 --    SetEnabled, SetAuraProcessingPolicy (ignored)
 --  button: SetIcon, SetDurationCooldown, SetApplicationCount,
 --    SetDurationText, AddDispelTypeTexture, SetCancelAuraButtons,
 --    SetTooltipAnchorPoint, SetHideTooltipInCombat
 --  candidate filters: maxDuration (drops permanent auras, as retail's
 --    does), includeSpellIDs, excludeSpellIDs, isFromPlayerOrPlayerPet
---  weapon enchants: AddItemEnchantment / SetItemEnchantmentLayout (the
---    buff bar, buffs.lua) from GetWeaponEnchantInfo, laid out first
+--  weapon enchants: AddItemEnchantment / SetItemEnchantmentLayout /
+--    SetItemEnchantmentEnabled (the buff bar, buffs.lua) from
+--    GetWeaponEnchantInfo, laid out first
 --
 -- The data is C_UnitAuras.GetAuraDataByIndex, which Mists has; tooltip and
 -- cancel are what Blizzard's own buff buttons there call (SetUnitAura,
@@ -224,6 +225,22 @@ function containerMixin:SetItemEnchantmentLayout(layout)
     self:MarkDirty()
 end
 
+function containerMixin:SetItemEnchantmentEnabled(slot, on)
+    local g = self.mEnchants
+    if not g then return end
+    g.off = g.off or {}
+    g.off[slot] = not on or nil
+    self:MarkDirty()
+end
+
+-- the buff bar's rows and debuff count, live
+function containerMixin:SetAuraGroupMaxFrameCount(key, count)
+    for _, g in ipairs(self.mGroups) do
+        if g.key == key then g.options.maxFrameCount = count end
+    end
+    self:MarkDirty()
+end
+
 function containerMixin:SetAuraGroupCandidateFilters(key, filters)
     for _, g in ipairs(self.mGroups) do
         if g.key == key then g.options.candidateFilters = filters end
@@ -356,7 +373,7 @@ function containerMixin:UpdateAllAuras()
             local info = { GetWeaponEnchantInfo() }
             for _, slot in ipairs(g.slots) do
                 local at = ENCHANT_RETURNS * (slot - 1)
-                if info[at + 1] then
+                if info[at + 1] and not (g.off and g.off[slot]) then
                     n = n + 1
                     local b = self:Button(g, n)
                     PaintEnchant(b, 15 + slot, info[at + 2], info[at + 3])

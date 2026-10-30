@@ -76,22 +76,58 @@ D.RegisterModule("BuffBar", {
         local f = D.Flow(c)
         local count = function(v) return tostring(v) end
         local px = function(v) return v .. " px" end
-        for _, key in ipairs({ "buffBar", "buffSize", "buffPerRow" }) do
-            if loaded[key] == nil then
-                loaded[key] = key == "buffBar" and DeckOrbsDB.buffBar or ns.DeviceDB()[key]
-            end
+        for _, key in ipairs({ "buffSize", "buffPerRow" }) do
+            if loaded[key] == nil then loaded[key] = ns.DeviceDB()[key] end
         end
-        f:Checkbox("Own buff bar in Final Fantasy style", db, "buffBar", function(v)
-            D.NeedReload("orbs:buffBar", v ~= loaded.buffBar)
-        end, "Replaces Blizzard's buffs (top right) with a status bar like Final Fantasy's: buffs from the right edge, debuffs on the left, the time below each icon. Out of combat every buff, in combat only those of a minute or less. Right click cancels a buff. Your player frame then shows no auras of its own. Needs a reload; move it with Move below.")
+        for _, key in ipairs({ "buffBar", "buffBarTime", "buffBarDispel" }) do
+            if loaded[key] == nil then loaded[key] = DeckOrbsDB[key] and true or false end
+        end
+        -- built in or not: the reload bar against what this session was built with
+        local function Rebuild(key)
+            return function(v) D.NeedReload("orbs:" .. key, (v and true or false) ~= loaded[key]) end
+        end
+        local live = function() ns.ApplyBuffBar() end
+        local function Live(key)
+            return function(v) DeckOrbsDB[key] = v; ns.ApplyBuffBar() end
+        end
+        local seconds = function(v)
+            if v <= 0 then return "all" end
+            if v >= 60 then return math.floor(v / 60 + 0.5) .. " min" end
+            return v .. " s"
+        end
+        f:Checkbox("Own buff bar in Final Fantasy style", db, "buffBar", Rebuild("buffBar"),
+            "Replaces Blizzard's buffs (top right) with a status bar like Final Fantasy's: buffs from the right edge, debuffs on the left, the time below each icon. Right click cancels a buff. Your player frame then shows no auras of its own. Needs a reload; move it with Move below.")
         f:Slider("Icon size (this device)", 18, 40, 1, px, ns.DeviceDB, "buffSize", function(v)
             ns.DeviceDB().buffSize = v
             D.NeedReload("orbs:buffSize", v ~= loaded.buffSize)
-        end)
+        end, "Needs a reload.")
         f:Slider("Icons per row (this device)", 6, 20, 1, count, ns.DeviceDB, "buffPerRow", function(v)
             ns.DeviceDB().buffPerRow = v
             D.NeedReload("orbs:buffPerRow", v ~= loaded.buffPerRow)
-        end, "Buffs per row, up to two rows; debuffs: eight on the left.")
+        end, "Buffs per row; the rows below. Needs a reload.")
+
+        f:Gap(4)
+        f:Label("What shows")
+        f:Checkbox("Buffs", db, "buffBarBuffs", live,
+            "Your buffs, from the right edge. The weapon enchants go with them.")
+        f:Checkbox("Debuffs", db, "buffBarDebuffs", live, "Your debuffs, from the left edge.")
+        f:Checkbox("Weapon enchants", db, "buffBarEnchants", live,
+            "Temporary weapon enchants - imbues, oils, sharpening stones - at the right end, before the buffs, with their time left.")
+        f:Slider("In combat: buffs up to", 0, 600, 10, seconds, db, "buffBarCombatMax", Live("buffBarCombatMax"),
+            "In combat only buffs this short show - procs and cooldowns, not food and flasks. With any limit, permanent buffs stay off too. 0 shows every buff in combat.")
+        f:Checkbox("Out of combat: every buff", db, "buffBarAllOut", live,
+            "Out of combat the limit above is lifted and every buff shows, permanent ones included. Off, the limit holds at all times.")
+        f:Slider("Buff rows", 1, 3, 1, count, db, "buffRows", Live("buffRows"),
+            "How many rows the buffs may fill, with the icons per row from above.")
+        f:Slider("Debuffs at most", 0, 16, 1, count, db, "buffDebuffMax", Live("buffDebuffMax"),
+            "How many debuffs the left block shows; 0 for none.")
+
+        f:Gap(4)
+        f:Label("Look")
+        f:Checkbox("Time below the icons", db, "buffBarTime", Rebuild("buffBarTime"),
+            "The time left under each icon. Off, the rows close up. Needs a reload.")
+        f:Checkbox("Dispel colour above debuffs", db, "buffBarDispel", Rebuild("buffBarDispel"),
+            "A short strip in the dispel colour above a debuff - Final Fantasy's mark for what Esuna removes. Needs a reload.")
     end,
 })
 
@@ -169,14 +205,22 @@ D.RegisterModule("FramePlayer", {
     title = "Player",
     build = function(c)
         local f = D.Flow(c)
-        for _, k in ipairs({ "playerAuras", "playerAuraSize", "playerBuffMax", "playerDebuffMax" }) do
+        for _, k in ipairs({ "playerBuffs", "playerDebuffs", "playerBuffsRight", "playerAuraShapes",
+                             "playerAuraSize", "playerBuffMax", "playerDebuffMax" }) do
             Snap(k, function() return DeckOrbsDB[k] end)
         end
         f:Hint("Your parameter bar in the Final Fantasy styles; the orbs keep their size slider on Player and target. Everything here needs a reload.")
         SizeSliders(f, "player")
         f:Label("Buffs and debuffs")
-        f:Cycles(Side("Auras", "playerAuras",
-            "Your buffs in a line above the bar with your debuffs over them, the same below its cast, or not at the bar at all. The buff bar on Player and target replaces them while it is on."))
+        f:Cycles(
+            Side("Buffs", "playerBuffs",
+                "Your buffs in a line above the bar, below its cast, or not at the bar at all. The buff bar replaces them while it is on."),
+            Side("Debuffs", "playerDebuffs",
+                "Your debuffs above the bar - over the buffs when both sit there - below its cast, or off."))
+        f:Checkbox("Buffs from the right edge", db, "playerBuffsRight", function(v) Need("playerBuffsRight", v) end,
+            "The buffs start at the bar's right edge and grow left, so they share a line with the debuffs without meeting them. Off, each kind has a line of its own from the left. Needs a reload.")
+        f:Checkbox("Final Fantasy XIV shapes", db, "playerAuraShapes", function(v) Need("playerAuraShapes", v) end,
+            "The icons in the shapes of the target's: a buff's top rises to a roof, a debuff's bottom falls to a point, the dispel colour as a strip above. Off, plain squares. Needs a reload.")
         f:Slider("Icon size", 14, 32, 1, px, db, "playerAuraSize", Plain("playerAuraSize"), "Needs a reload.")
         f:Slider("Buffs at most", 0, 20, 1, count, db, "playerBuffMax", Plain("playerBuffMax"),
             "In one line - as many as the width holds. Needs a reload.")

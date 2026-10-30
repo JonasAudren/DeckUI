@@ -178,24 +178,72 @@ local function Label(self, text, y)
     return fs
 end
 
+-- Status icon lines at a frame, as the Player and Target pages say: each
+-- kind below the cast, above the bar or off, from the left edge or (right)
+-- from the right edge, where it shares the line of a left-edge kind placed
+-- before it - so eight debuffs left and six buffs right never slide into
+-- each other (owner 2026-10-28). spec: size, belowY / aboveY (the first
+-- line's offset on each side), order (the kinds, nearest the frame first),
+-- and per kind { pos, max, right, filter, debuff, stealable, filters,
+-- style, register }; register puts the container into ns.targetDebuffs
+-- (the own-debuffs switch and debuffs.lua's exclusion). Sets self.DeckBelow /
+-- DeckAbove = the outermost line on each side, for whatever else wants to
+-- hang there (debuffs.lua).
+local function AuraRows(self, width, spec)
+    if not self.CreateAuras then return end
+    local S = spec.size
+    local line, leftOpen, last, lastLine = { below = 0, above = 0 }, {}, {}, { below = -1, above = -1 }
+    for _, kind in ipairs(spec.order) do
+        local e = spec[kind]
+        if e.pos ~= "off" and e.max > 0 then
+            local side, right = e.pos, e.right == true
+            -- a left-edge kind takes a line of its own; a right-edge kind
+            -- shares the open left line, then closes it
+            if not right and leftOpen[side] then line[side] = line[side] + 1 end
+            local n = line[side]
+            local y = side == "below" and (spec.belowY - n * (S + 4)) or (spec.aboveY + n * (S + 4))
+            local p, rp = side == "below" and "TOP" or "BOTTOM", side == "below" and "BOTTOM" or "TOP"
+            local edge = right and "RIGHT" or "LEFT"
+            local c = AuraRow(self, width, S, p .. edge, rp .. edge, y, right, e.max)
+            if e.style then c.PostCreateButton = e.style end
+            local key = c:AddGroup(e.filter, {
+                maxFrameCount = e.max,
+                showDebuffBorder = e.debuff,
+                showStealableBorder = e.stealable,
+                candidateFilters = e.filters,
+            })
+            if e.register then table.insert(ns.targetDebuffs, { container = c, key = key }) end
+            -- the outermost line: a kind sharing a line leaves the left-edge one in charge
+            if n > lastLine[side] then last[side], lastLine[side] = c, n end
+            if right then
+                line[side], leftOpen[side] = n + 1, false
+            else
+                leftOpen[side] = true
+            end
+        end
+    end
+    self.DeckBelow, self.DeckAbove = last.below, last.above
+end
+
 -- Your buffs and debuffs at the player bar, as the Player page says
--- (DeckOrbsDB.playerAuras: above the bar, below its cast, or off; icon
--- size and how many). belowY: where the first line goes under the frame,
--- past whatever cast hangs there. The buff bar (buffs.lua) replaces both.
+-- (DeckOrbsDB.playerBuffs / playerDebuffs: above the bar, below its cast,
+-- or off; the buffs from the right edge; icon size and how many; FFXIV's
+-- shapes or plain squares). The buffs come first, nearest the bar, as
+-- before the Player page. belowY: where the first line goes under the
+-- frame, past whatever cast hangs there. The buff bar (buffs.lua)
+-- replaces both.
 local function PlayerAuras(self, W, belowY)
-    if not self.CreateAuras or DeckOrbsDB.buffBar then return end
-    local pos = DeckOrbsDB.playerAuras or "above"
-    if pos == "off" then return end
-    local S = DeckOrbsDB.playerAuraSize or 22
-    local above = pos ~= "below"
-    local point, rel = above and "BOTTOMLEFT" or "TOPLEFT", above and "TOPLEFT" or "BOTTOMLEFT"
-    local y1 = above and 4 or belowY
-    local y2 = above and (y1 + S + 4) or (y1 - S - 4)
-    local bMax, dMax = DeckOrbsDB.playerBuffMax or 10, DeckOrbsDB.playerDebuffMax or 8
-    local buffs = AuraRow(self, W, S, point, rel, y1, false, bMax)
-    buffs:AddGroup("HELPFUL", { maxFrameCount = bMax, candidateFilters = { maxDuration = DeckOrbsDB.buffMaxDuration } })
-    local debuffs = AuraRow(self, W, S, point, rel, y2, false, dMax)
-    debuffs:AddGroup("HARMFUL", { maxFrameCount = dMax, showDebuffBorder = true })
+    if DeckOrbsDB.buffBar then return end
+    local style = DeckOrbsDB.playerAuraShapes and StyleTargetAura or nil
+    AuraRows(self, W, {
+        size = DeckOrbsDB.playerAuraSize or 22, belowY = belowY, aboveY = 4,
+        order = { "buffs", "debuffs" },
+        buffs = { pos = DeckOrbsDB.playerBuffs or "above", max = DeckOrbsDB.playerBuffMax or 10,
+                  right = DeckOrbsDB.playerBuffsRight == true, filter = "HELPFUL", style = style,
+                  filters = { maxDuration = DeckOrbsDB.buffMaxDuration } },
+        debuffs = { pos = DeckOrbsDB.playerDebuffs or "above", max = DeckOrbsDB.playerDebuffMax or 8,
+                    filter = "HARMFUL", debuff = true, style = style },
+    })
 end
 
 -- your debuffs under the target of target (DeckOrbsDB.totDebuffs)
@@ -283,39 +331,16 @@ end
 -- counts. self.DeckBelow / DeckAbove name the outermost line on each side,
 -- for whatever else wants to hang there (debuffs.lua).
 local function TargetAuraRows(self, width)
-    if not self.CreateAuras then return end
-    local S = DeckOrbsDB.targetAuraSize or 22
-    local dPos, bPos = DeckOrbsDB.targetDebuffs or "below", DeckOrbsDB.targetBuffs or "below"
-    local right = DeckOrbsDB.targetBuffsRight ~= false
-    local dMax, bMax = DeckOrbsDB.targetDebuffMax or 8, DeckOrbsDB.targetBuffMax or 6
-    local lines, last = { below = 0, above = 0 }, {}
-    -- the next line on a side: under the cast and its text, or over the bar
-    local function Place(side, fromRight)
-        local n = lines[side]
-        local y = side == "below" and (-28 - n * (S + 4)) or (4 + n * (S + 4))
-        local p, rp = side == "below" and "TOP" or "BOTTOM", side == "below" and "BOTTOM" or "TOP"
-        local edge = fromRight and "RIGHT" or "LEFT"
-        return p .. edge, rp .. edge, y
-    end
-    if dPos ~= "off" and dMax > 0 then
-        local point, rel, y = Place(dPos, false)
-        local debuffs = AuraRow(self, width, S, point, rel, y, false, dMax)
-        debuffs.PostCreateButton = StyleTargetAura
-        local filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL"
-        local key = debuffs:AddGroup(filter, { maxFrameCount = dMax, showDebuffBorder = true })
-        table.insert(ns.targetDebuffs, { container = debuffs, key = key })
-        last[dPos] = debuffs
-        -- buffs on the same side share the line only from the other edge
-        if not right then lines[dPos] = 1 end
-    end
-    if bPos ~= "off" and bMax > 0 then
-        local point, rel, y = Place(bPos, right)
-        local buffs = AuraRow(self, width, S, point, rel, y, right, bMax)
-        buffs.PostCreateButton = StyleTargetAura
-        buffs:AddGroup("HELPFUL", { maxFrameCount = bMax, showStealableBorder = true })
-        if lines[bPos] > 0 or not last[bPos] then last[bPos] = buffs end
-    end
-    self.DeckBelow, self.DeckAbove = last.below, last.above
+    AuraRows(self, width, {
+        size = DeckOrbsDB.targetAuraSize or 22, belowY = -28, aboveY = 4,   -- under the cast and its text; over the bar
+        order = { "debuffs", "buffs" },
+        debuffs = { pos = DeckOrbsDB.targetDebuffs or "below", max = DeckOrbsDB.targetDebuffMax or 8,
+                    filter = DeckOrbsDB.ownDebuffsOnly and "HARMFUL|PLAYER" or "HARMFUL", debuff = true,
+                    style = StyleTargetAura, register = true },
+        buffs = { pos = DeckOrbsDB.targetBuffs or "below", max = DeckOrbsDB.targetBuffMax or 6,
+                  right = DeckOrbsDB.targetBuffsRight ~= false, filter = "HELPFUL", stealable = true,
+                  style = StyleTargetAura },
+    })
 end
 
 -------------------------------------------------------------------

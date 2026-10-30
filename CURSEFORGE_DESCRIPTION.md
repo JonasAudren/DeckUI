@@ -20,7 +20,7 @@ The module list below describes Retail.
 - Class resource dots (combo points, holy power, runes, ...) around the player orb
 - Big target name announce on every target change
 - Class and reaction colours
-- **Own buff bar in Final Fantasy XIV style** (optional): status icons shaped like FFXIV's, the time below each, buffs from the right and debuffs from the left, your weapon enchants among them; in combat only short buffs, out of combat all of them - in place of Blizzard's buff frame
+- **Own buff bar in Final Fantasy XIV style** (optional): status icons shaped like FFXIV's, the time below each, buffs from the right and debuffs from the left, your weapon enchants among them; in combat only short buffs, out of combat all of them - each of that to your liking - in place of Blizzard's buff frame
 - Or **in Final Fantasy style**: HP/MP bars with numbers for you, a wide target bar at the top with cast, status icons and the target's target – and the bosses as FFXIV's **enemy list**: health, whom the boss is after, a red edge while it is you, its cast (grey when it cannot be interrupted) and your debuffs
 - Or **closer still to Final Fantasy XIV** (new in 1.7): rounded glossy bars without a box, HP and MP side by side with large numbers, the target as one long bar with its own target beside it, the focus as FFXIV's small focus box – and **FFXIV's experience bar** in place of Blizzard's (class, level and EXP; at the level cap the reputation you watch). Your cast can move to the **middle of the screen** with its icon and the time left
 - **Enemy list** (optional): the enemies fighting you or your group, one row each – a square that turns red while it targets you, raid marker, name and health, your current target lit
